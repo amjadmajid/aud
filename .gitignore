@@ -32,3 +32,15 @@ octave-workspace
 
 # Files with sampled/cropped audio samples (to prevent storing the same data multiple times)
 Sampled_files/
+
+# Files with the raw recordings
+Recorded_files/
+
+# Files with the sound used to make recordings
+Music_files/
+
+# any audio file (as a precausion)
+*.wav
+
+# the trained networks
+Matlab/Trained_nets/
