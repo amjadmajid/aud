@@ -1,7 +1,6 @@
 % Script for converting recorded signals into samples of fixed length 
 
 clearvars
-close all
 
 buffer_length = 1;      %time [s] at the beginning and and of the recordign which will be discarded
 sample_length = 0.5;    % Duration of each sample in seconds
