@@ -10,14 +10,14 @@ distances  = strings(size(recordings));
 directions = strings(size(recordings));
 
 for i = 1:length(recordings)
-    data = recordings(i).name(5:end-4);
+    metadata = strsplit(recordings(i).name(5:end-4),'_');
 %     if strcmp(data(end-5:end-2), 'locA')
 %         continue
 %     end
         
-    locations(i)  = data(end-5:end-2);
-    distances(i)  = data(1:5);
-    directions(i) = data(7:9);
+    locations(i)  = metadata{end}(1:end-1);
+    distances(i)  = metadata{1};
+    directions(i) = metadata{2};
 end
 
 % removing empty strings
