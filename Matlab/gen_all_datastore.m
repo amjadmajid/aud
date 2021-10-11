@@ -36,11 +36,6 @@ for i = 1:length(Top_types)
         LoS_type = LoS_types(j).name;
         LoS_path = fullfile(Top_path, LoS_type);
         
-        if LoS_type == "Non_Line_of_Sight"
-            disp("skip NLoS")
-            continue
-        end
-        
         Sound_types = dir(LoS_path);
         Sound_types(~[Sound_types.isdir]) = []; %Removes non folders
         Sound_types(ismember({Sound_types.name}, {'.','..'})) = []; %Revomves . and ..
