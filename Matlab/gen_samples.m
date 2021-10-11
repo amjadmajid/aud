@@ -56,13 +56,14 @@ for i = 1:length(Top_types)
             % use parallel pool to go over all recordings in the folder
             parfor ii = 1:length(Recordings)
                 Recording = Recordings(ii).name;
-                fprintf("now processing: %s\n",Recording)
                 
                 % test if this recording has been sampled before and skip
                 % the recording if it is the case
-                if  ~isempty(dir(Storage_path+'\'+Recording(1:end-4)+'.wav'))
+                if  ~isempty(dir(Storage_path+'\'+Recording(1:end-4)+'*.wav'))
                     continue
                 end
+                
+                fprintf("now processing: %s\n",Recording)
                 
                 Rec_info = audioinfo(Recordings(ii).folder + "\" + Recording);
                 
@@ -85,3 +86,5 @@ for i = 1:length(Top_types)
     end
     
 end
+
+fprintf("done\n")

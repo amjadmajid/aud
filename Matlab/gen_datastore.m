@@ -57,7 +57,7 @@ total_partitions = training_partion + validation_partition + testing_partition;
 training_partion = training_partion/total_partitions;
 validation_partition = validation_partition/total_partitions;
 testing_partition = testing_partition/total_partitions;
-
+%%
 [training_DS, rem] = splitDualLabel(audio_DS, label_to_split, training_partion);
 [validation_DS, testing_DS] = splitDualLabel(rem, label_to_split, validation_partition/(1-training_partion));
 
@@ -78,6 +78,7 @@ metadata.sound_file = d{3};
 d = split(d{4},"_");
 metadata.sample_length = str2double(replace(d{end},"s","."));
 metadata.date = date;
+metadata.splitted_label = label_to_split;
 
 data.general_DS = audio_DS;
 data.training_DS = training_DS;
