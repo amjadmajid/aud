@@ -1,11 +1,10 @@
 clearvars
+close all
 
 load label_definitions.mat
 %% User input
 
 Training_label = "direction";
-label = 3;
-
 %% Constructing datastores from user selected data sets
 
 samples_root = "..\Sampled_files\";
@@ -24,14 +23,14 @@ paths           = {};
 i = 1;
 while true
     [file, path]= uigetfile(samples_root + "*.mat");
-    
+
     if any(strcmp(path,paths))
         fprintf("dataset already in use\n")
         continue
     else
         paths = cat(1,paths,path);
     end
-    
+
     if file == 0
         break
     elseif who('-file',fullfile(path, file)) ~= "data"
@@ -42,9 +41,9 @@ while true
             fprintf("invalid file structure\n")
             continue
         end
-        
+
         fprintf("%s\n", fullfile(path, file))
-        
+
         Train_locs =   cat(1, Train_locs,   data.training_DS.Files);
         Train_labels = cat(1, Train_labels, data.training_DS.Labels);
         Val_locs =     cat(1, Val_locs,     data.validation_DS.Files);
@@ -53,10 +52,14 @@ while true
         Test_labels =  cat(1, Test_labels,  data.testing_DS.Labels);
 
         sample_metadata{i} = data.metadata;
-        
+
         clear data
         i = i + 1;
     end
+end
+
+if i == 1
+    return
 end
 
 Train_audio_DS = audioDatastore(Train_locs, 'Labels', Train_labels);
@@ -98,37 +101,39 @@ clear Train_audio_DS Val_audio_DS Test_audio_DS
 sample = read(Test_DS);
 reset(Test_DS);
 Input_layer_size = [size(sample{1}),1];
-Output_layer_size = length(categories(sample{2})); 
+Output_layer_size = length(categories(sample{2}));
 
 
 layers = [
     imageInputLayer(Input_layer_size,"Name","Input","Normalization","none")
-    
+
     dropoutLayer(0.4,"Name","dropout_2")
     convolution2dLayer([6 15],32,"Name","conv")
-    reluLayer("Name","relu") 
+    reluLayer("Name","relu")
     dropoutLayer(0.2,"Name","dropout_1")
-    
+
     fullyConnectedLayer(Output_layer_size,"Name","fc")
     softmaxLayer("Name","softmax")
     classificationLayer("Name","classoutput")];
 
-options = trainingOptions('adam', ...
+training_options = trainingOptions('adam', ...
     'MaxEpochs',15, ...
-    'MiniBatchSize', 10, ...
-    'L2Regularization', 0.001, ...
+    'MiniBatchSize', 64, ...
+    'L2Regularization', 0.005, ...
     'Shuffle','every-epoch', ...
     'Plots','training-progress', ...
     'Verbose',true, ...
     'ValidationData',Val_DS, ...
-    'ValidationFrequency', 20);
+    'ValidationFrequency', 200, ...
+    'ValidationPatience', 7, ...
+    'OutputNetwork', 'best-validation-loss');
 %% Training
 
-net = trainNetwork(Train_DS, layers, options);
+net = trainNetwork(Train_DS, layers, training_options);
 
 
 %% save network
-Save_folder = "Trained_nets/";
+Save_folder = "Trained_nets";
 
 date = string(datetime('today','Format','dd_MM_yyyy'));
 
@@ -148,7 +153,19 @@ if exist(Save_folder + name+".mat", 'file')
     name = sprintf("%s(%d)",name,i);
 end
 
-save(Save_folder + name, 'net', 'options','Train_DS', 'Val_DS', 'Test_DS', 'sample_metadata')
+save(fullfile(Save_folder, name), 'net', 'training_options', 'Train_DS', 'Val_DS', 'Test_DS', 'sample_metadata')
+
+%% Save training porcess immage
+Save_folder = "Training_process_images";
+currentfig = findall(groot,'Type','Figure');
+savefig(currentfig,fullfile(Save_folder,name))
+
+%% Turn off the pc at if training ends at nigth time
+c = fix(clock);
+h = c(4);
+if h >= 2 && h < 8
+    system('shutdown -s')
+end
 
 %% Helper functions
 function [dataOut,info] = preprocessForTraining(data,info)
