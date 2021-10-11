@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #script to run playrec.sh multiple times for all
 # music files in the folder /Music_files
 
@@ -23,6 +24,7 @@ return 0
 }
 
 args=
+loc=
 
 # Argument parsing
 while [ ! -z "$1" ]; do
@@ -53,7 +55,7 @@ while [ ! -z "$1" ]; do
       ;;
     --location)
       shift
-      args="$args --location $1"
+      loc=$1
       ;;
     -t)
       args="$args -t"
@@ -72,13 +74,15 @@ done
 musicloc="Music_files/"
 extension=".wav"
 
-for i in $musicloc*$extentsion; do
-  [ -f "$i" ] || continue   #guards for a case where ther are no existing files
-  musicname=${i#"$musicloc"}
-  musicname=${musicname%"$extension"}
-  echo $musicname
-  echo $args
-  ./playrec.sh $args --music $musicname
-  
-done
 
+for j in 1 2; do
+  for i in $musicloc*$extentsion; do
+    [ -f "$i" ] || continue   #guards for a case where ther are no existing files
+    musicname=${i#"$musicloc"}
+    musicname=${musicname%"$extension"}
+    echo $musicname
+    echo $args --location $loc$j
+    ./playrec.sh $args --music $musicname --location $loc$j
+  
+  done
+done

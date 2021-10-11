@@ -44,3 +44,5 @@ Music_files/
 
 # the trained networks
 Matlab/Trained_nets/
+Matlab/Training_process_images/
+Matlab/ds_selection_test.m

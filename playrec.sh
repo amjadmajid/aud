@@ -78,14 +78,14 @@ while [ ! -z "$1" ]; do
     --music)
       shift
       musicfile=$1
-	  if ["$musicfile" == "_no_music"]; then
-		no_music_mode=true
-	  fi
+      if [ "$musicfile" == "_no_music" ]; then
+		    no_music_mode=true
+	    fi
 			  
-	  if [[ ! -f "Music_files/$musicfile.wav" ]]; then
-	    echo "ERROR: Music_files/$musicfile.wav does not exist."
-		exit 1
-	  fi
+	    if [[ ! -f "Music_files/$musicfile.wav" ]]; then
+	      echo "ERROR: Music_files/$musicfile.wav does not exist."
+		  exit 1
+	    fi
       ;;
     --location)
       shift
@@ -151,7 +151,7 @@ if ! $no_music_mode ; then
 fi
 
 # recording file name
-if ! no_music_mode ; then
+if ! $no_music_mode ; then
   printf -v recfile "rec_%03dcm_%03d" $dist $dir
   if [ "$LoS" == "n" ]; then
     printf -v recfile "%s_euclid_%03dcm_%03d" $recfile $edist $edir
@@ -162,7 +162,7 @@ fi
 recfile="${recfile}_loc${loc}"
 
 # make folder to save the recorded files
-if ! no_music_mode ; then
+if ! $no_music_mode ; then
   recloc="Recorded_files/$top_state/$LoS_state/$musicfile/Raw_recordings"
 else
   recloc="Recorded_files/$top_state/Background/Raw_recordings"
@@ -173,7 +173,7 @@ if [[ ! -d $recloc ]]; then
 fi
 
 recloc="$recloc/$recfile.wav"
-if ! no_music_mode ; then
+if ! $no_music_mode ; then
   musicloc="Music_files/$musicfile.wav"
 fi
 
@@ -181,7 +181,7 @@ echo "------------------------------------------"
 if $test_mode; then
   echo "TEST MODE"
 fi
-if ! no_music_mode ; then
+if ! $no_music_mode ; then
   echo "Music file name:        $musicfile.wav"
   echo "Music file location:    $musicloc"
   echo "Recorded file name:     $recfile.wav"
@@ -190,6 +190,12 @@ if ! no_music_mode ; then
   echo "Direction:              $dir degrees"
   echo "Top state:              $top_state"
   echo "Line of Sight state:    $LoS_state"
+  
+  if [ "$LoS" == "n" ]; then
+    echo "Euclidian distance:     $edist cm"
+    echo "Euclidian direction:    $edir degrees"
+  fi  
+  
   echo "Location:               loc$loc"
 else
   echo "Recording background"
@@ -204,7 +210,7 @@ if $test_mode; then
   exit 0
 fi
 
-if ! no_music_mode ; then
+if ! $no_music_mode ; then
   # recording should start first
   arecord -d 32 -f S32_LE -r 44100 -c 6 $recloc &
   # play music

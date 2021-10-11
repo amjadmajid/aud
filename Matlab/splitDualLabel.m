@@ -1,35 +1,32 @@
-function [split, remainder] = splitDualLabel(adsi, labelDef, dir,p)
+function [split, remainder] = splitDualLabel(audio_DS, label ,p)
 
-if ~isa(labelDef,'signalLabelDefinition')
-    error("labelDef is not a signalLabelDefinition")
-end
-if size(labelDef,1) ~= 2
+labels = audio_DS.Labels.Properties.VariableNames;
+if length(labels) ~= 2
     error("number of labels != 2")
 end
-for i = 1:2
-    if labelDef(i).LabelDataType ~= "categorical"
-        error("Label '%s' is not categorical", labelDef(i).Name)
-    end
+
+if class(audio_DS.Labels{:,:}) ~= "categorical"
+    error("Labels must be categorical")
 end
 
-if dir == 1
-    label1 = labelDef(1);
-    label2 = labelDef(2);
-else
-    label1 = labelDef(2);
-    label2 = labelDef(1);
+label_idx = find(labels == label);
+if isempty(label_idx)
+    error("label not in datastore")
 end
 
-ads_for_split=cell(size(label1.Categories,1),1);
-ads_for_rem=cell(size(label1.Categories,1),1);
+label_categories = categories(audio_DS.Labels.(labels{label_idx}));
+num_categories = size(label_categories,1);
+
+ads_for_split=cell(num_categories,1);
+ads_for_rem=cell(num_categories,1);
 split_size = 0;
 rem_size = 0;
 
-for i = 1:size(label1.Categories,1)
-    idx = adsi.Labels.(label1.Name)==label1.Categories(i);
+for i = 1:num_categories
+    idx = audio_DS.Labels.(labels{label_idx})==label_categories{i};
     
-    ads_sub = subset(adsi,idx);
-    [spl, rem] = splitEachLabel(ads_sub,p,'randomized','TableVariable',label2.Name);
+    ads_sub = subset(audio_DS,idx);
+    [spl, rem] = splitEachLabel(ads_sub,p,'randomized','TableVariable',labels{mod(label_idx,2)+1});
     
     ads_for_split{i} = spl;
     split_size = split_size + size(spl.Files,1);
@@ -41,16 +38,16 @@ end
 split_src = cell(split_size,1);
 split_labels = table('Size',[split_size,2],...
     'VariableTypes',{'categorical', 'categorical'},...
-    'VariableNames',adsi.Labels.Properties.VariableNames);
+    'VariableNames',audio_DS.Labels.Properties.VariableNames);
 split_i = 1;
 
 rem_src = cell(rem_size,1);
 rem_labels = table('Size',[rem_size,2],...
     'VariableTypes',{'categorical', 'categorical'},...
-    'VariableNames',adsi.Labels.Properties.VariableNames);
+    'VariableNames',audio_DS.Labels.Properties.VariableNames);
 rem_i = 1;
 
-for i = 1:size(label1.Categories,1)
+for i = 1:num_categories
     split_src(split_i: split_i+size(ads_for_split{i}.Files,1)-1) = ...
         ads_for_split{i}.Files;
     
