@@ -16,9 +16,10 @@ training_partion        = 6;
 validation_partition    = 2;
 testing_partition       = 2;
 
-label_to_split = "direction";
+label_to_split = "location";
 %% Create general datastores
 
+multiWaitbar('all sample sets','reset');
 
 Top_types = dir(samples_root);
 Top_types(~[Top_types.isdir]) = []; %Removes non folders
@@ -63,41 +64,48 @@ for i = 1:length(Top_types)
             addLabelDefinitions(lss, labelDef);
             
             addMembers(lss,audio_DS)
-            
+            source = lss.Source;
+
             % Give the labels the proper values
             
-            msg = sprintf("Processing\n%s\n%s\n%s\n%s\n",Top_type,LoS_type,Sound_type,Sample_file);
-            bar = waitbar(0,msg);
-            bar.Children.Title.Interpreter = 'none';
-            
+            multiWaitbar('Processing samples','reset', 'CanCancel', 'on');
+            fprintf("Processing:\n%s\n",sample_path)           
             for ii = 1:lss.NumMembers
                 
+                filename = erase(source{ii},wildcardPattern+"\");
+                location_data = strsplit(filename,'_');
                 
-                waitbar(ii/lss.NumMembers,bar,sprintf("%s %d/%d",msg,ii,lss.NumMembers))
-                
-                filename = erase(lss.Source{ii},wildcardPattern+"\");
-                DoA = str2double(filename(11:13));   % direction of arival (degrees)
-                dist = str2double(filename(5:7));    % distance to source (cm)
+                DoA = str2double(location_data{3}(1:3));   % direction of arival (degrees)
+                dist = str2double(location_data{2}(1:3));  % distance to source (cm)
+                loc = strjoin({location_data{3},location_data{2}},'_');
                 
                 setLabelValue(lss,ii,'direction',categorical(DoA))
                 setLabelValue(lss,ii,'distance',categorical(dist))
+                setLabelValue(lss,ii,'location',categorical({loc}))
+                
+                abort = multiWaitbar('Processing samples', 'Increment', 1/lss.NumMembers, 'CanCancel', 'on');
+                if abort
+                    multiWaitbar('CLOSEALL')
+                    return
+                end
                 
             end
-            close(bar)
-            
+            multiWaitbar('Processing samples', 'Relabel', 'Gen datastore');
             audio_DS = audioDatastore(lss.Source, 'Labels',lss.Labels);
             %% Split datastores
-            
+            multiWaitbar('Gen datastore', 'Relabel', 'Split datastores')
+
             total_partitions = training_partion + validation_partition + testing_partition;
             training_partion = training_partion/total_partitions;
             validation_partition = validation_partition/total_partitions;
             testing_partition = testing_partition/total_partitions;
             
-            [training_DS, rem] = splitDualLabel(audio_DS, label_to_split, training_partion);
-            [validation_DS, testing_DS] = splitDualLabel(rem, label_to_split, validation_partition/(1-training_partion));
+            [training_DS, rem] = splitEachLabel(audio_DS, training_partion, 'randomized','TableVariable',label_to_split);
+            [validation_DS, testing_DS] = splitEachLabel(rem, validation_partition/(1-training_partion),'randomized','TableVariable',label_to_split);
             
             %% Save datastores
-            
+            multiWaitbar('Split datastores', 'Relabel', 'Save datastores')
+           
             d = split(sample_path,filesep);
             d(1:end-4) = [];
             
@@ -122,11 +130,12 @@ for i = 1:length(Top_types)
             end
             save(fullfile(sample_path,"datastores",file_name),"data");
             
-            
+            multiWaitbar('Save datastores', 'close')
+            fprintf("Finnished:\n%s\n",sample_path)
         end
     end
     
 end
-
+multiWaitbar("CLOSEALL")
 
 
