@@ -75,7 +75,7 @@ musicloc="Music_files/"
 extension=".wav"
 
 
-for j in 1 2; do
+for j in 1 2; do #repeat experiment twice 
   for i in $musicloc*$extentsion; do
     [ -f "$i" ] || continue   #guards for a case where ther are no existing files
     musicname=${i#"$musicloc"}
