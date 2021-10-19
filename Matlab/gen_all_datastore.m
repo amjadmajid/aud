@@ -137,9 +137,14 @@ for i = 1:length(Top_types)
         end
     end
     
-    end
-    
 end
-multiWaitbar("CLOSEALL")
+multiWaitbar("CLOSEALL");
+
+%% Turn off the pc at nigth time
+c = fix(clock);
+h = c(4);
+if h >= 2 && h < 8
+    system('shutdown -s')
+end
 
 
