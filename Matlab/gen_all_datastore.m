@@ -51,6 +51,7 @@ for i = 1:length(Top_types)
             
             if isfolder(fullfile(sample_path,"datastores"))
                 fprintf("already done: %s\n",sample_path)
+                multiWaitbar('all sample sets','increment', 1/6);
                 continue
             end
             
@@ -85,7 +86,7 @@ for i = 1:length(Top_types)
                 
                 abort = multiWaitbar('Processing samples', 'Increment', 1/lss.NumMembers, 'CanCancel', 'on');
                 if abort
-                    multiWaitbar('CLOSEALL')
+                    multiWaitbar('CLOSEALL');
                     return
                 end
                 
@@ -93,7 +94,7 @@ for i = 1:length(Top_types)
             multiWaitbar('Processing samples', 'Relabel', 'Gen datastore');
             audio_DS = audioDatastore(lss.Source, 'Labels',lss.Labels);
             %% Split datastores
-            multiWaitbar('Gen datastore', 'Relabel', 'Split datastores')
+            multiWaitbar('Gen datastore', 'Relabel', 'Split datastores');
 
             total_partitions = training_partion + validation_partition + testing_partition;
             training_partion = training_partion/total_partitions;
@@ -104,7 +105,7 @@ for i = 1:length(Top_types)
             [validation_DS, testing_DS] = splitEachLabel(rem, validation_partition/(1-training_partion),'randomized','TableVariable',label_to_split);
             
             %% Save datastores
-            multiWaitbar('Split datastores', 'Relabel', 'Save datastores')
+            multiWaitbar('Split datastores', 'Relabel', 'Save datastores');
            
             d = split(sample_path,filesep);
             d(1:end-4) = [];
@@ -130,9 +131,12 @@ for i = 1:length(Top_types)
             end
             save(fullfile(sample_path,"datastores",file_name),"data");
             
-            multiWaitbar('Save datastores', 'close')
-            fprintf("Finnished:\n%s\n",sample_path)
+            multiWaitbar('Save datastores', 'close');
+            fprintf("Finnished:\n%s\n",sample_path);
+            multiWaitbar('all sample sets','increment', 1/6);
         end
+    end
+    
     end
     
 end
