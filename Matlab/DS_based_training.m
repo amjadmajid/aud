@@ -4,7 +4,7 @@ close all
 load label_definitions.mat
 %% User input
 
-Training_label = "direction";
+Training_label = "location";
 %% Constructing datastores from user selected data sets
 
 samples_root = "..\Sampled_files\";
@@ -71,9 +71,9 @@ clear Train_locs Train_labels Val_locs Val_labels Test_locs Test_labels
 %% shrink the number of data samples for testing
 reduced_data = false;
 if reduced_data
-    Train_audio_DS = splitDualLabel(Train_audio_DS, Training_label,  0.1);
-    Val_audio_DS   = splitDualLabel(Val_audio_DS, Training_label,  0.1);
-    Test_audio_DS  = splitDualLabel(Test_audio_DS, Training_label,  0.1);
+    Train_audio_DS = splitEachLabel(Train_audio_DS, 0.1, 'randomized','TableVariable',Training_label);
+    Val_audio_DS   = splitEachLabel(Val_audio_DS, 0.1, 'randomized','TableVariable',Training_label);
+    Test_audio_DS  = splitEachLabel(Test_audio_DS, 0.1, 'randomized','TableVariable',Training_label);
 end
 
 %% Prep data stores for training
@@ -85,7 +85,7 @@ Test_audio_DS.Labels = Test_audio_DS.Labels.(Training_label);
 
 display_distribution(Train_audio_DS, "training DB")
 display_distribution(Val_audio_DS, "validation DB")
-display_distribution(Test_audio_DS, "validation DB")
+display_distribution(Test_audio_DS, "Test DB")
 
 % Convert to TransformDatastore object with the transform function for
 % forming the proper output format of the read function (as needed for the
@@ -107,24 +107,31 @@ Output_layer_size = length(categories(sample{2}));
 layers = [
     imageInputLayer(Input_layer_size,"Name","Input","Normalization","none")
 
-    dropoutLayer(0.4,"Name","dropout_2")
-    convolution2dLayer([6 15],32,"Name","conv")
-    reluLayer("Name","relu")
-    dropoutLayer(0.2,"Name","dropout_1")
+    %dropoutLayer(0.4)
+    convolution2dLayer([6 15],32)
+    reluLayer()
 
-    fullyConnectedLayer(Output_layer_size,"Name","fc")
-    softmaxLayer("Name","softmax")
-    classificationLayer("Name","classoutput")];
+    convolution2dLayer([3 3], 32)
+    reluLayer
+
+    %dropoutLayer(0.4)
+    fullyConnectedLayer(64)
+    reluLayer()
+
+    %dropoutLayer(0.2)
+    fullyConnectedLayer(Output_layer_size)
+    softmaxLayer()
+    classificationLayer()];
 
 training_options = trainingOptions('adam', ...
     'MaxEpochs',15, ...
-    'MiniBatchSize', 64, ...
-    'L2Regularization', 0.005, ...
+    'MiniBatchSize', 16, ...
+    'L2Regularization', 0.01, ...
     'Shuffle','every-epoch', ...
     'Plots','training-progress', ...
     'Verbose',true, ...
     'ValidationData',Val_DS, ...
-    'ValidationFrequency', 200, ...
+    'ValidationFrequency', 800, ...
     'ValidationPatience', 7, ...
     'OutputNetwork', 'best-validation-loss');
 %% Training
