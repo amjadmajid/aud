@@ -1,7 +1,7 @@
 clearvars
 close all
 
-load label_definitions.mat
+%load label_definitions.mat
 %% User input
 
 Training_label = "location";
@@ -118,6 +118,9 @@ layers = [
     fullyConnectedLayer(64)
     reluLayer()
 
+    fullyConnectedLayer(64)
+    reluLayer()
+
     %dropoutLayer(0.2)
     fullyConnectedLayer(Output_layer_size)
     softmaxLayer()
@@ -129,13 +132,13 @@ ValidationFrequency = floor(length(Train_DS.UnderlyingDatastores{1}.Files)/MiniB
 training_options = trainingOptions('adam', ...
     'MaxEpochs',15, ...
     'MiniBatchSize', MiniBatchSize, ...
-    'L2Regularization', 0.01, ...
+    'L2Regularization', 0.005, ...
     'Shuffle','every-epoch', ...
     'Plots','training-progress', ...
     'Verbose',true, ...
     'ValidationData',Val_DS, ...
     'ValidationFrequency', ValidationFrequency, ...
-    'ValidationPatience', 7, ...
+    'ValidationPatience', 5, ...
     'OutputNetwork', 'best-validation-loss');
 %% Training
 
@@ -176,6 +179,11 @@ h = c(4);
 if h >= 2 && h < 8
     system('shutdown -s')
 end
+
+%% show confusion matrix and distance error (if it isn't night time)
+[val_predict, val_true] = Conf_matrix(net,Val_DS, "validation");
+
+
 
 %% Helper functions
 function [dataOut,info] = preprocessForTraining(data,info)
