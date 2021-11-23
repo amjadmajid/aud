@@ -161,37 +161,37 @@ def get_frequency(k_min_index, r, f_vector, M):
     return frequency_signal
 
 
-M = 6
-f_start = 2000
-f_stop = 4000
-Fs = 44100
-t_c = 0.100
+if __name__ == '__main__':
+    M = 6
+    f_start = 2000
+    f_stop = 4000
+    Fs = 44100
+    t_c = 0.100
 
-signal, freq_test, k_min, r = chirp_generator(f_start, f_stop, M, Fs, t_c)
+    signal, freq_test, k_min, r = chirp_generator(f_start, f_stop, M, Fs, t_c)
 
-# Save chirps
-# Generate chirps padded with silence to play on a JBL speaker
-for i in range(M):
-    scaled = np.int16(signal[i] / np.max(np.abs(signal[i])) * 32767)
-    write(f'chirp{i+1}.wav', Fs, scaled)
-    zero_padding_start = np.zeros(int(0.1 * Fs))
-    zero_padding_end = np.zeros(int(0.5 * Fs))
-    chirp_ext = np.concatenate((zero_padding_start, signal[i], zero_padding_end))
-    scaled = np.int16(chirp_ext * 32767)
-    write(f'chirp{i + 1}_extended.wav', Fs, scaled)
-fig, axs = plt.subplots(2, 3)
-# Plot
-for i in range(2):
-    for j in range(3):
-        plot_freq(freq_test[i*2 + j], t_c, M, i*2 + j + 1, axs[i, j])
-for ax in axs.flat:
-    ax.set(xlabel='Time [ms]', ylabel='Frequency [kHz]')
-for ax in axs.flat:
-    ax.label_outer()
+    # Save chirps
+    # Generate chirps padded with silence to play on a JBL speaker
+    for i in range(M):
+        scaled = np.int16(signal[i] / np.max(np.abs(signal[i])) * 32767)
+        write(f'chirp{i+1}.wav', Fs, scaled)
+        zero_padding_start = np.zeros(int(0.1 * Fs))
+        zero_padding_end = np.zeros(int(0.5 * Fs))
+        chirp_ext = np.concatenate((zero_padding_start, signal[i], zero_padding_end))
+        scaled = np.int16(chirp_ext * 32767)
+        write(f'chirp{i + 1}_extended.wav', Fs, scaled)
+    fig, axs = plt.subplots(2, 3)
+    # Plot
+    for i in range(2):
+        for j in range(3):
+            plot_freq(freq_test[i*2 + j], t_c, M, i*2 + j + 1, axs[i, j])
+    for ax in axs.flat:
+        ax.set(xlabel='Time [ms]', ylabel='Frequency [kHz]')
+    for ax in axs.flat:
+        ax.label_outer()
 
-plt.rc('figure', titlesize=14)
-fig.suptitle(f'Set of {M} orthogonal chirp waveforms ({f_start / 1000}-{f_stop / 1000} kHz)')
-fig.tight_layout()
-fig.show()
-fig.savefig('chirps.png', dpi=400)
-
+    plt.rc('figure', titlesize=14)
+    fig.suptitle(f'Set of {M} orthogonal chirp waveforms ({f_start / 1000}-{f_stop / 1000} kHz)')
+    fig.tight_layout()
+    fig.show()
+    fig.savefig('chirps.png', dpi=400)
