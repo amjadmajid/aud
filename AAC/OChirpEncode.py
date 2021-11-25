@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from BitManipulation import frombits, tobits
 from scipy.signal import chirp
@@ -215,6 +216,24 @@ class OChirpEncode:
 
         return preamble
 
+    def get_single_chirp(self, chirp_number: int):
+        """
+            Get the chirp (row in the matrix) from the encoder
+            Used for simple debugging and for other applications.
+
+            Does some weird stuff with `orthogonal_pair_offset`, but it's fine, since it is single threaded.
+        """
+
+        chirp_offset = int(chirp_number / 2)
+        chirp_index = chirp_number % 2
+
+        old_offset = self.orthogonal_pair_offset
+        self.orthogonal_pair_offset = chirp_offset
+        symbols = self.get_orthogonal_chirps()[chirp_index]
+        self.orthogonal_pair_offset = old_offset
+
+        return self.convert_bit_to_chrirp(symbols=[symbols], bit=0)
+
     def convert_bit_to_chrirp(self, symbols: list, bit: int, M: int = None, T: float = None, no_window: bool = False,
                               blank_space: bool = True, minimal_sub_chirp_duration: bool = False) -> np.ndarray:
         """
@@ -330,4 +349,8 @@ if __name__ == '__main__':
 
     oc = OChirpEncode(T=None)
     file, data = oc.convert_data_to_sound(data_to_send)
-    sd.play(data, oc.fsample, blocking=True)
+    # sd.play(data, oc.fsample, blocking=True)
+
+    plt.figure()
+    plt.plot(oc.get_single_chirp(4))
+    plt.show()
