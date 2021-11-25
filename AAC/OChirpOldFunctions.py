@@ -27,10 +27,10 @@ def frombits(bits):
 
 # Figure 3.a in the paper
 def plot_up_chirps():
-    M = 6
-    fs = 38000
-    fe = 44000
-    T = 0.012
+    M = 5
+    fs = 10000
+    fe = 20000
+    T = 0.1
     Tb = T / M
     for m in range(M):
         fsm = fs + (m * (fe - fs)) / M
@@ -44,14 +44,16 @@ def plot_up_chirps():
 
     plt.xlim(0, T)
     plt.grid()
+    plt.xlabel("time [s]")
+    plt.ylabel("Frequency [Hz]")
 
 
 # Figure 3.b in the paper
 def plot_down_chirps():
-    M = 6
-    fs = 38000
-    fe = 44000
-    T = 0.012
+    M = 5
+    fs = 10000
+    fe = 20000
+    T = 0.1
     Tb = T / M
     for m in range(M):
         fsm = fs + (m * (fe - fs)) / M
@@ -65,14 +67,16 @@ def plot_down_chirps():
 
     plt.xlim(0, T)
     plt.grid()
+    plt.xlabel("time [s]")
+    plt.ylabel("Frequency [Hz]")
 
 
 # Figure 3.c in the paper
 def plot_hybrid_chirps():
-    M = 6
-    fs = 38000
-    fe = 44000
-    T = 0.012
+    M = 5
+    fs = 10000
+    fe = 20000
+    T = 0.1
     Tb = T / M
     for m in range(1, M + 1):
         fsm = fs + ((m - 1) * (fe - fs)) / M
@@ -91,40 +95,101 @@ def plot_hybrid_chirps():
 
     plt.xlim(0, T)
     plt.grid()
+    plt.xlabel("time [s]")
+    plt.ylabel("Frequency [Hz]")
 
 
 # Figure 4a-f in the paper
 def plot_unity_pulses():
-    M = 6
-    T = 0.012
+    M = 5
+    T = 0.1
     Tb = T / M
-    R = [[4, 6, 2, 1, 5, 3],
-         [3, 4, 6, 2, 1, 5],
-         [5, 3, 4, 6, 2, 1],
-         [1, 5, 3, 4, 6, 2],
-         [2, 1, 5, 3, 4, 6],
-         [6, 2, 1, 5, 3, 4]]
+    # R = [[4, 6, 2, 1, 5, 3],
+    #      [3, 4, 6, 2, 1, 5],
+    #      [5, 3, 4, 6, 2, 1],
+    #      [1, 5, 3, 4, 6, 2],
+    #      [2, 1, 5, 3, 4, 6],
+    #      [6, 2, 1, 5, 3, 4]]
 
+    R = [[5, 1, 3, 4, 2],
+         [3, 5, 2, 1, 4],
+         [2, 3, 4, 5, 1],
+         [1, 4, 5, 2, 3],
+         [4, 2, 1, 3, 5]]
+
+    # fig = plt.figure()
     for r in R:
         fig, axs = plt.subplots(M, sharex=True, sharey=True)
         for i, element in enumerate(r):
-            start = (element - 1) * Tb
+            # print(element)
+            start = i * Tb
             end = start + Tb
             x = np.linspace(0, T, 1000)
             y = np.logical_and(x >= start, x <= end)
-            axs[i].plot(x, y)
-            axs[i].set_ylim(-0.1, 1.1)
+            axs[5-element].plot(x, y)
+            axs[5-element].set_ylim(-0.1, 1.1)
+        axs[-1].set_xlabel("time [s]")
         fig.tight_layout()
 
+        # plt.show()
+
+
+def plot_both():
+    M = 5
+    fs = 10000
+    fe = 20000
+    T = 0.1
+    Tb = T / M
+    R = [[5, 1, 3, 4, 2],
+         [3, 5, 2, 1, 4],
+         [2, 3, 4, 5, 1],
+         [1, 4, 5, 2, 3],
+         [4, 2, 1, 3, 5]]
+
+    fig = plt.figure(figsize=(6, 6))
+    subfigs = fig.subfigures(2, 1)
+    axs_top = subfigs[1].subplots(M, sharex=True, sharey=True)
+    axs_bottom = subfigs[0].subplots(1, sharex=True)
+    row = R[0]
+    for i, element in enumerate(row):
+        start = i * Tb
+        end = start + Tb
+        x = np.linspace(0, T, 1000)
+        y = np.logical_and(x >= start, x <= end)
+        axs_top[5 - element].plot(x, y)
+        axs_top[5 - element].set_ylim(-0.1, 1.1)
+
+        axs_top[element - 1].set_ylabel(f"{6-element}", rotation=0)
+        axs_top[element - 1].yaxis.set_label_coords(-0.06, 0.275)
+        if element == 3:
+            axs_top[element - 1].text(-0.017, 0.5, "selected sub-chirp", rotation=90, in_layout=False, 
+                                      horizontalalignment='center', verticalalignment='center')
+
+        m = element
+        fsm = fs + ((m - 1) * (fe - fs)) / M
+        fem = fsm + (fe - fs) / M
+
+        t = np.arange(0, int(Tb * fs)) / fs
+        if m % 2 == i % 2:
+            y = np.linspace(fem, fsm, len(t))
+        else:
+            y = np.linspace(fsm, fem, len(t))
+        axs_bottom.plot(t + (i * Tb), y)
+        axs_bottom.grid(True)
+        axs_bottom.set_ylabel("frequency [Hz]")
+
+    axs_top[-1].set_xlabel("time [s]")
+    fig.tight_layout()
+    plt.subplots_adjust(bottom=0.15, left=0.13)
     plt.show()
 
 
 # Figure 5 in the paper
 def plot_excitation_signals():
-    M = 6
-    T = 0.012
-    fs = 3800
-    fe = 44000
+    M = 5
+    fs = 10000
+    fe = 20000
+    T = 0.1
     Tb = T / M
     # The R matrix from step 4
     # R = [[4, 6, 2, 1, 5, 3],
@@ -135,12 +200,18 @@ def plot_excitation_signals():
     #      [6, 2, 1, 5, 3, 4]]
     #
     # The R matrix that reproduces figure 5
-    R = [[3, 4, 1, 6, 2, 5],
-         [2, 3, 6, 5, 1, 4],
-         [1, 2, 5, 4, 6, 3],
-         [6, 1, 4, 3, 5, 2],
-         [5, 6, 3, 2, 4, 1],
-         [4, 5, 2, 1, 3, 6]]
+    # R = [[3, 4, 1, 6, 2, 5],
+    #      [2, 3, 6, 5, 1, 4],
+    #      [1, 2, 5, 4, 6, 3],
+    #      [6, 1, 4, 3, 5, 2],
+    #      [5, 6, 3, 2, 4, 1],
+    #      [4, 5, 2, 1, 3, 6]]
+
+    R = [[5, 1, 3, 4, 2],
+         [3, 5, 2, 1, 4],
+         [2, 3, 4, 5, 1],
+         [1, 4, 5, 2, 3],
+         [4, 2, 1, 3, 5]]
 
     for r in R:
         plt.figure()
@@ -154,9 +225,13 @@ def plot_excitation_signals():
             else:
                 y = np.linspace(fsm, fem, len(t))
             plt.plot(t + (i * Tb), y)
+            # print(m)
+            # plt.show()
 
         plt.xlim(0, T)
         plt.grid()
+        plt.ylabel("frequency [Hz]")
+        plt.xlabel("time [s]")
 
     plt.tight_layout()
 
@@ -205,7 +280,7 @@ def get_orthogonal_chirps():
     return symbols
 
 
-def convert_bit_to_chrirp(symbols, bit, M: int = 4, T: float = 0.025, no_window: bool = False) -> np.ndarray:
+def convert_bit_to_chrirp(symbols, bit, M: int = 4, T: float = 0.1, no_window: bool = False) -> np.ndarray:
     # Symbols is the list of symbols we have at our disposal
     # Bit may only be 1/0
     fsample = 44100
@@ -254,7 +329,8 @@ def convert_data_to_soundfile(symbols: list, data: str) -> (str, np.ndarray):
     bits_to_send = tobits(data)
     chirps = get_chirps_from_bits(symbols, bits_to_send)
 
-    preamble = get_preamble()
+    # preamble = get_preamble()
+    preamble = np.array([])
 
     from scipy.io.wavfile import write
     concat_samples = np.array(preamble)
@@ -270,10 +346,17 @@ def convert_data_to_soundfile(symbols: list, data: str) -> (str, np.ndarray):
 
 def plot_overview():
     # plot_up_chirps()
+    # plt.figure()
+    # plot_up_chirps()
+    # plt.show()
+    # plt.gca().clear()
     # plot_down_chirps()
+    # plt.grid(True)
+    # plt.figure()
     # plot_hybrid_chirps()
     # plot_unity_pulses()
     # plot_excitation_signals()
+    # plot_both()
 
     # Currently doing hybrid symbols, not sure about the performance difference
     # Only getting the first 2 of the 6 symbols
@@ -290,8 +373,8 @@ def plot_overview():
     data = (data[:int(0.12 * 44100)] / np.iinfo(np.int16).max).astype(np.float64)
     conv_0 = np.convolve(data, np.flip(symbol0))
     conv_1 = np.convolve(data, np.flip(symbol1))
-    conv_merged_0 = np.convolve(symbol_merged, np.conjugate(np.flip(symbol0)))
-    conv_merged_1 = np.convolve(symbol_merged, np.conjugate(np.flip(symbol1)))
+    conv_merged_0 = np.convolve(symbol_merged, np.flip(symbol0))
+    conv_merged_1 = np.convolve(symbol_merged, np.flip(symbol1))
 
     fig, axs = plt.subplots(8, figsize=(8, 10))
     axs[0].plot(data)
@@ -304,12 +387,14 @@ def plot_overview():
     axs[2].set_title("[C] Symbol 1")
 
     axs[3].plot(conv_0)
-    axs[3].set_ylim(-700, 700)
+    # axs[3].set_ylim(10, 1000)
     axs[3].set_title("[D] Convolution result with symbol 0")
+    # axs[3].set_yscale("log")
 
     axs[4].plot(conv_1)
-    axs[4].set_ylim(-700, 700)
+    # axs[4].set_ylim(10, 1000)
     axs[4].set_title("[E] Convolution result with symbol 1")
+    # axs[4].set_yscale("log")
 
     axs[5].plot(symbol_merged)
     axs[5].set_title("[F] Symbol 0+1 (merged)")
@@ -751,8 +836,8 @@ def run_live_test():
 
 
 def main():
-    # plot_overview()
-    run_offline_test()
+    plot_overview()
+    # run_offline_test()
     # run_live_test()
 
     plt.show()

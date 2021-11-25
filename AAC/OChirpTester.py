@@ -4,20 +4,51 @@ from OChirpEncode import OChirpEncode
 from OChirpDecode import OChirpDecode
 import sounddevice as sd
 from OChirpOldFunctions import add_wgn
+from scipy.io.wavfile import write
+from pathlib import Path
+import os
+import pandas as pd
+from glob import glob
+from matplotlib import pyplot as plt
+import os.path
 
 
-def run_test(encoder: OChirpEncode, decoder: OChirpDecode, data_to_send: str) -> float:
+def run_orthogonal_test(encoders: list, data_to_send: str, plot: bool = False) -> (float, float):
+    """
+        Run a test with a list of encoders and what data to send.
 
-    filename, data = encoder.convert_data_to_sound(data_to_send)
+        Then we test whether the encoders are orthogonal by transmitting everything at the same time
+        (left/right speaker channel)
+    """
 
-    sd.play(data, encoder.fsample, blocking=False)
+    decoder1 = OChirpDecode(original_data=data_to_send, encoder=encoders[0])
+    decoder2 = OChirpDecode(original_data=data_to_send, encoder=encoders[1])
 
-    ber = decoder.decode_live(plot=False)
+    filename1, data1 = encoders[0].convert_data_to_sound(data_to_send, filename="temp1.wav")
+    filename2, data2 = encoders[1].convert_data_to_sound(data_to_send, filename="temp2.wav")
+
+    # Merge channels
+    merged_data = []
+    for i in range(len(data1)):
+        dual_channel = (data1[i], data2[i])
+        merged_data.append(dual_channel)
+
+    merged_data = np.array(merged_data)
+
+    write("test_dual_channel.wav", encoders[0].fsample, merged_data)
+
+    sd.play(merged_data, encoders[0].fsample, blocking=False, mapping=[1, 2])
+
+    # Just record the message
+    decoder1.decode_live(plot=False, do_not_process=True)
 
     # make sure we finished playing (decoder should block though)
     sd.wait()
 
-    return ber
+    ber1 = decoder1.decode_file(file="microphone.wav", plot=plot)
+    ber2 = decoder2.decode_file(file="microphone.wav", plot=plot)
+
+    return ber1, ber2
 
 
 def play_and_record():
@@ -31,9 +62,9 @@ def play_and_record():
             - Blank space
     """
 
-    encoder = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.005, f_preamble_start=0,
-                           f_preamble_end=10000, T_preamble=0.250, minimal_sub_chirp_duration=True,
-                           required_number_of_cycles=30, M=4)
+    encoder = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.0025, f_preamble_start=0,
+                           f_preamble_end=10000, T_preamble=0.050, minimize_sub_chirp_duration=True,
+                           required_number_of_cycles=15, M=4)
     decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
     filename, data = encoder.convert_data_to_sound(data_to_send)
@@ -55,58 +86,31 @@ def play_and_record():
 
 
 def test_orthogonality():
-    from scipy.io.wavfile import write
-
     """
-        We want to transmit two supposedly orthogonal symbols and decode them to see if they have no effect on each other
+       We want to transmit two supposedly orthogonal symbols and decode them to see if they have no effect on each other
     """
     data_to_send = "Hello, World"
 
-    """
-        Settings to play with:
-            - Chirp range (fs-fe)
-            - Symbol time (T)
-            - Number of transmitters (M)
-            - Blank space
-    """
-    encoder1 = OChirpEncode(fs=1000, fe=5000, blank_space_time=0.025, f_preamble_start=100,
-                            f_preamble_end=1000, orthogonal_pair_offset=0, minimal_sub_chirp_duration=True,
-                            required_number_of_cycles=15)
-    encoder2 = OChirpEncode(fs=1000, fe=5000, blank_space_time=0.025, f_preamble_start=100,
-                            f_preamble_end=1000, orthogonal_pair_offset=2, minimal_sub_chirp_duration=True,
-                            required_number_of_cycles=15)
-    decoder1 = OChirpDecode(original_data=data_to_send, encoder=encoder1)
-    decoder2 = OChirpDecode(original_data=data_to_send, encoder=encoder2)
-
-    filename1, data1 = encoder1.convert_data_to_sound(data_to_send, filename="temp1.wav")
-    filename2, data2 = encoder2.convert_data_to_sound(data_to_send, filename="temp2.wav")
-
-    # Merge channels
-    merged_data = []
-    for i in range(len(data1)):
-        dual_channel = (data1[i], data2[i])
-        merged_data.append(dual_channel)
-
-    merged_data = np.array(merged_data)
-
-    write("test_dual_channel.wav", encoder1.fsample, merged_data)
-
-    sd.play(merged_data, encoder1.fsample, blocking=False, mapping=[1, 2])
-
-    decoder1.decode_live(plot=True)
-
-    # make sure we finished playing (decoder should block though)
-    sd.wait()
-
-    decoder2.decode_file(file="microphone.wav", plot=True)
+    encoder1 = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.015, f_preamble_start=100,
+                            f_preamble_end=7000, orthogonal_pair_offset=0, minimize_sub_chirp_duration=True,
+                            required_number_of_cycles=50, M=8, no_window=True)
+    encoder2 = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.015, f_preamble_start=100,
+                            f_preamble_end=7000, orthogonal_pair_offset=2, minimize_sub_chirp_duration=True,
+                            required_number_of_cycles=50, M=8, no_window=True)
+    bers = run_orthogonal_test([encoder1, encoder2], data_to_send, plot=True)
+    bers = run_orthogonal_test([encoder1, encoder1], data_to_send, plot=True)
+    bers = run_orthogonal_test([encoder2, encoder2], data_to_send, plot=True)
+    print(bers)
 
 
 def range_test():
-    from pathlib import Path
-    import os
+    """
+        Iterate over numerous configurations to test them at various distances
+        Note: we need to change the distance manually
+    """
     data_to_send = "Hello, World"
 
-    base_folder = "../Audio samples/real-life/14-11-2021_measurements_at_lucan_living_room"
+    base_folder = "../Audio samples/real-life/22-11-2021_measurements_at_lucan_living_room"
 
     """
         For all configs:
@@ -144,7 +148,7 @@ def range_test():
         (8, 0.015, False, 50),
         (8, 0.06, False, 75),
 
-        # Non orthogonal chirps
+        # Non orthogonal chirps (M=1)
         # M, T, fs, fe, f_p_s, f_p_e
         (1, 0.056, 200, 1200, 1200, 2200),
         (1, 0.056, 200, 2200, 2200, 4200),
@@ -154,7 +158,10 @@ def range_test():
     ]
     iterations = 5
 
-    distance = 1
+    # Give me time to walk away
+    time.sleep(10)
+
+    distance = 0
     for config in configurations_to_test:
         for i in range(iterations):
             M = int(config[0])
@@ -180,7 +187,7 @@ def range_test():
 
             encoder = OChirpEncode(fs=fs, fe=fe, blank_space_time=blank_space, f_preamble_start=f_p_s,
                                    f_preamble_end=f_p_e, T_preamble=0.250, T=T,
-                                   minimal_sub_chirp_duration=minimize_sub_chirp_duration,
+                                   minimize_sub_chirp_duration=minimize_sub_chirp_duration,
                                    required_number_of_cycles=num_cycles, M=M)
             decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
@@ -212,13 +219,13 @@ def range_test():
 
 
 def get_range_test_results():
-    import pandas as pd
-    from glob import glob
-    from matplotlib import pyplot as plt
+    """
+        This file is REALLY convoluted, but parses the results from `range_test` and plots them.
+    """
 
     data_send = "Hello, World"
 
-    files = glob("..\\Audio samples\\real-life\\14-11-2021_measurements_at_lucan_living_room\\**\\*.wav", recursive=True)
+    files = glob("..\\Audio samples\\real-life\\22-11-2021_measurements_at_lucan_living_room\\**\\*.wav", recursive=True)
     print(files)
 
     def process_file(file: str) -> (int, int, float, bool, int, int, float):
@@ -238,6 +245,7 @@ def get_range_test_results():
         try:
             T = float(file_info[4])
         except ValueError:
+            # If we minimize the cycles
             T = None
         fs = int(file_info[5])
         fe = int(file_info[6])
@@ -247,34 +255,129 @@ def get_range_test_results():
         print(T)
         print(minimize_sub_chirp_duration)
         encoder = OChirpEncode(fs=fs, fe=fe, blank_space_time=blank_space, f_preamble_start=f_p_s, T=T,
-                               f_preamble_end=f_p_e, T_preamble=0.250, minimal_sub_chirp_duration=minimize_sub_chirp_duration,
+                               f_preamble_end=f_p_e, T_preamble=0.250, minimize_sub_chirp_duration=minimize_sub_chirp_duration,
                                required_number_of_cycles=num_cycles, M=M)
         decoder = OChirpDecode(original_data=data_send, encoder=encoder)
 
         if T is None:
             T = encoder.T
 
-        ber = decoder.decode_file(file, plot=False)
+        if M > 1:
+            plot = False
+        else:
+            plot = False
+
+        T = round(T, 5)
+        ber = decoder.decode_file(file, plot=plot)
         plt.show()
 
         return distance, M, blank_space, minimize_sub_chirp_duration, num_cycles, T, fs, fe, f_p_s, f_p_e, iteration, ber
 
-    data_list = []
-    for file in files:
-        data_list.append(process_file(file))
-    df = pd.DataFrame(data_list, columns=["distance", "M", "blank_space", "minimzed_subchirp_duration", "cycles", "T", "fs", "fe", "f_p_s", "f_p_e", "iteration", "ber"])
-    pd.options.display.width = 0
-    print(df[df.ber > 0])
-    df = df.groupby(["distance", "M", "blank_space", "minimzed_subchirp_duration", "cycles", "T", "fs", "fe", "f_p_s", "f_p_e", "iteration"], as_index=False).ber.agg(['mean', 'std']).reset_index()
+    if not os.path.isfile("test_results.csv"):
+        data_list = []
+        for file in files:
+            if file.split("\\")[-1][0].isdigit():
+                data_list.append(process_file(file))
 
-    df.plot(x="cycles", y="mean", yerr="std", label="ber")
+        df = pd.DataFrame(data_list, columns=["distance", "M", "blank_space", "minimzed_subchirp_duration", "cycles", "T", "fs", "fe", "f_p_s", "f_p_e", "iteration", "ber"])
+
+        df["Configuration"] = df.apply(lambda row: "-".join([str(i) for i in row[1:-2]]), axis=1, raw=True)
+        df["Threshold_scheme"] = ""
+        tempdf = df[["Configuration", "Threshold_scheme", "distance", "ber", "iteration"]]
+        tempdf = tempdf.rename(columns={"distance": "Distance", "iteration": "Iteration", "ber": "BER"})
+        tempdf.to_csv("../Results/real-life-tests/chirps.csv", index=False)
+
+        df.to_csv("raw_test_results.csv", index=False)
+
+        df = df.groupby(["distance", "M", "blank_space", "minimzed_subchirp_duration", "cycles", "T", "fs", "fe", "f_p_s", "f_p_e"], as_index=False).ber.agg(['mean', 'std']).reset_index()
+
+        df.to_csv("test_results.csv", index=False)
+    else:
+        # df = pd.read_csv("test_results.csv")
+        df = pd.read_csv("raw_test_results.csv")
+
+    pd.options.display.width = 0
+    print(df)
+
+    # Some boxplot settings
+    color_list = ["#a8ddb5", '#7bccc4', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    medianprops = {'color': color_list[3], 'linewidth': 2}
+    boxprops = {'color': color_list[3], 'linestyle': '-'}
+    whiskerprops = {'color': color_list[3], 'linestyle': '-'}
+    capprops = {'color': color_list[3], 'linestyle': '-'}
+
+    # Plot average difference per M
+    plt.figure(figsize=(6, 3))
+    df = df[df.M != 1]
+    index = 0
+    labels = []
+    for distance in df.distance.unique():
+        for m in df.M.unique():
+            print(f"{distance} {m}")
+            data = df[(df.M == m) & (df.distance == distance)]
+
+            plt.boxplot(data['ber'], positions=[index], showfliers=False, medianprops=medianprops, boxprops=boxprops,
+                        whiskerprops=whiskerprops, capprops=capprops, widths=0.65)
+            # hardcoded to be at the middle on the x-axis
+            if (index + 2) % 3 == 0:
+                plt.text(x=index - 1, y=0.7, s=f"{distance} meters", color='black')
+
+            labels.append(f"{m}")
+            index += 1
+            plt.axvline(x=index - 0.5, color='black', alpha=0.2)
+            # plt.text(x=index-1, y=-0.025, s=m, color='r')
+        if distance < 5:
+            plt.axvline(x=index-0.5, color='r', linestyle="dashed")
+
+    plt.ylabel("BER")
+    plt.xlabel("M")
+    plt.xticks(np.arange(index), labels)
+    plt.tight_layout()
     plt.show()
 
-    print(df)
+    # Try to plot all data...
+    plt.figure(figsize=(8.27*2, 6))
+    index = 0
+    labels = []
+    plt.text(x=-2.5, y=-0.025, s='m=', color='r')
+    for distance in df.distance.unique():
+        for m in df.M.unique():
+            data = df[(df.M == m) & (df.distance == distance)]
+            gb = data.groupby(["blank_space", "minimzed_subchirp_duration", "cycles", "T", "fs", "fe", "f_p_s", "f_p_e"])
+
+            for name, group in gb:
+                # Drop bad configs
+                good_configs = [(0.015, False, 50)]
+
+                # good = np.any([item[0] == name[0] and item[1] == name[1] and item[2] == name[2] for item in good_configs])
+                good = True
+                if good:
+                    print(name)
+                    plt.boxplot(group['ber'], positions=[index], showfliers=False, medianprops=medianprops, boxprops=boxprops, whiskerprops=whiskerprops, capprops=capprops)
+
+                    # hardcoded to be at the middle on the x-axis
+                    if (index + 9) % 17 == 0:
+                        labels.append(distance)
+                    else:
+                        labels.append("")
+                    index += 1
+
+            plt.axvline(x=index - 0.5, color='black', alpha=0.2)
+            plt.text(x=index-3, y=-0.025, s=m, color='r')
+
+        if distance < 5:
+            plt.axvline(x=index-0.5, color='r', linestyle="dashed")
+
+    plt.xticks(np.arange(index), labels)
+    plt.ylabel("ber")
+    plt.xlabel("distance [m]")
+
+    plt.show()
 
 
 if __name__ == '__main__':
-    play_and_record()
-    # test_orthogonality()
+    # play_and_record()
+    test_orthogonality()
     # range_test()
     # get_range_test_results()
+
