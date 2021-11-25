@@ -4,24 +4,22 @@ from OChirpEncode import OChirpEncode
 from OChirpDecode import OChirpDecode
 import sounddevice as sd
 from OChirpOldFunctions import add_wgn
-
-
-def run_test(encoder: OChirpEncode, decoder: OChirpDecode, data_to_send: str) -> float:
-
-    filename, data = encoder.convert_data_to_sound(data_to_send)
-
-    sd.play(data, encoder.fsample, blocking=False)
-
-    ber = decoder.decode_live(plot=False)
-
-    # make sure we finished playing (decoder should block though)
-    sd.wait()
-
-    return ber
+from scipy.io.wavfile import write
+from pathlib import Path
+import os
+import pandas as pd
+from glob import glob
+from matplotlib import pyplot as plt
+import os.path
 
 
 def run_orthogonal_test(encoders: list, data_to_send: str, plot: bool = False) -> (float, float):
-    from scipy.io.wavfile import write
+    """
+        Run a test with a list of encoders and what data to send.
+
+        Then we test whether the encoders are orthogonal by transmitting everything at the same time
+        (left/right speaker channel)
+    """
 
     decoder1 = OChirpDecode(original_data=data_to_send, encoder=encoders[0])
     decoder2 = OChirpDecode(original_data=data_to_send, encoder=encoders[1])
@@ -65,7 +63,7 @@ def play_and_record():
     """
 
     encoder = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.0025, f_preamble_start=0,
-                           f_preamble_end=10000, T_preamble=0.050, minimal_sub_chirp_duration=True,
+                           f_preamble_end=10000, T_preamble=0.050, minimize_sub_chirp_duration=True,
                            required_number_of_cycles=15, M=4)
     decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
@@ -88,17 +86,16 @@ def play_and_record():
 
 
 def test_orthogonality():
-
     """
-        We want to transmit two supposedly orthogonal symbols and decode them to see if they have no effect on each other
+       We want to transmit two supposedly orthogonal symbols and decode them to see if they have no effect on each other
     """
     data_to_send = "Hello, World"
 
     encoder1 = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.015, f_preamble_start=100,
-                            f_preamble_end=7000, orthogonal_pair_offset=0, minimal_sub_chirp_duration=True,
+                            f_preamble_end=7000, orthogonal_pair_offset=0, minimize_sub_chirp_duration=True,
                             required_number_of_cycles=50, M=8, no_window=True)
     encoder2 = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.015, f_preamble_start=100,
-                            f_preamble_end=7000, orthogonal_pair_offset=2, minimal_sub_chirp_duration=True,
+                            f_preamble_end=7000, orthogonal_pair_offset=2, minimize_sub_chirp_duration=True,
                             required_number_of_cycles=50, M=8, no_window=True)
     bers = run_orthogonal_test([encoder1, encoder2], data_to_send, plot=True)
     bers = run_orthogonal_test([encoder1, encoder1], data_to_send, plot=True)
@@ -107,8 +104,10 @@ def test_orthogonality():
 
 
 def range_test():
-    from pathlib import Path
-    import os
+    """
+        Iterate over numerous configurations to test them at various distances
+        Note: we need to change the distance manually
+    """
     data_to_send = "Hello, World"
 
     base_folder = "../Audio samples/real-life/22-11-2021_measurements_at_lucan_living_room"
@@ -149,7 +148,7 @@ def range_test():
         (8, 0.015, False, 50),
         (8, 0.06, False, 75),
 
-        # Non orthogonal chirps
+        # Non orthogonal chirps (M=1)
         # M, T, fs, fe, f_p_s, f_p_e
         (1, 0.056, 200, 1200, 1200, 2200),
         (1, 0.056, 200, 2200, 2200, 4200),
@@ -159,6 +158,7 @@ def range_test():
     ]
     iterations = 5
 
+    # Give me time to walk away
     time.sleep(10)
 
     distance = 0
@@ -187,7 +187,7 @@ def range_test():
 
             encoder = OChirpEncode(fs=fs, fe=fe, blank_space_time=blank_space, f_preamble_start=f_p_s,
                                    f_preamble_end=f_p_e, T_preamble=0.250, T=T,
-                                   minimal_sub_chirp_duration=minimize_sub_chirp_duration,
+                                   minimize_sub_chirp_duration=minimize_sub_chirp_duration,
                                    required_number_of_cycles=num_cycles, M=M)
             decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
@@ -219,9 +219,9 @@ def range_test():
 
 
 def get_range_test_results():
-    import pandas as pd
-    from glob import glob
-    from matplotlib import pyplot as plt
+    """
+        This file is REALLY convoluted, but parses the results from `range_test` and plots them.
+    """
 
     data_send = "Hello, World"
 
@@ -255,7 +255,7 @@ def get_range_test_results():
         print(T)
         print(minimize_sub_chirp_duration)
         encoder = OChirpEncode(fs=fs, fe=fe, blank_space_time=blank_space, f_preamble_start=f_p_s, T=T,
-                               f_preamble_end=f_p_e, T_preamble=0.250, minimal_sub_chirp_duration=minimize_sub_chirp_duration,
+                               f_preamble_end=f_p_e, T_preamble=0.250, minimize_sub_chirp_duration=minimize_sub_chirp_duration,
                                required_number_of_cycles=num_cycles, M=M)
         decoder = OChirpDecode(original_data=data_send, encoder=encoder)
 
@@ -273,7 +273,6 @@ def get_range_test_results():
 
         return distance, M, blank_space, minimize_sub_chirp_duration, num_cycles, T, fs, fe, f_p_s, f_p_e, iteration, ber
 
-    import os.path
     if not os.path.isfile("test_results.csv"):
         data_list = []
         for file in files:
