@@ -17,7 +17,7 @@ figure
 cm = confusionchart(C,Labels(unique(idx_true)),'Title','Confusion matrix '+ DS_type + ' data');
 sortClasses(cm,Labels(unique(idx_true)))
 accuracy = sum(diag(C))/sum(C,'all');
-disp(accuracy)
+fprintf("accuracy: %.2f%% \n", accuracy*100)
 %% distance error
 [edist, ~] = loc_errors(idx_predicted, idx_true, Labels);
 
@@ -46,7 +46,7 @@ if any(strcmp(Labels,"Noise"))
 
     C_noise = confusionmat((idx_true==noise_idx),(idx_predicted == noise_idx));
     figure
-    cn = confusionchart(C_noise,["signal","noise"],'Title','Confusion matrix noise differentiation'+ DS_type + ' data'); 
+    cn = confusionchart(C_noise,["signal","noise"],'Title','Confusion matrix noise differentiation '+ DS_type + ' data'); 
     sortClasses(cn,["signal", "noise"])
 end
 
