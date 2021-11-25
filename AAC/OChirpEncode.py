@@ -9,7 +9,7 @@ class OChirpEncode:
     def __init__(self, fsample: int = 44100, T: float = None, M: int = 4, fs: int = 100, fe: int = 1000,
                  f_preamble_start: int = 1000, f_preamble_end: int = 2000, blank_space_time: float = 0.006,
                  T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
-                 minimal_sub_chirp_duration: bool = False, volume: float = 1):
+                 minimal_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False):
 
         self.fsample = fsample
         self.M = M  # Hardcoded function
@@ -28,6 +28,7 @@ class OChirpEncode:
         self.minimal_sub_chirp_duration = minimal_sub_chirp_duration
 
         self.volume = volume
+        self.no_window = no_window
 
         if T is None:
             self.T = self.get_min_symbol_time(M, required_number_of_cycles, fs, fe, minimal_sub_chirp_duration) \
@@ -89,11 +90,11 @@ class OChirpEncode:
             ]
         # The following matrices where pre-generated with the matlab code
         elif self.M == 5:
-            R = [[1, 2, 3, 2, 5],
-                 [5, 1, 2, 4, 3],
-                 [2, 3, 1, 5, 4],
-                 [3, 5, 4, 1, 2],
-                 [4, 2, 5, 3, 1]]
+            R = [[5, 1, 3, 4, 2],
+                 [3, 5, 2, 1, 4],
+                 [2, 3, 4, 5, 1],
+                 [1, 4, 5, 2, 3],
+                 [4, 2, 1, 3, 5]]
         elif self.M == 4:
             R = [[3, 2, 1, 4],
                  [2, 4, 3, 1],
@@ -199,7 +200,7 @@ class OChirpEncode:
         else:
             print("bit is not 1 or 0!")
 
-    def get_chirps_from_bits(self, symbols, bits) -> [np.ndarray]:
+    def get_chirps_from_bits(self, symbols, bits, no_window: bool = False) -> [np.ndarray]:
         # Symbols is the list of symbols we have at our disposal
         # Bit must be a list of 1s and 0s
         chirps = []
@@ -208,16 +209,19 @@ class OChirpEncode:
         print(f"Available symbols: {symbols}")
 
         for bit in bits:
-            chirps.append(self.convert_bit_to_chrirp(symbols, bit, minimal_sub_chirp_duration=self.minimal_sub_chirp_duration))
+            chirps.append(self.convert_bit_to_chrirp(symbols, bit, minimal_sub_chirp_duration=self.minimal_sub_chirp_duration, no_window=no_window))
         return chirps
 
-    def convert_data_to_sound(self, data: str, filename: str = "temp.wav") -> (str, np.ndarray):
+    def convert_data_to_sound(self, data: str, filename: str = "temp.wav", no_window: bool = None) -> (str, np.ndarray):
         # Currently doing hybrid symbols, I think the paper concluded that there where no performance differences
         symbols = self.get_orthogonal_chirps()
 
+        if no_window is None:
+            no_window = self.no_window
+
         print(f"raw data: {data}")
         bits_to_send = tobits(data)
-        chirps = self.get_chirps_from_bits(symbols, bits_to_send)
+        chirps = self.get_chirps_from_bits(symbols, bits_to_send, no_window=no_window)
 
         preamble = self.get_preamble()
 

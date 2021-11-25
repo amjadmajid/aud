@@ -24,10 +24,14 @@ class OChirpDecode:
     def get_preamble(self, flipped: bool = True) -> np.ndarray:
         return self.__encoder.get_preamble(flipped)
 
-    first = True
+    first = False
 
-    def get_symbols(self, no_window: bool = False) -> list:
+    def get_symbols(self, no_window: bool = None) -> list:
         symbols = self.__encoder.get_orthogonal_chirps()
+
+        if no_window is None:
+            no_window = self.__encoder.no_window
+
         symbol0 = np.conjugate(np.flip(self.__encoder.convert_bit_to_chrirp(symbols, 0, no_window=no_window,
                                                                             blank_space=False,
                                                                             T=self.T-self.__encoder.blank_space_time,
@@ -69,7 +73,7 @@ class OChirpDecode:
         avg_distance = int(self.T * self.fsample)
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.05
+        peak_time = self.T * 0.25
         peak_length = int(peak_time * self.fsample)
 
         if data[0].size != data[1].size:
@@ -80,7 +84,7 @@ class OChirpDecode:
         # Only used to determine the first peak, should be above the noise floor
         # And also above the cross correlation peak
         # threshold = (np.mean(data) + np.max(data)) / 2
-        threshold = np.max(data) * 0.75
+        threshold = np.max(data) * 0.55
 
         def get_first_peak(data: np.ndarray, threshold: float) -> int:
             try:
@@ -100,6 +104,9 @@ class OChirpDecode:
         if plot:
             fig, axs = plt.subplots(2, sharex=True)
             fig.suptitle("Peaks data")
+            axs[0].set_title("Symbol 0")
+            axs[1].set_title("Symbol 1")
+            axs[1].set_xlabel("time [samples]")
         else:
             axs = None
 
@@ -235,7 +242,7 @@ class OChirpDecode:
     """
     def decode_data_iterative(self, data: np.ndarray, plot: bool = False) -> (str, list):
         # Get the original symbols, used for convolution
-        symbols = self.get_symbols(no_window=True)
+        symbols = self.get_symbols()
 
         # How many symbols to listen for at once
         n = 13
@@ -332,6 +339,8 @@ class OChirpDecode:
     def decode_data_regular(self, data: np.ndarray, plot: bool = False) -> (str, list):
 
         # Get the original symbols, used for convolution
+        # We want to window this, because otherwise the preamble will give a big hit
+        # Even though it has a much longer length and operates in a different frequency band
         symbols = self.get_symbols(no_window=False)
 
         if self.contains_preamble(data, plot=plot):
@@ -354,12 +363,13 @@ class OChirpDecode:
         if plot:
             fig, axs = plt.subplots(3, sharex=True)
             fig.suptitle("Decode data results")
-            axs[0].set_title("Microphone data")
+            axs[0].set_title("Data")
             axs[0].plot(data)
-            axs[1].set_title("Convolution result with symbol 0")
+            axs[1].set_title("Convolution with symbol 0")
             axs[1].plot(conv_data[0])
-            axs[2].set_title("Convolution result with symbol 1")
+            axs[2].set_title("Convolution with symbol 1")
             axs[2].plot(conv_data[1])
+            axs[2].set_xlabel("time [samples]")
             for peak in peaks:
                 i = peak[1] + 1
                 axs[i].plot(peak[0], conv_data[peak[1]][peak[0]], "xr")
@@ -449,9 +459,8 @@ class OChirpDecode:
 if __name__ == '__main__':
     data_to_send = "Hello, World!"
 
-    encoder = OChirpEncode(minimal_sub_chirp_duration=False)
+    encoder = OChirpEncode(T=0.01, M=5, fs=10000, fe=20000, f_preamble_start=0, f_preamble_end=10000, fsample=44100*4)
     file, data = encoder.convert_data_to_sound(data_to_send)
     oc = OChirpDecode(original_data=data_to_send, encoder=encoder)
     oc.decode_file("temp.wav", plot=True)
     # oc.decode_live()
-
