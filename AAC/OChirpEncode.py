@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from BitManipulation import frombits, tobits
-from scipy.signal import chirp
 from scipy.io.wavfile import write
+from scipy.signal import chirp
+
+from .BitManipulation import tobits
 
 
 class OChirpEncode:
@@ -61,7 +62,7 @@ class OChirpEncode:
 
     """
 
-    def __init__(self, fsample: int = 44100, T: float = None, M: int = 8, fs: int = 5500, fe: int = 9500,
+    def __init__(self, fsample: int = 44100, T: float = 0.024, M: int = 8, fs: int = 5500, fe: int = 9500,
                  f_preamble_start: int = 100, f_preamble_end: int = 5500, blank_space_time: float = 0.000,
                  T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
                  minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False):
@@ -344,7 +345,6 @@ class OChirpEncode:
 
 
 if __name__ == '__main__':
-    import sounddevice as sd
     data_to_send = "Hello, World!"
 
     oc = OChirpEncode(T=None)
