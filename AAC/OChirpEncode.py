@@ -59,13 +59,17 @@ class OChirpEncode:
             - no_window
                 Whether we want to window the sub-chirps or not
 
+            - orthogonal_preamble
+                Whether the preamble we transmit is orthogonal. Basically: we use a longer version of the symbol as the
+                preamble.
+
     """
 
     def __init__(self, fsample: int = 44100, T: float = 0.024, M: int = 8, fs: int = 5500, fe: int = 9500,
                  f_preamble_start: int = 100, f_preamble_end: int = 5500, blank_space_time: float = 0.000,
                  T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
                  minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False,
-                 window_beta: float = 4):
+                 window_beta: float = 4, orthogonal_preamble : bool = False):
 
         self.fsample = fsample
         self.M = M
@@ -76,6 +80,7 @@ class OChirpEncode:
         self.blank_space_time = blank_space_time
         self.orthogonal_pair_offset = orthogonal_pair_offset
         self.required_number_of_cycles = required_number_of_cycles
+        self.orthogonal_preamble = orthogonal_preamble
 
         """
             minimal sub chirp duration optimizes the sub-chirps such that the length is minimal (guarantees exact 
@@ -200,17 +205,35 @@ class OChirpEncode:
         # Only return two chirps based on the offset
         return symbols[self.orthogonal_pair_offset:self.orthogonal_pair_offset+2]
 
-    def get_preamble(self, flipped: bool = False) -> np.ndarray:
+    def get_preamble(self, flipped: bool = False) -> list[np.ndarray]:
         """
             Manipulate the functions a bit to generate a regular chirp such that we can use this as our preamble.
             Returns the preamble signal
         """
 
-        # A single tuple means M=1
-        preamble = [(self.preamble_start, self.preamble_end)]
+        # We can also scan for the first symbol instead of preamble.
+        # But only return something if we need it for convolution
+        if self.T_preamble == 0.0 and flipped is True:
+            preamble = self.get_orthogonal_chirps()
+            preamble = [np.flip(self.convert_bit_to_chrirp(preamble, 0)),
+                        np.flip(self.convert_bit_to_chrirp(preamble, 1))]
 
-        # We want the preamble to be just one chirp, does not need to be orthogonal
-        preamble = self.convert_bit_to_chrirp([preamble], 0, M=1, T=self.T_preamble)
+        elif self.T_preamble == 0.0:
+            preamble = [np.array([])]
+
+        elif self.orthogonal_preamble:
+            # Get the first ochirp
+            preamble = self.get_orthogonal_chirps()[0]
+
+            # We want the preamble to be just one chirp
+            preamble = [self.convert_bit_to_chrirp([preamble], 0, T=self.T_preamble)]
+
+        else:
+            # A single tuple means M=1
+            preamble = [(self.preamble_start, self.preamble_end)]
+
+            # We want the preamble to be just one chirp, does not need to be orthogonal
+            preamble = [self.convert_bit_to_chrirp([preamble], 0, M=1, T=self.T_preamble)]
 
         # We may flip the symbol if we need it for convolution
         if flipped:

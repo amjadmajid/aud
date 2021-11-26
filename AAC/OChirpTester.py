@@ -62,20 +62,10 @@ def play_and_record():
             - Blank space
     """
 
-    encoder = OChirpEncode(fs=10000, fe=20000, blank_space_time=0.0025, f_preamble_start=0,
-                           f_preamble_end=10000, T_preamble=0.050, minimize_sub_chirp_duration=True,
-                           required_number_of_cycles=15, M=4)
+    encoder = OChirpEncode(orthogonal_preamble=True, T_preamble=0.2)
     decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
     filename, data = encoder.convert_data_to_sound(data_to_send)
-
-    # Add some white noise at the beginning, to make sure the JBL speaker has initialized
-    # z = np.ones(10000)
-    # z = add_wgn(z, -60)
-    # data = np.append(z, data)
-    # from matplotlib import pyplot as plt
-    # plt.plot(data)
-    # plt.show()
 
     sd.play(data, encoder.fsample, blocking=False)
 
@@ -376,8 +366,8 @@ def get_range_test_results():
 
 
 if __name__ == '__main__':
-    # play_and_record()
-    test_orthogonality()
+    play_and_record()
+    # test_orthogonality()
     # range_test()
     # get_range_test_results()
 
