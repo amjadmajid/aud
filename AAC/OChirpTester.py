@@ -365,9 +365,26 @@ def get_range_test_results():
     plt.show()
 
 
+def test_baseline_configuration():
+    data_to_send = "Hello, World!"
+
+    encoder = OChirpEncode(T=0.048, T_preamble=0)
+    decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
+
+    filename, data = encoder.convert_data_to_sound(data_to_send)
+
+    sd.play(data, encoder.fsample, blocking=False)
+
+    decoder.decode_live(plot=True)
+
+    # make sure we finished playing (decoder should block though)
+    sd.wait()
+
+
 if __name__ == '__main__':
-    play_and_record()
+    # play_and_record()
     # test_orthogonality()
     # range_test()
     # get_range_test_results()
+    test_baseline_configuration()
 

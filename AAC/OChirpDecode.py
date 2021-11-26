@@ -114,7 +114,7 @@ class OChirpDecode:
         # Only used to determine the first peak, should be above the noise floor
         # And also above the cross correlation peak
         # threshold = (np.mean(data) + np.max(data)) / 2
-        threshold = np.max(data) * 0.55
+        threshold = np.max(data) * 0.65
 
         def get_last_peak(data: np.ndarray, threshold: float) -> int:
             try:
@@ -352,7 +352,7 @@ class OChirpDecode:
         # Try do determine for how long we should read.
         # Not an exact science.
         if self.__encoder.T_preamble > 0:
-            n = int(self.__encoder.T_preamble / self.T)
+            n = int(np.ceil(self.__encoder.T_preamble / (self.T + self.__encoder.blank_space_time)))
         else:
             n = 2
         CHUNK = int(n * self.T * self.fsample)
@@ -384,7 +384,7 @@ class OChirpDecode:
                 break
 
         print("Recording rest of the message")
-        tempdata = np.frombuffer(stream.read(CHUNK * (data_len // n + 1)), dtype=np.int16)
+        tempdata = np.frombuffer(stream.read(CHUNK * (data_len // n + 2*n)), dtype=np.int16)
         all_data = np.append(all_data, tempdata)
         stream.close()
         print("Finished recording")
