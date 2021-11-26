@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.wavfile import write
 from scipy.signal import chirp
-
-from .BitManipulation import tobits
+from BitManipulation import tobits
 
 
 class OChirpEncode:
@@ -65,7 +64,8 @@ class OChirpEncode:
     def __init__(self, fsample: int = 44100, T: float = 0.024, M: int = 8, fs: int = 5500, fe: int = 9500,
                  f_preamble_start: int = 100, f_preamble_end: int = 5500, blank_space_time: float = 0.000,
                  T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
-                 minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False):
+                 minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False,
+                 window_beta: float = 4):
 
         self.fsample = fsample
         self.M = M
@@ -86,6 +86,7 @@ class OChirpEncode:
 
         self.volume = volume
         self.no_window = no_window
+        self.window_beta = window_beta
 
         if T is None:
             self.T = self.get_min_symbol_time(M, required_number_of_cycles, fs, fe, minimize_sub_chirp_duration) \
@@ -276,7 +277,7 @@ class OChirpEncode:
 
                 # Maybe shape the chirp with a window function, to reduce the phase difference click
                 if not no_window:
-                    window_kaiser = np.kaiser(len(t), beta=4)
+                    window_kaiser = np.kaiser(len(t), beta=self.window_beta)
                 else:
                     window_kaiser = 1
                 subchirp_signal = window_kaiser * self.volume * chirp(t, subchirp[0], Tb, subchirp[1])
