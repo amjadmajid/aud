@@ -62,12 +62,14 @@ test = False
 
 # Music_files
 # File names
-num_chirp_trains = 8
+M = 8
+chirp_types = ["0s024", "0s048"]
 
 music_names = []
-for i in range(num_chirp_trains):
-    music_names.append('chirp_train_chirp{}'.format(i-1))
-    #music_names.append("Test{}".format(i))
+for j in range(len(num_chirp_types)):
+    for i in range(M):
+        music_names.append('chirp_train_chirp_{}_{}'.format(chirp_types[j],i-1))
+        #music_names.append("Test{}".format(i))
     
 # Length of the music files (seconds)
 duration = 25
@@ -96,7 +98,7 @@ client.message_callback_add("play_done", play_done_callback)
 # loop
 client.loop_start()
 print("playrec settings \n{}".format(msg))
-for i in range(num_chirp_trains):
+for i in range(len(music_names)):
     print(music_names[i])
     
     rec_done = rec_init
