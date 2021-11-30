@@ -121,7 +121,7 @@ def range_test():
     # Give me time to walk away
     time.sleep(10)
 
-    distance = 0
+    distance = 2
     for i, encoder in enumerate(configurations_to_test):
         Path(f"{base_folder}/{distance}m").mkdir(parents=True, exist_ok=True)
         for j in range(iterations):
@@ -132,10 +132,10 @@ def range_test():
 
             # Add some white noise at the beginning and end, to make sure the JBL speaker is initialized and does
             # not stop too early
-            # z = np.ones(2500)
-            # z = add_wgn(z, -40)
-            # data = np.append(z, data)
-            # data = np.append(data, z)
+            z = np.ones(5000)
+            z = add_wgn(z, -20)
+            data = np.append(z, data)
+            data = np.append(data, z)
 
             sd.play(data, encoder.fsample, blocking=False)
 
@@ -167,11 +167,11 @@ def get_range_test_results():
     M = 8
     configurations_to_test = [
         # Basic configuration
-        # OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.048, orthogonal_preamble=True, T_preamble=0),
+        OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.048, orthogonal_preamble=True, T_preamble=0),
         # Fast basic configuration
-        # OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.024, orthogonal_preamble=True, T_preamble=0),
+        OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.024, orthogonal_preamble=True, T_preamble=0),
         # Tweaked fast basic configuration
-        # OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0.012, T=0.024, orthogonal_preamble=True, T_preamble=0.048),
+        OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0.012, T=0.024, orthogonal_preamble=True, T_preamble=0.048),
         # Speed
         OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0.005, T=None, orthogonal_preamble=True, T_preamble=0.048,
                      required_number_of_cycles=10),
@@ -179,7 +179,7 @@ def get_range_test_results():
 
     print(files)
 
-    def process_file(file: str) -> (OChirpEncode, int, int, float):
+    def process_file(file: str) -> (OChirpEncode, float, int, int, float):
         print(file)
 
         filename = file.split("\\")[-1]
@@ -195,33 +195,28 @@ def get_range_test_results():
         encoder = configurations_to_test[config_number]
         decoder = OChirpDecode(original_data=data_send, encoder=encoder)
 
-        ber = decoder.decode_file(file, plot=False)
+        if distance == 2 and config_number == 2 and False:
+            ber = decoder.decode_file(file, plot=True)
+        else:
+            ber = decoder.decode_file(file, plot=False)
         plt.show()
 
-        return encoder, config_number, iteration, ber
+        return encoder, distance, config_number, iteration, ber
 
-    if not os.path.isfile("test_results.csv"):
-        data_list = []
-        for file in files:
-            if file.split("\\")[-1][0].isdigit():
-                data_list.append(process_file(file))
+    data_list = []
+    for file in files:
+        data_list.append(process_file(file))
 
-        df = pd.DataFrame(data_list, columns=["encoder", "Configuration", "iteration", "ber"])
+    df = pd.DataFrame(data_list, columns=["encoder", "distance", "Configuration", "iteration", "ber"])
 
-        df.to_csv("raw_test_results.csv", index=False)
+    # TODO: extract info from encoder and remove encoder column
+    # Data such as symbol time to calculate bit rate, maybe just load all parameters
+    df = df.drop(columns='encoder')
+    df.to_csv("./data/results/30-11-2021/raw_test_results.csv", index=False)
 
-        df = df.groupby(
-            ["encoder", "Configuration"], as_index=False).ber.agg(['mean', 'std']).reset_index()
+    df = df.groupby(["distance", "Configuration"], as_index=False).ber.agg(['mean', 'std']).reset_index()
 
-        df.to_csv("test_results.csv", index=False)
-    else:
-        # df = pd.read_csv("test_results.csv")
-        df = pd.read_csv("raw_test_results.csv")
-
-    pd.options.display.width = 0
-    print(df)
-
-    # ..plot
+    df.to_csv("./data/results/30-11-2021/test_results.csv", index=False)
 
 
 def test_baseline_configuration(short_symbols: bool = False):
@@ -283,7 +278,7 @@ def test_advanced_configuration():
 if __name__ == '__main__':
     # play_and_record()
     # test_orthogonality()
-    range_test()
-    # get_range_test_results()
+    # range_test()
+    get_range_test_results()
     # test_baseline_configuration()
     # test_advanced_configuration()
