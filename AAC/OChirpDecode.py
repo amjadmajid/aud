@@ -34,7 +34,7 @@ class OChirpDecode:
         self.original_data = original_data
         self.original_data_bits = tobits(original_data)
 
-    def get_preamble(self, flipped: bool = True) -> list[np.ndarray]:
+    def get_preamble(self, flipped: bool = True) -> list:
         """
             Get the preamble from the encoder, but flipped for auto correlation.
         """

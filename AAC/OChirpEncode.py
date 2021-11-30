@@ -99,10 +99,12 @@ class OChirpEncode:
             self.T_preamble = T_preamble
             print(f"Calculated minimum symbol time: {self.T*1000:.1f} ms")
         elif minimize_sub_chirp_duration is False:
-            min_symbol_time = self.get_min_symbol_time(M, 1, fs, fe) + blank_space_time
+            min_symbol_time = self.get_min_symbol_time(M, 1, fs, fe)
             if T < min_symbol_time:
                 print(f"WARNING: The given T [{T*1000:.1f} ms] is smaller than required for a single cycle [{min_symbol_time*1000:.1f} ms]!")
                 print("This will give poor results.")
+            if T == blank_space_time:
+                print("WARNING: T=0. This WILL crash later. make sure that T - blank_symbol_time > 0")
             self.T = T
             self.T_preamble = T_preamble
         else:
@@ -127,7 +129,7 @@ class OChirpEncode:
 
         return result
 
-    def get_orthogonal_chirps(self) -> list[list]:
+    def get_orthogonal_chirps(self) -> list:
         """
             This function returns a list of symbols
             Every entry in this list describes the orthogonal frequencies with a tuple containing a starting and
@@ -205,7 +207,7 @@ class OChirpEncode:
         # Only return two chirps based on the offset
         return symbols[self.orthogonal_pair_offset:self.orthogonal_pair_offset+2]
 
-    def get_preamble(self, flipped: bool = False) -> list[np.ndarray]:
+    def get_preamble(self, flipped: bool = False) -> list:
         """
             Manipulate the functions a bit to generate a regular chirp such that we can use this as our preamble.
             Returns the preamble signal
