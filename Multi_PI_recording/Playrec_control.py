@@ -24,13 +24,14 @@ def Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, 
     args = "{} --direction {}".format(args, direction)
 
     if not LoS:
-        args = "{} --LoS n".format(args)
-        args = "{} --edistance n".format(args, edist)
-        args = "{} --edirectio n".format(args, edirection)
-        
-    args = "{} --top {}".format(args, top)
-    args = "{} --location {}".format(args, location)
+        args = "{} --LoS".format(args)
+        args = "{} --edistance {}".format(args, edist)
+        args = "{} --edirection {}".format(args, edirection)
 
+    if top:    
+        args = "{} --top".format(args)
+
+    args = "{} --location {}".format(args, location)
     args = "{} --duration {}".format(args, duration)
 
     return args
@@ -44,47 +45,44 @@ dist = 50 #cm
 direction = 0
 
 # Line-of-Sight state
-LoS = True
+LoS = False
 
 # (Euclidian) source location (only send if LoS == False)
-edist = 0 #cm
-edirection = 0
+edist = 58 #cm
+edirection = 16
 
 # Meta lobation of recording
-location = 0
+location = "Test"
 
 # Top state (if ther's an obustructio inbetween the mics)
-top = "y"
+top = True
 
 # Testing flag (set to True to run trough program without actually playing/recording
 test = False
 
 # Music_files
 # File names
-num_chirp_trains = 2
+num_chirp_trains = 8
 
 music_names = []
 for i in range(num_chirp_trains):
     music_names.append('chirp_train_chirp{}'.format(i))
-
+    #music_names.append("Test{}".format(i))
+    
 # Length of the music files (seconds)
-duration = 2#5
+duration = 25
 
 # User inputs end
 msg = Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, duration)
 
 
-
-
-rec_init = True
+rec_init = False
 play_init = False
 
 rec_done = rec_init
 play_done = play_init
-    
 
-
-
+#connect to mqtt
 client = mqtt.Client()
 
 client.connect("Robomindpi-002")
@@ -95,8 +93,8 @@ client.subscribe("play_done")
 client.message_callback_add("rec_done", rec_done_callback)
 client.message_callback_add("play_done", play_done_callback)
 
+# loop
 client.loop_start()
-
 print("playrec settings \n{}".format(msg))
 for i in range(num_chirp_trains):
     print(music_names[i])
