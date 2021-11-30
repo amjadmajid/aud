@@ -23,7 +23,7 @@ def generate_chirp_train(chirp: str, N: int, silence_time: float, preamble_time:
     for _ in range(N):
         signal = np.append(signal, np.append(data, silence))
 
-    write(f"chirp_train_{chirp}", encoder.fsample, signal)
+    write(f"chirp_train_{chirp}", encoder.fsample, signal.astype(np.float32))
 
 
 def generate_chirp_files():
