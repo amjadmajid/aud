@@ -365,10 +365,50 @@ def get_range_test_results():
     plt.show()
 
 
-def test_baseline_configuration():
+def test_baseline_configuration(short_symbols: bool = False):
+    """
+        This configuration presents a simple baseline:
+            - No preamble
+            - Long symbol size (48ms) (20.8bps)
+            - Localization can be done on every chirp
+        Since we also want to try 24ms chirps, we can change this with `short_symbols`. (41.7bps)
+    """
     data_to_send = "Hello, World!"
 
-    encoder = OChirpEncode(T=0.048, T_preamble=0)
+    if short_symbols is False:
+        symbol_time = 0.048
+    else:
+        symbol_time = 0.024
+
+    encoder = OChirpEncode(T=symbol_time, T_preamble=0)
+    decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
+
+    filename, data = encoder.convert_data_to_sound(data_to_send)
+
+    sd.play(data, encoder.fsample, blocking=False)
+
+    decoder.decode_live(plot=True)
+
+    # make sure we finished playing (decoder should block though)
+    sd.wait()
+
+
+def test_advanced_configuration():
+    """
+        This configuration presents a more advanced communication:
+            - With orthogonal preamble to localize on (48ms)
+            - Short symbol size (23.9ms) (41.8bps)
+            - Localization can only be done on the preamble
+            - Nearly the same as the `short_symbols=True` baseline configuration
+                - Comparable bitrate
+                - But with preamble
+                - And with a shorter active symbol and a longer blank space
+                - A compromise with a weaker symbol but better detectable preamble
+    """
+    data_to_send = "Hello, World!"
+
+    encoder = OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, blank_space_time=0.01,
+                           required_number_of_cycles=10, minimize_sub_chirp_duration=False)
     decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
     filename, data = encoder.convert_data_to_sound(data_to_send)
@@ -386,5 +426,5 @@ if __name__ == '__main__':
     # test_orthogonality()
     # range_test()
     # get_range_test_results()
-    test_baseline_configuration()
-
+    # test_baseline_configuration()
+    test_advanced_configuration()
