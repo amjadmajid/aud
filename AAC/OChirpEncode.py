@@ -99,10 +99,12 @@ class OChirpEncode:
             self.T_preamble = T_preamble
             print(f"Calculated minimum symbol time: {self.T*1000:.1f} ms")
         elif minimize_sub_chirp_duration is False:
-            min_symbol_time = self.get_min_symbol_time(M, 1, fs, fe) + blank_space_time
+            min_symbol_time = self.get_min_symbol_time(M, 1, fs, fe)
             if T < min_symbol_time:
                 print(f"WARNING: The given T [{T*1000:.1f} ms] is smaller than required for a single cycle [{min_symbol_time*1000:.1f} ms]!")
                 print("This will give poor results.")
+            if T == blank_space_time:
+                print("WARNING: T=0. This WILL crash later. make sure that T - blank_symbol_time > 0")
             self.T = T
             self.T_preamble = T_preamble
         else:
