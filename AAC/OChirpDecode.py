@@ -34,7 +34,7 @@ class OChirpDecode:
         self.original_data = original_data
         self.original_data_bits = tobits(original_data)
 
-    def get_preamble(self, flipped: bool = True) -> np.ndarray:
+    def get_preamble(self, flipped: bool = True) -> list[np.ndarray]:
         """
             Get the preamble from the encoder, but flipped for auto correlation.
         """
@@ -87,7 +87,7 @@ class OChirpDecode:
 
         return conv_data
 
-    def get_peaks(self, data: list, plot: bool = False) -> list:
+    def get_peaks(self, data: list, N: int, plot: bool = False) -> list:
         """
             Try to decode the auto correlation result by correctly detecting the peaks.
 
@@ -114,20 +114,20 @@ class OChirpDecode:
         # Only used to determine the first peak, should be above the noise floor
         # And also above the cross correlation peak
         # threshold = (np.mean(data) + np.max(data)) / 2
-        threshold = np.max(data) * 0.55
+        threshold = np.max(data) * 0.65
 
-        def get_first_peak(data: np.ndarray, threshold: float) -> int:
+        def get_last_peak(data: np.ndarray, threshold: float) -> int:
             try:
-                return np.where(data > threshold)[0][0]
+                return np.where(data > threshold)[0][-1]
             except IndexError:
-                return np.iinfo(int).max
+                return np.iinfo(int).min
 
-        # First, find the first point above the threshold, assume this to be the first peak
-        peaks0 = get_first_peak(data[0], threshold)
-        peaks1 = get_first_peak(data[1], threshold)
-        peak = min(peaks0, peaks1)
+        # First, find the first point to cross the threshold, searching from the right.
+        peaks0 = get_last_peak(data[0], threshold)
+        peaks1 = get_last_peak(data[1], threshold)
+        peak = max(peaks0, peaks1)
 
-        if peak == np.iinfo(int).max:
+        if peak == np.iinfo(int).min:
             print("Did not find peak!")
             return []
 
@@ -156,8 +156,8 @@ class OChirpDecode:
             peak_range_s1 = data[1][start:end]
 
             # If this range is empty, then we're at the end
-            if peak_range_s0.size == 0:
-                break
+            # if peak_range_s0.size == 0:
+            #     break
 
             # Get the index of the actual peaks
             actual_peak_s0 = peak + np.argmax(peak_range_s0) - peak_length
@@ -182,7 +182,11 @@ class OChirpDecode:
                     pass
 
             # Go to the predicted next peak based on the actual peak
-            peak = highest_peak + avg_distance
+            peak = highest_peak - avg_distance
+
+            # If we've parsed all the data
+            if peak < 0 or len(peaks) >= N:
+                break
 
         if plot:
             axs[0].plot(data[0])
@@ -190,28 +194,30 @@ class OChirpDecode:
             axs[0].hlines(threshold, 0, data[0].size, colors="black")
             axs[1].hlines(threshold, 0, data[0].size, colors="black")
 
+        peaks.reverse()
         return peaks
 
     def contains_preamble(self, data: np.ndarray, plot: bool = False) -> bool:
         """
             Check if the passed data contains a preamble. We do this with auto correlation.
         """
-        preamble = self.get_preamble(True)
 
         if data.size == 0:
             return False
 
-        conv_data = self.get_conv_results(data, [preamble])[0]
+        preamble = self.get_preamble(True)
+
+        conv_data = self.get_conv_results(data, preamble)
 
         # This threshold seems to work fine
-        # Might be too low for a noisy scenario
-        preamble_min_peak = 10 * np.mean(conv_data)
+        preamble_min_peak = 3 * np.mean(conv_data)
 
         if plot:
             fig, axs = plt.subplots(2)
             fig.suptitle("preamble data")
             axs[0].plot(data)
-            axs[1].plot(conv_data)
+            for conv in conv_data:
+                axs[1].plot(conv)
             axs[1].hlines(preamble_min_peak, 0, data.size, color='black')
 
         return np.max(conv_data) > preamble_min_peak
@@ -281,7 +287,7 @@ class OChirpDecode:
         conv_data = self.get_conv_results(data, symbols)
 
         # Find the peaks
-        peaks = self.get_peaks(conv_data, plot=plot)
+        peaks = self.get_peaks(conv_data, plot=plot, N=len(self.original_data_bits))
 
         # Convert the peaks to bits
         bits = self.get_bits_from_peaks(peaks)
@@ -345,7 +351,10 @@ class OChirpDecode:
 
         # Try do determine for how long we should read.
         # Not an exact science.
-        n = int(self.__encoder.T_preamble / self.T)
+        if self.__encoder.T_preamble > 0:
+            n = int(np.ceil(self.__encoder.T_preamble / (self.T + self.__encoder.blank_space_time)))
+        else:
+            n = 2
         CHUNK = int(n * self.T * self.fsample)
 
         data_len = len(self.original_data_bits)
@@ -375,7 +384,7 @@ class OChirpDecode:
                 break
 
         print("Recording rest of the message")
-        tempdata = np.frombuffer(stream.read(CHUNK * (data_len // n + 1)), dtype=np.int16)
+        tempdata = np.frombuffer(stream.read(CHUNK * (data_len // n + 2*n)), dtype=np.int16)
         all_data = np.append(all_data, tempdata)
         stream.close()
         print("Finished recording")
