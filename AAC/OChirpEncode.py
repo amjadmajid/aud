@@ -129,7 +129,7 @@ class OChirpEncode:
 
         return result
 
-    def get_orthogonal_chirps(self) -> list[list]:
+    def get_orthogonal_chirps(self) -> list:
         """
             This function returns a list of symbols
             Every entry in this list describes the orthogonal frequencies with a tuple containing a starting and
@@ -207,7 +207,7 @@ class OChirpEncode:
         # Only return two chirps based on the offset
         return symbols[self.orthogonal_pair_offset:self.orthogonal_pair_offset+2]
 
-    def get_preamble(self, flipped: bool = False) -> list[np.ndarray]:
+    def get_preamble(self, flipped: bool = False) -> list:
         """
             Manipulate the functions a bit to generate a regular chirp such that we can use this as our preamble.
             Returns the preamble signal

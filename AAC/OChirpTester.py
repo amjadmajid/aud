@@ -107,11 +107,11 @@ def range_test():
     M = 8
     configurations_to_test = [
         # Basic configuration
-        # OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.048, orthogonal_preamble=True, T_preamble=0),
+        OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.048, orthogonal_preamble=True, T_preamble=0),
         # Fast basic configuration
-        # OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.024, orthogonal_preamble=True, T_preamble=0),
+        OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0, T=0.024, orthogonal_preamble=True, T_preamble=0),
         # Tweaked fast basic configuration
-        # OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0.012, T=0.024, orthogonal_preamble=True, T_preamble=0.048),
+        OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0.012, T=0.024, orthogonal_preamble=True, T_preamble=0.048),
         # Speed
         OChirpEncode(M=M, fs=fs, fe=fe, blank_space_time=0.005, T=None, orthogonal_preamble=True, T_preamble=0.048,
                      required_number_of_cycles=10),
@@ -119,7 +119,7 @@ def range_test():
     iterations = 3
 
     # Give me time to walk away
-    # time.sleep(10)
+    time.sleep(10)
 
     distance = 0
     for i, encoder in enumerate(configurations_to_test):
@@ -283,7 +283,7 @@ def test_advanced_configuration():
 if __name__ == '__main__':
     # play_and_record()
     # test_orthogonality()
-    # range_test()
-    get_range_test_results()
+    range_test()
+    # get_range_test_results()
     # test_baseline_configuration()
     # test_advanced_configuration()
