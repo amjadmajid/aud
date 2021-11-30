@@ -66,7 +66,7 @@ num_chirp_trains = 8
 
 music_names = []
 for i in range(num_chirp_trains):
-    music_names.append('chirp_train_chirp{}'.format(i))
+    music_names.append('chirp_train_chirp{}'.format(i-1))
     #music_names.append("Test{}".format(i))
     
 # Length of the music files (seconds)
