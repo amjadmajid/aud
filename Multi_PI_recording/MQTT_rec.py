@@ -66,7 +66,7 @@ def recording(args):
         subprocess.call(['arecord',\
                          '-r 44100',\
                          '-f', 'S16_LE',\
-                         '-c 6',\
+                         '-c 8',\
                          '-d', str(int(duration)),\
                          '{}/{}'.format(file_path, file_name)])
         
