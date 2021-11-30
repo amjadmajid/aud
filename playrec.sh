@@ -212,7 +212,7 @@ fi
 
 if ! $no_music_mode ; then
   # recording should start first
-  arecord -d 32 -f S32_LE -r 44100 -c 6 $recloc &
+  arecord -d 32 -f S16_LE -r 44100 -c 6 $recloc &
   # play music
   aplay -d 32 -r 44100 $musicloc
 else
