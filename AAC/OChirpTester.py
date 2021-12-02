@@ -11,6 +11,7 @@ import pandas as pd
 from glob import glob
 from matplotlib import pyplot as plt
 import os.path
+from configuration import Configuration, get_configuration_encoder
 
 
 def run_orthogonal_test(encoders: list, data_to_send: str, plot: bool = False) -> (float, float):
@@ -230,11 +231,10 @@ def test_baseline_configuration(short_symbols: bool = False):
     data_to_send = "Hello, World!"
 
     if short_symbols is False:
-        symbol_time = 0.048
+        encoder = get_configuration_encoder(Configuration.baseline)
     else:
-        symbol_time = 0.024
+        encoder = get_configuration_encoder(Configuration.baseline_fast)
 
-    encoder = OChirpEncode(T=symbol_time, T_preamble=0)
     decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
     filename, data = encoder.convert_data_to_sound(data_to_send)
@@ -261,8 +261,8 @@ def test_advanced_configuration():
     """
     data_to_send = "Hello, World!"
 
-    encoder = OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, blank_space_time=0.01,
-                           required_number_of_cycles=10, minimize_sub_chirp_duration=False)
+    encoder = get_configuration_encoder(Configuration.balanced)
+
     decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
 
     filename, data = encoder.convert_data_to_sound(data_to_send)
@@ -279,6 +279,6 @@ if __name__ == '__main__':
     # play_and_record()
     # test_orthogonality()
     # range_test()
-    get_range_test_results()
+    # get_range_test_results()
     # test_baseline_configuration()
-    # test_advanced_configuration()
+    test_advanced_configuration()
