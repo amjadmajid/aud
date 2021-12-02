@@ -62,8 +62,12 @@ test = False
 
 # Music_files
 # File names
-M = 8
-chirp_types = ["0s024", "0s048"]
+if test:
+	M = 2
+	chirp_types = ["0s024"]
+else:
+	M = 8
+	chirp_types = ["0s024", "0s048"]
 
 music_names = []
 for j in range(len(num_chirp_types)):
@@ -72,7 +76,10 @@ for j in range(len(num_chirp_types)):
         #music_names.append("Test{}".format(i))
     
 # Length of the music files (seconds)
-duration = 25
+if test:
+	duration = 2
+else:
+	duration = 25
 
 # User inputs end
 msg = Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, duration)
