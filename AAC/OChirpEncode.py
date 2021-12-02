@@ -251,8 +251,12 @@ class OChirpEncode:
             Does some weird stuff with `orthogonal_pair_offset`, but it's fine, since it is single threaded.
         """
 
-        chirp_offset = int(chirp_number / 2)
-        chirp_index = chirp_number % 2
+        if chirp_number % 2 == 0:
+            chirp_offset = chirp_number
+            chirp_index = 0
+        else:
+            chirp_offset = chirp_number - 1
+            chirp_index = 1
 
         old_offset = self.orthogonal_pair_offset
         self.orthogonal_pair_offset = chirp_offset
