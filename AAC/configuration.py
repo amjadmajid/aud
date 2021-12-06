@@ -24,5 +24,6 @@ def get_configuration_encoder(config: Configuration) -> OChirpEncode:
         return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=22,
                             minimize_sub_chirp_duration=True)
     elif config == Configuration.fast:
-        return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=11,
-                            minimize_sub_chirp_duration=True)
+        return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=12,
+                            minimize_sub_chirp_duration=True, f_preamble_start=5500, f_preamble_end=9500,
+                            fs=12500, fe=20000, blank_space_time=0.002)

@@ -275,10 +275,35 @@ def test_advanced_configuration():
     sd.wait()
 
 
+def test_fast_configuration():
+    """
+        This configuration presents the fastest configuration we can create:
+            - With orthogonal preamble to localize on (48ms)
+            - Short symbol size (?ms) (?bps)
+            - Localization can only be done on the preamble
+            - Higher frequency band, so shorter symbols.
+    """
+    data_to_send = "Hello, World!"
+
+    encoder = get_configuration_encoder(Configuration.fast)
+
+    decoder = OChirpDecode(original_data=data_to_send, encoder=encoder)
+
+    filename, data = encoder.convert_data_to_sound(data_to_send)
+
+    sd.play(data, encoder.fsample, blocking=False)
+
+    decoder.decode_live(plot=True)
+
+    # make sure we finished playing (decoder should block though)
+    sd.wait()
+
+
 if __name__ == '__main__':
     # play_and_record()
     # test_orthogonality()
     # range_test()
     # get_range_test_results()
     # test_baseline_configuration()
-    test_advanced_configuration()
+    # test_advanced_configuration()
+    test_fast_configuration()

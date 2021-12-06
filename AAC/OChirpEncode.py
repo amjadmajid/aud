@@ -224,8 +224,20 @@ class OChirpEncode:
             preamble = [np.array([])]
 
         elif self.orthogonal_preamble:
+            orignal_fs = self.fs
+            original_fe = self.fe
+            original_minimize = self.minimal_sub_chirp_duration
+
+            self.fs = self.preamble_start
+            self.fe = self.preamble_end
+            self.minimal_sub_chirp_duration = False
+
             # Get the first ochirp
             preamble = self.get_orthogonal_chirps()[0]
+
+            self.minimal_sub_chirp_duration = original_minimize
+            self.fe = original_fe
+            self.fs = orignal_fs
 
             # We want the preamble to be just one chirp
             preamble = [self.convert_bit_to_chrirp([preamble], 0, T=self.T_preamble)]
