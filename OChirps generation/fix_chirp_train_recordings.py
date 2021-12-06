@@ -52,11 +52,6 @@ def reorder_channel(chirp_train: str):
 
     data = data[:, selected_channels]
 
-    stds = []
-    for channel in range(number_of_channels-2):
-        channel_data = data[:, channel]
-        stds.append(np.std(channel_data))
-
     write(destination, fs, data)
 
 
