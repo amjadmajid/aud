@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 original_location = '../Recorded_files/'
-ordered_files = '../Ordered_recordings/'
+ordered_files = '../Ordered_files/'
 final_files = '../Sampled_files/'
 
 
