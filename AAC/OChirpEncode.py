@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.wavfile import write
 from scipy.signal import chirp
-from BitManipulation import tobits
+from .BitManipulation import tobits
 
 
 class OChirpEncode:
@@ -332,10 +332,10 @@ class OChirpEncode:
 
         if bit == 0:
             return encode(symbols[0], Tb, t)
-        elif bit == 1:
+        elif bit == 1 and len(symbols) > 1:
             return encode(symbols[1], Tb, t)
         else:
-            print("bit is not 1 or 0!")
+            return np.zeros(1)
 
     def get_chirps_from_bits(self, symbols: list, bits: list, no_window: bool = False) -> [np.ndarray]:
         """
