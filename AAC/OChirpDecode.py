@@ -1,6 +1,6 @@
 import numpy as np
-from BitManipulation import frombits, tobits
-from OChirpEncode import OChirpEncode
+from .BitManipulation import frombits, tobits
+from .OChirpEncode import OChirpEncode
 from scipy.signal import hilbert
 from matplotlib import pyplot as plt
 from scipy.io.wavfile import write
@@ -54,10 +54,14 @@ class OChirpDecode:
                                                                 blank_space=False,
                                                                 T=self.T-self.__encoder.blank_space_time,
                                                                 minimal_sub_chirp_duration=self.__encoder.minimal_sub_chirp_duration))
-        symbol1 = np.flip(self.__encoder.convert_bit_to_chrirp( symbols, 1, no_window=no_window,
-                                                                blank_space=False,
-                                                                T=self.T-self.__encoder.blank_space_time,
-                                                                minimal_sub_chirp_duration=self.__encoder.minimal_sub_chirp_duration))
+        # Mostly for testing, if we want the last chirp to be symbol 0
+        if len(symbols) > 1:
+            symbol1 = np.flip(self.__encoder.convert_bit_to_chrirp( symbols, 1, no_window=no_window,
+                                                                    blank_space=False,
+                                                                    T=self.T-self.__encoder.blank_space_time,
+                                                                    minimal_sub_chirp_duration=self.__encoder.minimal_sub_chirp_duration))
+        else:
+            symbol1 = np.zeros(symbol0.size)
 
         if self.plot_symbols is True:
             fig, axs = plt.subplots(2)
