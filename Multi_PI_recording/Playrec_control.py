@@ -45,14 +45,16 @@ dist = 50 #cm
 direction = 0
 
 # Line-of-Sight state
-LoS = False
+LoS = True
 
 # (Euclidian) source location (only send if LoS == False)
-edist = 58 #cm
-edirection = 16
+
+edist = 0 #cm
+edirection = 0
+
 
 # Meta lobation of recording
-location = "Test"
+location = "H2-IC02"
 
 # Top state (if ther's an obustructio inbetween the mics)
 top = True
@@ -70,16 +72,15 @@ else:
 	chirp_types = ["0s024", "0s048"]
 
 music_names = []
-for j in range(len(num_chirp_types)):
+for j in range(len(chirp_types)):
     for i in range(M):
-        music_names.append('chirp_train_chirp_{}_{}'.format(chirp_types[j],i-1))
-        #music_names.append("Test{}".format(i))
+        music_names.append('chirp_train_chirp_{}_{}'.format(chirp_types[j],i))
     
 # Length of the music files (seconds)
 if test:
 	duration = 2
 else:
-	duration = 25
+	duration = 30
 
 # User inputs end
 msg = Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, duration)
@@ -104,7 +105,7 @@ client.message_callback_add("play_done", play_done_callback)
 
 # loop
 client.loop_start()
-print("playrec settings \n{}".format(msg))
+print("playrec settings \n{}\n".format(msg))
 for i in range(len(music_names)):
     print(music_names[i])
     
@@ -112,13 +113,14 @@ for i in range(len(music_names)):
     play_done = play_init
     
     tx_args = "{} --music {}".format(msg,music_names[i])
-    print(tx_args)
     client.publish("playrec", tx_args)
 
     while not (rec_done and play_done):
         pass
     
     time.sleep(1)
+    print()
 
 print("done")
+print("playrec settings \n{}\n".format(msg))
 client.loop_stop()
