@@ -107,7 +107,7 @@ class OChirpDecode:
         avg_distance = int(self.T * self.fsample)
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.05
+        peak_time = self.T * 0.1
         peak_length = int(peak_time * self.fsample)
 
         if data[0].size != data[1].size:
