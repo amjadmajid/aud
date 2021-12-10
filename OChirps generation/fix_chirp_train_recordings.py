@@ -148,22 +148,23 @@ def generate_sample(chirp_train: str):
     # We use this to make sure that we center the sample nicely.
     sample_offset = sample_width * 0.2
 
-##    # plotting
-##    fig, axs = plt.subplots(6, sharex=True, sharey=True)
-##    for j in range(6):
-##        dataset = data[:, j]
-##        ax = axs[j]
-##        ax.plot(dataset)
-##
-##    for i, peak in enumerate(peaks):
-##        start = int(sample_offset + peak - sample_width/2)
-##        end = int(sample_offset + peak + sample_width/2)
-##        
-##        ax.vlines(start, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
-##        ax.vlines(end, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
-##
-##    plt.tight_layout()
-##    plt.show()
+    # plotting
+    if False:
+        fig, axs = plt.subplots(6, sharex=True, sharey=True)
+        for j in range(6):
+            dataset = data[:, j]
+            ax = axs[j]
+            ax.plot(dataset)
+
+        for i, peak in enumerate(peaks):
+            start = int(sample_offset + peak - sample_width/2)
+            end = int(sample_offset + peak + sample_width/2)
+            
+            ax.vlines(start, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+            ax.vlines(end, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+
+        plt.tight_layout()
+        plt.show()
         
 
     # Sanity checks
@@ -183,12 +184,12 @@ def generate_sample(chirp_train: str):
               f"or there are not enough peaks {len(peaks)} != 200\n"
               f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}\n")
 
-        # Plot some results to show the issues
-        decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
-        plt.figure()
-        plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
-        plt.plot(conv_data[0])
-        plt.show()
+        if True: # Plot some results to show the issues
+            decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
+            plt.figure()
+            plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
+            plt.plot(conv_data[0])
+            plt.show()
         return
 
     
