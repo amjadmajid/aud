@@ -136,13 +136,23 @@ def generate_sample(chirp_train: str):
     correct_peak_diff = 5474 if T == 0.024 else 6530
     peak_diff = np.diff(peaks)
     mean_peak_diff = np.mean(peak_diff)
+    correct_heights_std = 20000
+    heights_std = np.std(conv_data[0][np.array(peaks)])
     if len(peaks) != 200 or \
             np.abs(mean_peak_diff - correct_peak_diff) > (sample_width * 0.005) or \
-            np.std(peak_diff) > 50:
+            np.std(peak_diff) > 50 or \
+            heights_std > correct_heights_std:
         print(f"ERROR! {chirp_train}\nWe cannot decode this file! mean peak diff: {mean_peak_diff}, but should be {correct_peak_diff}\n"
               f"or the avg peak interval differs too much: {np.abs(mean_peak_diff - correct_peak_diff)} > {(sample_width * 0.005)}\n"
-              f"or there is too much variance in the typical peak difference: {np.std(peak_diff)} > 50 "
-              f"or there are not enough peaks {len(peaks)} != 200")
+              f"or there is too much variance in the typical peak dfference: {np.std(peak_diff)} > 50\n"
+              f"or there are not enough peaks {len(peaks)} != 200\n"
+              f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}")
+
+        # Plot some results to show the issues
+        plt.figure()
+        plt.plot(conv_data[0])
+        plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X')
+        plt.show()
         return
 
     # fig, axs = plt.subplots(6, sharex=True, sharey=True)
@@ -175,6 +185,9 @@ def generate_samples():
 
     files = glob(ordered_files + '/**/*.wav', recursive=True)
     print(files)
+
+    # for file in files:
+    #     generate_sample(file)
 
     with Pool(12) as p:
         p.map(generate_sample, files)
