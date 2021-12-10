@@ -15,6 +15,7 @@ final_files = '../Sampled_files/'
 
 
 def reorder_channel(chirp_train: str):
+    
     destination = chirp_train.replace(original_location[:-1], ordered_files[:-1])
 
     # Skip the file if it exists
@@ -22,6 +23,8 @@ def reorder_channel(chirp_train: str):
         return
     else:
         Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
+
+    print(chirp_train)
 
     fs, data = read(chirp_train)
 
@@ -60,14 +63,20 @@ def reorder_channel(chirp_train: str):
 
 def reorder_channels():
 
-    files = glob(original_location + '/**/*.wav', recursive=True)
-    print(files)
+    wav_files = glob(original_location + '/**/*.wav', recursive=True)
+
+    #filter out non chirp train recordings
+    files = [file for file in wav_files if not "z_copy" in file and "chirp_train" in file]
+    
+    #print(files)
+    print("{} files found".format(len(files)))
 
     with Pool(12) as p:
         p.map(reorder_channel, files)
 
 
 def generate_sample(chirp_train: str):
+    #print(chirp_train)
 
     placeholder_marker = "PLACEHOLDER_INT"
 
@@ -82,6 +91,7 @@ def generate_sample(chirp_train: str):
             return 0.024
         elif "0s048" in chirp_train:
             return 0.048
+        print("ERROR, no known time in: {}".format(chirp_train))
 
     def get_chirp_index(chirp_train: str) -> int:
         if "_0\\" in chirp_train:
@@ -130,7 +140,25 @@ def generate_sample(chirp_train: str):
 
     # How much should we add to the peak such that it shifts to the right
     # We use this to make sure that we center the sample nicely.
-    sample_offset = sample_width * 0.25
+    sample_offset = sample_width * 0.2
+
+##    # plotting
+##    fig, axs = plt.subplots(6, sharex=True, sharey=True)
+##    for j in range(6):
+##        dataset = data[:, j]
+##        ax = axs[j]
+##        ax.plot(dataset)
+##
+##    for i, peak in enumerate(peaks):
+##        start = int(sample_offset + peak - sample_width/2)
+##        end = int(sample_offset + peak + sample_width/2)
+##        
+##        ax.vlines(start, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+##        ax.vlines(end, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+##
+##    plt.tight_layout()
+##    plt.show()
+        
 
     # Sanity checks
     correct_peak_diff = 5474 if T == 0.024 else 6530
@@ -138,52 +166,53 @@ def generate_sample(chirp_train: str):
     mean_peak_diff = np.mean(peak_diff)
     if len(peaks) != 200 or \
             np.abs(mean_peak_diff - correct_peak_diff) > (sample_width * 0.005) or \
-            np.std(peak_diff) > 50:
+            np.std(peak_diff) > 200:
         print(f"ERROR! {chirp_train}\nWe cannot decode this file! mean peak diff: {mean_peak_diff}, but should be {correct_peak_diff}\n"
               f"or the avg peak interval differs too much: {np.abs(mean_peak_diff - correct_peak_diff)} > {(sample_width * 0.005)}\n"
-              f"or there is too much variance in the typical peak difference: {np.std(peak_diff)} > 50 "
+              f"or there is too much variance in the typical peak difference: {np.std(peak_diff)} > 200 "
               f"or there are not enough peaks {len(peaks)} != 200")
         return
 
-    # fig, axs = plt.subplots(6, sharex=True, sharey=True)
-    # for j in range(6):
-    #     dataset = data[:, j]
-    #     ax = axs[j]
-    #     ax.plot(dataset)
+    
     for i, peak in enumerate(peaks):
         start = int(sample_offset + peak - sample_width/2)
         end = int(sample_offset + peak + sample_width/2)
-        # ax.vlines(start, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
-        # ax.vlines(end, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+         
         sample = data[start:end]
 
-        real_destination = destination.replace(placeholder_marker, str(i))
+        real_destination = destination.replace(placeholder_marker, str(i).zfill(3))
 
         # Skip the file if it exists
-        if not os.path.isfile(real_destination):
-            Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
+        #if not os.path.isfile(real_destination):
+        Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
             # print(f"writing {real_destination}")
-            write(real_destination, fsample, sample)
+        write(real_destination, fsample, sample)
         # else:
         #     print(f"skipping {real_destination}")
 
-    # plt.tight_layout()
-    # plt.show()
 
 
 def generate_samples():
 
-    files = glob(ordered_files + '/**/*.wav', recursive=True)
-    print(files)
+    wav_files = glob(ordered_files + '/**/*.wav', recursive=True)
+
+    #filter out non chirp train recordings
+    files = [file for file in wav_files if not "z_copy" in file and "chirp_train" in file]
+    
+    #print(files)
+    print("{} files found".format(len(files)))
 
     with Pool(12) as p:
         p.map(generate_sample, files)
 
 
 def main():
+    print("Reordering")
     reorder_channels()
-    generate_samples()
 
+    print("Sample_generation")
+    generate_samples()
+    
 
 if __name__ == '__main__':
     main()

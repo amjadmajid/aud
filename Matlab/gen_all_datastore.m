@@ -49,13 +49,17 @@ for i = 1:length(Top_types)
             Sound_type = Sound_types(k).name;
             Sound_path = fullfile(LoS_path, Sound_type);
 
-            Sample_file = "Samples_0s5";
+            Sample_file = "Samples";
             sample_path = fullfile(Sound_path,Sample_file);
+
+            if ~isfolder(sample_path)
+                continue
+            end
 
             % Skip if there already exists a datastores folder
             if isfolder(fullfile(sample_path,"datastores"))
                 fprintf("already done: %s\n",sample_path)
-                multiWaitbar('all sample sets','increment', 1/11);
+                multiWaitbar('all sample sets','increment', 1/32);
                 continue
             end
 
@@ -69,10 +73,12 @@ for i = 1:length(Top_types)
             lss = labeledSignalSet;
             addLabelDefinitions(lss, labelDef);
 
-
-
             addMembers(lss,audio_DS)
             source = lss.Source;
+
+            % indices of measurements larger than 250 cm (which will be
+            % skipped
+            to_remove = zeros(1,lss.NumMembers);
 
             % Give the labels the proper values
 
@@ -86,6 +92,18 @@ for i = 1:length(Top_types)
                     DoA = str2double(location_data{3}(1:3));   % direction of arival (degrees)
                     dist = str2double(location_data{2}(1:3));  % distance to source (cm)
                     loc = strjoin({location_data{3},location_data{2}},'_');
+
+                    % removing distances past 250 cm
+                    if dist > 250
+                        to_remove(ii) = true;
+                        multiWaitbar('Processing samples', 'Increment', 1/lss.NumMembers, 'CanCancel', 'on');
+                        continue
+                    end
+
+                    % fixing location name (legacy solution)
+                    if ~contains(loc,"deg")
+                        loc = insertAfter(loc,3,"deg");
+                    end
 
                     setLabelValue(lss,ii,'direction',categorical(DoA))
                     setLabelValue(lss,ii,'distance',categorical(dist))
@@ -105,6 +123,8 @@ for i = 1:length(Top_types)
 
             end
             multiWaitbar('Processing samples', 'Relabel', 'Gen datastore');
+
+            removeMembers(lss,find(to_remove)) %remove past 250 cm
             audio_DS = audioDatastore(lss.Source, 'Labels',lss.Labels);
             %% Split datastores
             multiWaitbar('Gen datastore', 'Relabel', 'Split datastores');
@@ -142,7 +162,7 @@ for i = 1:length(Top_types)
             if ~isfolder(fullfile(sample_path,"datastores"))
                 mkdir(sample_path, "datastores")
             end
-            save(fullfile(sample_path,"datastores",file_name),"data");
+            save(fullfile(sample_path,"datastores",file_name),"data",'-v7.3');
 
             multiWaitbar('Save datastores', 'close');
             fprintf("Finnished:\n%s\n",sample_path);
