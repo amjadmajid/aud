@@ -220,12 +220,8 @@ def generate_samples():
     #print(files)
     print("{} files found".format(len(files)))
 
-    for file in files:
-        generate_sample(file)
-        return
-
-    # with Pool(12) as p:
-    #     p.map(generate_sample, files)
+    with Pool(12) as p:
+        p.map(generate_sample, files)
 
 
 def main():
