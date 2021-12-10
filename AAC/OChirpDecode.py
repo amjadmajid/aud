@@ -107,7 +107,7 @@ class OChirpDecode:
         avg_distance = int(self.T * self.fsample)
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.05
+        peak_time = self.T * 0.1
         peak_length = int(peak_time * self.fsample)
 
         if data[0].size != data[1].size:
@@ -201,7 +201,8 @@ class OChirpDecode:
         peaks.reverse()
         return peaks
 
-    def contains_preamble(self, data: np.ndarray, plot: bool = False) -> bool:
+    def contains_preamble(self, data: np.ndarray, plot: bool = False, preamble_index: bool = False,
+                          threshold_multiplier: int = 3):
         """
             Check if the passed data contains a preamble. We do this with auto correlation.
         """
@@ -214,7 +215,7 @@ class OChirpDecode:
         conv_data = self.get_conv_results(data, preamble)
 
         # This threshold seems to work fine
-        preamble_min_peak = 3 * np.mean(conv_data)
+        preamble_min_peak = threshold_multiplier * np.mean(conv_data)
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -224,7 +225,10 @@ class OChirpDecode:
                 axs[1].plot(conv)
             axs[1].hlines(preamble_min_peak, 0, data.size, color='black')
 
-        return np.max(conv_data) > preamble_min_peak
+        if preamble_index is not None:
+            return np.argwhere(conv_data[0] > preamble_min_peak)[0][0]
+        else:
+            return np.max(conv_data) > preamble_min_peak
 
     @staticmethod
     def get_bits_from_peaks(peaks: list) -> list:

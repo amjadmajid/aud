@@ -127,12 +127,18 @@ def generate_sample(chirp_train: str):
 
     symbols = decoder.get_symbols(no_window=False)
 
+    # Find the index of the preamble, such that we can check whether we detect peaks before this (incorrect)
+    preamble_index = decoder.contains_preamble(reference_data, preamble_index=True, threshold_multiplier=10)
+
     # Convolve the data with the original symbols, this produces periodic peaks
     conv_data = decoder.get_conv_results(reference_data, symbols)
 
     # Find the peaks
     peaks = decoder.get_peaks(conv_data, plot=False, N=len(decoder.original_data_bits))
-    peaks = list(map(lambda x: x[0], peaks))
+    peaks = np.array(list(map(lambda x: x[0], peaks)))
+
+    # Remove any peaks that occur before the preamble
+    peaks = peaks[peaks > preamble_index]
 
     # How wide should we select the sample?
     # Can tweak this is we don't want any overlap
@@ -164,13 +170,25 @@ def generate_sample(chirp_train: str):
     correct_peak_diff = 5474 if T == 0.024 else 6530
     peak_diff = np.diff(peaks)
     mean_peak_diff = np.mean(peak_diff)
+    correct_heights_std = 20000
+    heights_std = np.std(conv_data[0][np.array(peaks)])
     if len(peaks) != 200 or \
             np.abs(mean_peak_diff - correct_peak_diff) > (sample_width * 0.005) or \
-            np.std(peak_diff) > 200:
+
+            np.std(peak_diff) > 50 or \
+            heights_std > correct_heights_std:
         print(f"ERROR! {chirp_train}\nWe cannot decode this file! mean peak diff: {mean_peak_diff}, but should be {correct_peak_diff}\n"
               f"or the avg peak interval differs too much: {np.abs(mean_peak_diff - correct_peak_diff)} > {(sample_width * 0.005)}\n"
-              f"or there is too much variance in the typical peak difference: {np.std(peak_diff)} > 200 "
-              f"or there are not enough peaks {len(peaks)} != 200")
+              f"or there is too much variance in the typical peak dfference: {np.std(peak_diff)} > 50\n"
+              f"or there are not enough peaks {len(peaks)} != 200\n"
+              f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}")
+
+        # Plot some results to show the issues
+        decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
+        plt.figure()
+        plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
+        plt.plot(conv_data[0])
+        plt.show()
         return
 
     
@@ -202,8 +220,12 @@ def generate_samples():
     #print(files)
     print("{} files found".format(len(files)))
 
-    with Pool(12) as p:
-        p.map(generate_sample, files)
+    for file in files:
+        generate_sample(file)
+        return
+
+    # with Pool(12) as p:
+    #     p.map(generate_sample, files)
 
 
 def main():
