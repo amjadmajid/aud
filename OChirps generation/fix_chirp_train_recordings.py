@@ -117,12 +117,18 @@ def generate_sample(chirp_train: str):
 
     symbols = decoder.get_symbols(no_window=False)
 
+    # Find the index of the preamble, such that we can check whether we detect peaks before this (incorrect)
+    preamble_index = decoder.contains_preamble(reference_data, preamble_index=True, threshold_multiplier=10)
+
     # Convolve the data with the original symbols, this produces periodic peaks
     conv_data = decoder.get_conv_results(reference_data, symbols)
 
     # Find the peaks
     peaks = decoder.get_peaks(conv_data, plot=False, N=len(decoder.original_data_bits))
-    peaks = list(map(lambda x: x[0], peaks))
+    peaks = np.array(list(map(lambda x: x[0], peaks)))
+
+    # Remove any peaks that occur before the preamble
+    peaks = peaks[peaks > preamble_index]
 
     # How wide should we select the sample?
     # Can tweak this is we don't want any overlap
@@ -187,11 +193,12 @@ def generate_samples():
     files = glob(ordered_files + '/**/*.wav', recursive=True)
     print(files)
 
-    # for file in files:
-    #     generate_sample(file)
+    for file in files:
+        generate_sample(file)
+        return
 
-    with Pool(12) as p:
-        p.map(generate_sample, files)
+    # with Pool(12) as p:
+    #     p.map(generate_sample, files)
 
 
 def main():
