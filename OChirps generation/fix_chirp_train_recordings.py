@@ -170,18 +170,18 @@ def generate_sample(chirp_train: str):
     correct_peak_diff = 5474 if T == 0.024 else 6530
     peak_diff = np.diff(peaks)
     mean_peak_diff = np.mean(peak_diff)
-    correct_heights_std = 20000
+    correct_heights_std = 100000
     heights_std = np.std(conv_data[0][np.array(peaks)])
+    peak_diff_std_threshold = 200
     if len(peaks) != 200 or \
             np.abs(mean_peak_diff - correct_peak_diff) > (sample_width * 0.005) or \
-
-            np.std(peak_diff) > 50 or \
+            np.std(peak_diff) > peak_diff_std_threshold or \
             heights_std > correct_heights_std:
         print(f"ERROR! {chirp_train}\nWe cannot decode this file! mean peak diff: {mean_peak_diff}, but should be {correct_peak_diff}\n"
               f"or the avg peak interval differs too much: {np.abs(mean_peak_diff - correct_peak_diff)} > {(sample_width * 0.005)}\n"
-              f"or there is too much variance in the typical peak dfference: {np.std(peak_diff)} > 50\n"
+              f"or there is too much variance in the typical peak dfference: {np.std(peak_diff)} > {peak_diff_std_threshold}\n"
               f"or there are not enough peaks {len(peaks)} != 200\n"
-              f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}")
+              f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}\n")
 
         # Plot some results to show the issues
         decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
