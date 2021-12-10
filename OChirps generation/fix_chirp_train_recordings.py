@@ -183,12 +183,12 @@ def generate_sample(chirp_train: str):
               f"or there are not enough peaks {len(peaks)} != 200\n"
               f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}\n")
 
-        # Plot some results to show the issues
-        decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
-        plt.figure()
-        plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
-        plt.plot(conv_data[0])
-        plt.show()
+        if False: # Plot some results to show the issues
+            decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
+            plt.figure()
+            plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
+            plt.plot(conv_data[0])
+            plt.show()
         return
 
     
