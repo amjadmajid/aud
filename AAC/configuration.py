@@ -3,10 +3,10 @@ from OChirpEncode import OChirpEncode
 
 
 class Configuration(enum):
-    baseline = 1,
-    baseline_fast = 2,
-    balanced = 3,
-    fast = 4
+    baseline = 0,
+    baseline_fast = 1,
+    balanced = 2,
+    fast = 3
 
 
 def get_configuration_encoder(config: Configuration) -> OChirpEncode:

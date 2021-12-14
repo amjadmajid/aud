@@ -1,6 +1,6 @@
 import numpy as np
-from .BitManipulation import frombits, tobits
-from .OChirpEncode import OChirpEncode
+from BitManipulation import frombits, tobits
+from OChirpEncode import OChirpEncode
 from scipy.signal import hilbert
 from matplotlib import pyplot as plt
 from scipy.io.wavfile import write

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.wavfile import write
 from scipy.signal import chirp
-from .BitManipulation import tobits
+from BitManipulation import tobits
 
 
 class OChirpEncode:
