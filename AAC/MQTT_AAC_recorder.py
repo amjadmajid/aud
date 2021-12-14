@@ -5,26 +5,9 @@ from configuration import Configuration, get_configuration_encoder
 from OChirpDecode import OChirpDecode
 import shutil
 from pathlib import Path
-
-
-def record(msg: str, decode: bool = False):
-    # f"{i}_{c}_{iteration}_{DATA_TO_SEND}"
-    split_msg = msg.split('_')
-    configuration_name = split_msg[1]
-    data = split_msg[3]
-
-    print(f"Going to record and decode : [{data}] with configuration [{configuration_name}]")
-
-    config = Configuration[configuration_name]
-    encoder = get_configuration_encoder(config)
-    decoder = OChirpDecode(encoder=encoder, original_data=data)
-
-    ber = decoder.decode_live(plot=decode, do_not_process=decode)
-
-    print(f"Done. BER = [{ber}]. Saving recording...")
-
-    Path("./range-recordings/").mkdir(parents=True, exist_ok=True)
-    shutil.move("microphone.wav", "./range-recordings/" + msg + '.wav')
+import multiprocessing
+import time
+from MQTT_AAC_control import record
 
 
 def on_message(client, userdata, msg):
@@ -34,7 +17,7 @@ def on_message(client, userdata, msg):
 
     print(f"Message details: {msg.topic}  {str(msg.payload)}")
 
-    record(msg.payload, True)
+    record(msg.payload)
 
     print("Finished recording sound")
     client.publish("rec_done", 1)
@@ -57,7 +40,7 @@ if __name__ == '__main__':
     client.loop_start()
     while True:
         try:
-            pass
+            time.sleep(0.1)
         except KeyboardInterrupt:
             break
 
