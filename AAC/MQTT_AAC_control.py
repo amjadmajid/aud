@@ -69,16 +69,7 @@ def record(msg: str, do_not_decode: bool = False):
     decoder = OChirpDecode(encoder=encoder, original_data=data)
 
     # Plotting does not work, not main thread
-    # ber = decoder.decode_live(plot=False, do_not_process=False)
-
-    p = pyaudio.PyAudio()
-    CHUNK = int(len(decoder.original_data_bits) * encoder.T * 1.25)
-    stream = p.open(format=pyaudio.paInt16, channels=1, rate=encoder.fsample, input=True, frames_per_buffer=CHUNK)
-    data = np.frombuffer(stream.read(CHUNK), dtype=np.int16)
-
-    ber = decoder.decode_data(data, plot=False)
-
-    write("microphone.wav", encoder.fsample, data.astype(np.int16))
+    ber = decoder.decode_live(plot=False, do_not_process=False)
 
     print(f"Done. BER = [{ber}]. Saving recording...")
 
