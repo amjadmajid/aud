@@ -74,7 +74,7 @@ def plot_example_peak_detection():
 
 def plot_range_test_results():
     # df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
-    df = pd.read_csv('./data/results/15-12-2021/parsed_results.csv')
+    df = pd.read_csv('./data/results/15-12-2021-nlos/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
@@ -108,12 +108,13 @@ def plot_range_test_results():
             plt.axvline(x=index - 0.5, color='r', linestyle="dashed")
 
     plt.ylim(-0.025, 0.7)
-    plt.xlim(-0.5, 11.5)
+    # plt.xlim(-0.5, 5.5)
     plt.text(x=9 - 0.5, y=0.8, s=f"Distance [m]", color='black', horizontalalignment='center',
              verticalalignment='center')
     plt.ylabel("BER")
     plt.xlabel("Configurations")
     plt.xticks(rotation=45)
+    # labels.append("")
     plt.xticks(np.arange(index), labels)
     plt.tight_layout()
     plt.savefig("./images/range_test_results.pdf", format="pdf", bbox_inches='tight')

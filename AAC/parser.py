@@ -4,7 +4,7 @@ from configuration import Configuration, get_configuration_encoder
 from OChirpDecode import OChirpDecode
 import pandas as pd
 
-directory = './data/results/15-12-2021/'
+directory = './data/results/15-12-2021-nlos/'
 configurations = ['baseline', 'baseline_fast', 'balanced', 'fast']
 
 if __name__ == '__main__':
