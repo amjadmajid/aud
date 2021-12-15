@@ -65,22 +65,24 @@ test = False
 # Music_files
 # File names
 if test:
-	M = 2
-	chirp_types = ["0s024"]
+    M = 2
+    chirp_types = ["0s024"]
 else:
-	M = 8
-	chirp_types = ["0s024", "0s048"]
+    M = 8
+    chirp_types = ["0s024", "0s048"]
 
 music_names = []
 for j in range(len(chirp_types)):
     for i in range(M):
         music_names.append('chirp_train_chirp_{}_{}'.format(chirp_types[j],i))
-    
+
+music_names = ['baseline', 'baseline_fast', 'advanced', 'fast']
+
 # Length of the music files (seconds)
 if test:
-	duration = 2
+    duration = 2
 else:
-	duration = 30
+    duration = 6  # 30
 
 # User inputs end
 msg = Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, duration)
@@ -95,7 +97,7 @@ play_done = play_init
 #connect to mqtt
 client = mqtt.Client()
 
-client.connect("Robomindpi-002")
+client.connect("192.168.1.18")
 
 client.subscribe("rec_done")
 client.subscribe("play_done")
@@ -112,7 +114,7 @@ for i in range(len(music_names)):
     rec_done = rec_init
     play_done = play_init
     
-    tx_args = "{} --music {}".format(msg,music_names[i])
+    tx_args = "{} --music {}".format(msg, music_names[i])
     client.publish("playrec", tx_args)
 
     while not (rec_done and play_done):

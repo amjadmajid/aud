@@ -222,8 +222,8 @@ class OChirpDecode:
 
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
-        if preamble_min_peak < 60000:
-            preamble_min_peak = 60000
+        if preamble_min_peak < 20000:
+            preamble_min_peak = 20000
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -351,6 +351,11 @@ class OChirpDecode:
             Simply read the file and pass it on to decode_data
         """
         fs, data = read(file)
+        
+        print(data.shape)
+        if data.shape[1] > 1:
+            data = data[:,0]
+        print(data.shape)
         self.fsample = fs
         return self.decode_data(data, plot=plot)
 
@@ -429,5 +434,5 @@ if __name__ == '__main__':
     encoder = get_configuration_encoder(Configuration.baseline)
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
-    decoder.decode_file("./data/range-recordings/0_baseline_0_Hello, World!_25.wav", plot=True)
+    decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
 

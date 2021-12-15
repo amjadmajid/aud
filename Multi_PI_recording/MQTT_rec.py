@@ -93,7 +93,7 @@ def on_message(client, userdata, msg):
     # print "lightshow"
     # subprocess.call(['python', 'Lightshow1.py'])
     
-    print 'done'
+    print('done')
     client.publish("rec_done",1)
 
 client = mqtt.Client()
@@ -103,7 +103,7 @@ client.on_message = on_message
 
 
 #connect
-client.connect("robomindpi-002")
+client.connect("192.168.1.18")
 
 client.loop_start()
 while True:

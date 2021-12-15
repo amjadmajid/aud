@@ -14,7 +14,8 @@ def playing(args):
     test = '-t' in args
     
     music_name = args[args.index('--music')+1]
-    music_file = '../Music_files/{}.wav'.format(music_name)
+    #music_file = '../Music_files/{}.wav'.format(music_name)
+    music_file = '../AAC/sample_chirps/{}.wav'.format(music_name)
     
     duration = float(args[args.index('--duration')+1])
 
@@ -66,7 +67,7 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 #connect
-client.connect("robomindpi-002")
+client.connect("192.168.1.18")
 
 
 
