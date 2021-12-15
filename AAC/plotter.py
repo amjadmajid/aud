@@ -3,6 +3,7 @@ from OChirpEncode import OChirpEncode
 from OChirpDecode import OChirpDecode
 import numpy as np
 import pandas as pd
+from configuration import Configuration
 
 
 """
@@ -72,19 +73,20 @@ def plot_example_peak_detection():
 
 
 def plot_range_test_results():
-    df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
+    # df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
+    df = pd.read_csv('./data/results/15-12-2021/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
     config_list = ["Baseline (T=48ms)", "Baseline (T=24ms)", "Advanced (T~=24ms)", "Speed (T~=?)"]
-
+    print(df.Configuration.unique())
     plt.figure(figsize=(6, 3))
     index = 0
     labels = []
     for distance in df.distance.unique():
-        for i, config in enumerate(df.Configuration.unique()):
+        for i, config in enumerate(Configuration):
             print(f"{distance} {config}")
-            data = df[(df.Configuration == config) & (df.distance == distance)]
+            data = df[(df.Configuration == str(config)) & (df.distance == distance)]
 
             medianprops = {'color': color_list[i], 'linewidth': 2}
             boxprops = {'color': color_list[i], 'linestyle': '-'}
@@ -98,7 +100,7 @@ def plot_range_test_results():
                 plt.text(x=index-0.5, y=0.725, s=f"{distance}", color='black', horizontalalignment='center',
                          verticalalignment='center')
 
-            labels.append(f"{config}")
+            labels.append(f"{config.name}")
             index += 1
             plt.axvline(x=index - 0.5, color='black', alpha=0.2)
 
@@ -111,6 +113,7 @@ def plot_range_test_results():
              verticalalignment='center')
     plt.ylabel("BER")
     plt.xlabel("Configurations")
+    plt.xticks(rotation=45)
     plt.xticks(np.arange(index), labels)
     plt.tight_layout()
     plt.savefig("./images/range_test_results.pdf", format="pdf", bbox_inches='tight')

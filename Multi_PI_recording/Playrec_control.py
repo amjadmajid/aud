@@ -41,7 +41,7 @@ def Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, 
 # User inputs start
 
 # (Geodesic) souce location
-dist = 50 #cm
+dist = 250 #cm
 direction = 0
 
 # Line-of-Sight state
@@ -76,13 +76,13 @@ for j in range(len(chirp_types)):
     for i in range(M):
         music_names.append('chirp_train_chirp_{}_{}'.format(chirp_types[j],i))
 
-music_names = ['baseline', 'baseline_fast', 'advanced', 'fast']
+music_names = ['baseline', 'baseline_fast', 'balanced', 'fast']
 
 # Length of the music files (seconds)
 if test:
     duration = 2
 else:
-    duration = 6  # 30
+    duration = 5  # 30
 
 # User inputs end
 msg = Input_parsing(dist, direction, LoS, edist, edirection, location, top, test, duration)
@@ -97,7 +97,7 @@ play_done = play_init
 #connect to mqtt
 client = mqtt.Client()
 
-client.connect("192.168.1.18")
+client.connect("192.168.1.166")
 
 client.subscribe("rec_done")
 client.subscribe("play_done")
@@ -109,19 +109,19 @@ client.message_callback_add("play_done", play_done_callback)
 client.loop_start()
 print("playrec settings \n{}\n".format(msg))
 for i in range(len(music_names)):
-    print(music_names[i])
-    
-    rec_done = rec_init
-    play_done = play_init
-    
-    tx_args = "{} --music {}".format(msg, music_names[i])
-    client.publish("playrec", tx_args)
+    for _ in range(5):
+        print(music_names[i])
 
-    while not (rec_done and play_done):
-        pass
-    
-    time.sleep(1)
-    print()
+        rec_done = rec_init
+        play_done = play_init
+
+        tx_args = "{} --music {}".format(msg, music_names[i])
+        client.publish("playrec", tx_args)
+
+        while not (rec_done and play_done):
+            pass
+
+        print("")
 
 print("done")
 print("playrec settings \n{}\n".format(msg))
