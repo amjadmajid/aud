@@ -4,7 +4,7 @@ from configuration import Configuration, get_configuration_encoder
 from OChirpDecode import OChirpDecode
 import pandas as pd
 
-directory = './data/results/15-12-2021-nlos/'
+directory = './data/results/15-12-2021-retry-3/'
 configurations = ['baseline', 'baseline_fast', 'balanced', 'fast']
 
 if __name__ == '__main__':
@@ -13,7 +13,6 @@ if __name__ == '__main__':
     bers = []
 
     for file in files:
-
         for conf in configurations:
             if '\\' + conf + '\\' in file:
                 break
@@ -26,9 +25,12 @@ if __name__ == '__main__':
 
         ber = decoder.decode_file(file, plot=False)
         bers.append((conf, distance, ber))
-        # if ber != 0.0:
-        #     decoder.decode_file(file, plot=True)
+        if conf == Configuration.balanced and (distance == 100):
+            print("\nINFORMATION")
+            print(conf)
+            print(f"{distance}cm")
+            decoder.decode_file(file, plot=True)
 
     df = pd.DataFrame(bers, columns=['Configuration', 'distance', 'ber'])
 
-    df.to_csv(directory + 'parsed_results.csv', index=False)
+    # df.to_csv(directory + 'parsed_results.csv', index=False)

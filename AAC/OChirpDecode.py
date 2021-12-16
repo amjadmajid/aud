@@ -107,7 +107,7 @@ class OChirpDecode:
         avg_distance = int(self.T * self.fsample)
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.2
+        peak_time = self.T * 0.25
         peak_length = int(peak_time * self.fsample)
 
         if data[0].size != data[1].size:
@@ -222,8 +222,8 @@ class OChirpDecode:
 
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
-        if preamble_min_peak < 20000:
-            preamble_min_peak = 20000
+        if self.__encoder.T_preamble == 0.0:
+            preamble_min_peak = 1
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -353,7 +353,7 @@ class OChirpDecode:
         fs, data = read(file)
         
         print(data.shape)
-        if data.shape[1] > 1:
+        if len(data.shape) > 1 and data.shape[1] > 1:
             data = data[:,0]
         print(data.shape)
         self.fsample = fs
@@ -431,8 +431,9 @@ if __name__ == '__main__':
 
     from configuration import get_configuration_encoder, Configuration
 
-    encoder = get_configuration_encoder(Configuration.baseline)
+    encoder = get_configuration_encoder(Configuration.baseline_fast)
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
-    decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
+    # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
+    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_1_-1dB.wav", plot=True)
 
