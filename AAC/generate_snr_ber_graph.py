@@ -47,8 +47,8 @@ def add_noise_to_data(data: np.ndarray, noise: np.ndarray, desired_snr_db: float
 def generate_noisy_samples():
     babble_noise_file = "./babble_noise.wav"
     pure_signals = glob("./sample_chirps/*.wav")
-    snrs = np.arange(-50, 1, 1)
-    num_iterations = 15
+    snrs = np.arange(-45, 1, 2)
+    num_iterations = 300
 
     fs, bubble_noise = read(babble_noise_file)
     bubble_noise = bubble_noise
@@ -129,12 +129,17 @@ def plot_noisy_samples():
     for i, conf in enumerate(configurations):
         data = df[df.Configuration == conf]
 
-        plt.plot(data.snr, data['mean'], label=conf, marker=markers[i])
+        plt.plot(data.snr, data['mean'], label=conf.split(".")[-1], marker=markers[i])
         # plt.fill_between(data.snr, data['mean'] - data['std'], data['mean'] + data['std'], alpha=0.33)
 
+    plt.ylim(-0.000075, 1.1)
     plt.grid(True)
     plt.legend()
     plt.show()
+
+
+# def get_snr_from_recording(recording:str):
+
 
 
 if __name__ == '__main__':
