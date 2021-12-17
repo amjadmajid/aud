@@ -223,7 +223,7 @@ class OChirpDecode:
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
         if self.__encoder.T_preamble == 0.0:
-            preamble_min_peak = 1
+            preamble_min_peak = 30000
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -435,5 +435,5 @@ if __name__ == '__main__':
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
     # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_1_-1dB.wav", plot=True)
+    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_0_-50.0dB.wav", plot=True)
 
