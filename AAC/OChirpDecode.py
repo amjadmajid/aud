@@ -107,7 +107,7 @@ class OChirpDecode:
         avg_distance = int(self.T * self.fsample)
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.25
+        peak_time = self.T * 0.05
         peak_length = int(peak_time * self.fsample)
 
         if data[0].size != data[1].size:
@@ -118,7 +118,8 @@ class OChirpDecode:
         # Only used to determine the first peak, should be above the noise floor
         # And also above the cross correlation peak
         # threshold = (np.mean(data) + np.max(data)) / 2
-        threshold = np.max(data) * 0.65
+        # threshold = np.max(data) * 0.45
+        threshold = np.mean(data) + 4.5 * np.std(data)
 
         def get_last_peak(data: np.ndarray, threshold: float) -> int:
             try:
@@ -223,7 +224,7 @@ class OChirpDecode:
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
         if self.__encoder.T_preamble == 0.0:
-            preamble_min_peak = 30000
+            preamble_min_peak = 20000
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -351,10 +352,10 @@ class OChirpDecode:
             Simply read the file and pass it on to decode_data
         """
         fs, data = read(file)
-        
+
         print(data.shape)
         if len(data.shape) > 1 and data.shape[1] > 1:
-            data = data[:,0]
+            data = data[:, np.argmax(np.max(data, axis=0), axis=0)]
         print(data.shape)
         self.fsample = fs
         return self.decode_data(data, plot=plot)
