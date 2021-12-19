@@ -3,7 +3,7 @@ from OChirpEncode import OChirpEncode
 from OChirpDecode import OChirpDecode
 import numpy as np
 import pandas as pd
-from configuration import Configuration
+from configuration import Configuration, get_configuration_encoder
 
 
 """
@@ -12,38 +12,57 @@ from configuration import Configuration
 
 
 def plot_example_ochirp():
-    encoder = OChirpEncode(fsample=44100*4)
-    ochirp = encoder.get_single_chirp(0)
+    encoder = OChirpEncode(fsample=4 * 44100, T=None, fs=500, fe=2500, minimize_sub_chirp_duration=True, required_number_of_cycles=3)
+    ochirp1 = encoder.get_single_chirp(0)
+    encoder.minimal_sub_chirp_duration = False
+    ochirp2 = encoder.get_single_chirp(0)[:-2]
+    print(ochirp1.size)
+    print(ochirp2.size)
 
-    t = np.linspace(0, encoder.T*1000, len(ochirp))
+    t = np.linspace(0, encoder.T*1000, len(ochirp1))
 
-    plt.figure(figsize=(6, 2))
-    plt.plot(t, ochirp)
-    plt.xlabel("Time [ms]")
+    fig, axs = plt.subplots(2, sharex=True, sharey=True)
+    axs[0].plot(t, ochirp2)
+    axs[0].set_xlabel("a)")
+    axs[1].plot(t, ochirp1)
+    axs[1].set_xlabel("b)\nTime [ms]")
+    axs[0].set_ylabel("Amplitude")
+    axs[1].set_ylabel("Amplitude")
     plt.tight_layout()
     plt.savefig("./images/example_ochirp.pdf", format="pdf", bbox_inches='tight')
+    np.savetxt("./images/example_ochirp_min.csv", ochirp1, delimiter=",")
+    np.savetxt("./images/example_ochirp_regular.csv", ochirp2, delimiter=",")
     plt.show()
 
 
 def plot_example_frame():
-    data = "Hello"
-    encoder = OChirpEncode(fsample=44100*4)
+    data = "H"
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 4 * 44100
     _, frame = encoder.convert_data_to_sound(data, filename="temp.wav")
+    frame = frame/np.max(frame)
 
     t = np.linspace(0, len(frame)/encoder.fsample*1000, len(frame))
 
     plt.figure(figsize=(6, 2))
+    plt.xlim(-1, 120)
     plt.plot(t, frame)
+    plt.fill_between([0, 48], -1.1, 1.1, alpha=0.5, color='green')
+    plt.fill_between([48.1, 120], -1.1, 1.1, alpha=0.5, color='red')
     plt.xlabel("Time [ms]")
+    plt.ylabel("Amplitude")
     plt.tight_layout()
     plt.savefig("./images/example_frame.pdf", format="pdf", bbox_inches='tight')
+    np.savetxt("./images/exaple_frame.csv", frame, delimiter=",")
     plt.show()
 
 
 def plot_example_decode():
-    data = "Hello"
-    encoder = OChirpEncode(fsample=44100*4)
+    data = "H"
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 4 * 44100
     _, frame = encoder.convert_data_to_sound(data, filename="temp.wav")
+    frame = frame/np.max(frame)
 
     decoder = OChirpDecode(original_data=data, encoder=encoder)
 
@@ -56,9 +75,11 @@ def plot_example_decode():
 
 
 def plot_example_peak_detection():
-    data = "Hello"
-    encoder = OChirpEncode(fsample=44100*4)
+    data = "H"
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 4 * 44100
     _, frame = encoder.convert_data_to_sound(data, filename="temp.wav")
+    frame = frame / np.max(frame)
 
     decoder = OChirpDecode(original_data=data, encoder=encoder)
 
@@ -66,7 +87,7 @@ def plot_example_peak_detection():
 
     plt.figure(2).suptitle("")
     plt.figure(2).set_size_inches(6, 3)
-    plt.xlim(encoder.T_preamble*encoder.fsample, encoder.T_preamble*encoder.fsample + 3*encoder.T*encoder.fsample)
+    plt.xlim(encoder.T_preamble * 1000, 1000 * (encoder.T_preamble + 3 * encoder.T))
     plt.tight_layout()
     plt.savefig("./images/example_peak_detection.pdf", format="pdf", bbox_inches='tight')
     plt.show()
@@ -125,8 +146,8 @@ def main():
     # plot_example_ochirp()
     # plot_example_frame()
     # plot_example_decode()
-    # plot_example_peak_detection()
-    plot_range_test_results()
+    plot_example_peak_detection()
+    # plot_range_test_results()
 
 
 if __name__ == "__main__":

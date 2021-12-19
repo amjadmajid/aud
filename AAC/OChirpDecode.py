@@ -139,11 +139,17 @@ class OChirpDecode:
         if plot:
             fig, axs = plt.subplots(2, sharex=True)
             fig.suptitle("Peaks data")
+
+            t = np.linspace(0, (len(data[0]) / self.__encoder.fsample) * 1000, len(data[0]))
+
             axs[0].set_title("Symbol 0")
+            axs[0].set_ylabel("Amplitude")
             axs[1].set_title("Symbol 1")
-            axs[1].set_xlabel("time [samples]")
+            axs[1].set_ylabel("Amplitude")
+            axs[1].set_xlabel("Time [ms]")
         else:
             axs = None
+            t = None
 
         # We now search for every next peak.
         peaks = []
@@ -175,14 +181,20 @@ class OChirpDecode:
 
             # Plot some debug information
             if plot:
-                axs[0].vlines(peak - peak_length, 0, np.max(data), color="black", alpha=0.5)
-                axs[0].vlines(peak + peak_length, 0, np.max(data), color="black", alpha=0.5)
-                axs[1].vlines(peak - peak_length, 0, np.max(data), color="black", alpha=0.5)
-                axs[1].vlines(peak + peak_length, 0, np.max(data), color="black", alpha=0.5)
-                axs[symbol].plot(highest_peak, data[symbol][highest_peak], color="purple", marker="x")
+
+                plot_peak = peak / self.__encoder.fsample * 1000
+                plot_highest_peak = highest_peak / self.__encoder.fsample * 1000
+                plot_p_min = (peak - peak_length) / self.__encoder.fsample * 1000
+                plot_p_max = (peak + peak_length) / self.__encoder.fsample * 1000
+
+                axs[0].vlines(plot_p_min, 0, np.max(data), color="black", alpha=0.5)
+                axs[0].vlines(plot_p_max, 0, np.max(data), color="black", alpha=0.5)
+                axs[1].vlines(plot_p_min, 0, np.max(data), color="black", alpha=0.5)
+                axs[1].vlines(plot_p_max, 0, np.max(data), color="black", alpha=0.5)
+                axs[symbol].plot(plot_highest_peak, data[symbol][highest_peak], color="red", marker="x", zorder=3)
                 try:
-                    axs[0].plot(peak, data[0][peak], color="black", marker="D")
-                    axs[1].plot(peak, data[1][peak], color="black", marker="D")
+                    axs[0].plot(plot_peak, data[0][peak], color="black", marker="D", alpha=0.75)
+                    axs[1].plot(plot_peak, data[1][peak], color="black", marker="D", alpha=0.75)
                 except IndexError:
                     pass
 
@@ -197,10 +209,10 @@ class OChirpDecode:
                 break
 
         if plot:
-            axs[0].plot(data[0])
-            axs[1].plot(data[1])
-            axs[0].hlines(threshold, 0, data[0].size, colors="black")
-            axs[1].hlines(threshold, 0, data[0].size, colors="black")
+            axs[0].plot(t, data[0])
+            axs[1].plot(t, data[1])
+            axs[0].hlines(threshold, 0, data[0].size / self.__encoder.fsample * 1000, colors="black")
+            axs[1].hlines(threshold, 0, data[0].size / self.__encoder.fsample * 1000, colors="black")
 
         peaks.reverse()
         return peaks
@@ -316,16 +328,22 @@ class OChirpDecode:
         if plot:
             fig, axs = plt.subplots(3, sharex=True)
             fig.suptitle("Decode data results")
+
+            t = np.linspace(0, (len(data)/self.__encoder.fsample) * 1000, len(data))
+
             axs[0].set_title("Data")
-            axs[0].plot(data)
+            axs[0].set_ylabel("Amplitude")
+            axs[0].plot(t, data)
             axs[1].set_title("Convolution with symbol 0")
-            axs[1].plot(conv_data[0])
+            axs[1].set_ylabel("Amplitude")
+            axs[1].plot(t, conv_data[0])
             axs[2].set_title("Convolution with symbol 1")
-            axs[2].plot(conv_data[1])
-            axs[2].set_xlabel("time [samples]")
+            axs[2].set_ylabel("Amplitude")
+            axs[2].plot(t, conv_data[1])
+            axs[2].set_xlabel("Time [ms]")
             for peak in peaks:
                 i = peak[1] + 1
-                axs[i].plot(peak[0], conv_data[peak[1]][peak[0]], "xr")
+                axs[i].plot(peak[0]/self.__encoder.fsample * 1000, conv_data[peak[1]][peak[0]], "xr")
 
         return received_data, bits
 
@@ -436,5 +454,5 @@ if __name__ == '__main__':
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
     # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_0_-50.0dB.wav", plot=True)
+    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_0_-5dB.wav", plot=False)
 

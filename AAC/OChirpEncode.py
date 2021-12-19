@@ -66,10 +66,10 @@ class OChirpEncode:
     """
 
     def __init__(self, fsample: int = 44100, T: float = 0.024, M: int = 8, fs: int = 5500, fe: int = 9500,
-                 f_preamble_start: int = 100, f_preamble_end: int = 5500, blank_space_time: float = 0.000,
+                 f_preamble_start: int = 5500, f_preamble_end: int = 9500, blank_space_time: float = 0.000,
                  T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
                  minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False,
-                 window_beta: float = 4, orthogonal_preamble : bool = False):
+                 window_beta: float = 4, orthogonal_preamble: bool = False):
 
         self.fsample = fsample
         self.M = M
@@ -275,7 +275,7 @@ class OChirpEncode:
         symbols = self.get_orthogonal_chirps()[chirp_index]
         self.orthogonal_pair_offset = old_offset
 
-        return self.convert_bit_to_chrirp(symbols=[symbols], bit=0)
+        return self.convert_bit_to_chrirp(symbols=[symbols], bit=0, minimal_sub_chirp_duration=self.minimal_sub_chirp_duration)
 
     def convert_bit_to_chrirp(self, symbols: list, bit: int, M: int = None, T: float = None, no_window: bool = False,
                               blank_space: bool = True, minimal_sub_chirp_duration: bool = False) -> np.ndarray:
