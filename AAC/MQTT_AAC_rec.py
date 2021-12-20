@@ -74,12 +74,12 @@ def recording(args):
     power.off()
 
 
-
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
 
     client.subscribe("playrec")
+
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -93,7 +93,7 @@ def on_message(client, userdata, msg):
     # print "lightshow"
     # subprocess.call(['python', 'Lightshow1.py'])
     
-    print 'done'
+    print('done')
     client.publish("rec_done",1)
 
 client = mqtt.Client()
@@ -103,7 +103,7 @@ client.on_message = on_message
 
 
 #connect
-client.connect("robomindpi-002")
+client.connect("192.168.1.196")
 
 client.loop_start()
 while True:

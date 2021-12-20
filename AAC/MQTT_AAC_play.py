@@ -2,9 +2,10 @@
 
 import paho.mqtt.client as mqtt
 import subprocess
-from pixel_ring import pixel_ring
-from gpiozero import LED
-
+# from pixel_ring import pixel_ring
+# from gpiozero import LED
+import sounddevice as sd
+from scipy.io.wavfile import read
 import time
 
 # playing music
@@ -14,31 +15,40 @@ def playing(args):
     test = '-t' in args
     
     music_name = args[args.index('--music')+1]
-    music_file = '../Music_files/{}.wav'.format(music_name)
+    #music_file = '../Music_files/{}.wav'.format(music_name)
+    music_file = '../AAC/sample_chirps/{}.wav'.format(music_name)
     
     duration = float(args[args.index('--duration')+1])
 
     
-    power = LED(5)
-    power.on()
-    pixel_ring.set_brightness(100)
-    
-    pixel_ring.listen()
+    # power = LED(5)
+    # power.on()
+    # pixel_ring.set_brightness(100)
+    #
+    # pixel_ring.listen()
     
     # wait to ensure recording started
     time.sleep(1)
 
-    pixel_ring.think()
+    # pixel_ring.think()
     if test:
         #test mode
         time.sleep(duration)
     else:
-        subprocess.call(['aplay', \
-                         '-d', str(int(duration)),\
-                         '-r 44100',\
-                         music_file])
-    pixel_ring.off()
-    power.off()
+        # subprocess.call(['aplay', \
+        #                  '-d', str(int(duration)),\
+        #                  '-r 44100',\
+        #                  music_file])
+        fs, data = read(music_file)
+
+        z = np.ones(5000)
+        z = add_wgn(z, -20)
+        # data = np.append(z, data)
+        data = np.append(data, z)
+
+        sd.play(data, samplerate=fs, blocking=True)
+    # pixel_ring.off()
+    # power.off()
         
 
 
@@ -66,15 +76,14 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 #connect
-client.connect("robomindpi-002")
+print("Connecting...")
+client.connect("192.168.1.196")
 
-
-
-
+print("Looping...")
 client.loop_start()
 while True:
     try:
-        pass
+        time.sleep(0.1)
     except KeyboardInterrupt:
         break
 
