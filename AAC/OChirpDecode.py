@@ -109,8 +109,9 @@ class OChirpDecode:
 
         # Get the index of the actual peaks
         local_max = peak + np.argmax(peak_range) - search_range
+        # local_min = data[peak + np.argmin(peak_range) - search_range]
 
-        # print(f"Found {local_max} as local maximum in [{start}:{peak}:{end}]")
+        # print(f"Found {local_max} as local maximum with max diff [{local_min}]")
 
         # Plot some debug information
         if ax is not None:
@@ -127,7 +128,6 @@ class OChirpDecode:
                 ax.plot(plot_peak, data[peak], color="black", marker="D", alpha=0.75)
             except IndexError:
                 pass
-
         return local_max
 
     def get_next_peak(self, current_peak: int, direction: str, data: np.ndarray, avg_peak_distance: int, ax=None) -> int:
@@ -158,6 +158,33 @@ class OChirpDecode:
         # else:
         #     return actual_peak
         return actual_peak
+
+    def select_valid_peaks(self, peaks: list, data: np.ndarray) -> list:
+        """
+            Since we use the highest peak as the first peak, we do not know where the data starts and ends.
+            Determining what peaks to remove at the beginning and end proves to be quite difficult. However,
+            if we use a window of the number of peaks we need (fixed length data required), sum the peak values
+            in this window and then shift it one place over, then we can find the offset that will give us the highest
+            peaks on average.
+        """
+        number_of_data_peaks = len(self.original_data_bits)
+        number_of_signal_peaks = len(peaks)
+        offset = number_of_signal_peaks - number_of_data_peaks
+
+        if offset < 1:
+            return peaks
+
+        print(f"Need to remove {offset} peaks")
+
+        sums = []
+        for i in range(offset):
+            sums.append(np.sum(data[peaks[i:i + number_of_data_peaks]]))
+
+        # This is purely for visualization and printing
+        sums = sums - np.min(sums)
+        correct_offset = np.argmax(sums)
+
+        return peaks[correct_offset:correct_offset + number_of_data_peaks]
 
     def get_peaks(self, data: list, N: int, plot: bool = False) -> list:
         """
@@ -192,42 +219,42 @@ class OChirpDecode:
             ax.plot(t, merged_data)
             ax.set_title("Peak detection", fontsize=14)
             ax.set_ylabel("Amplitude", fontsize=14)
-            # axs[1].set_title("Symbol 1", fontsize=14)
-            # axs[1].set_ylabel("Amplitude", fontsize=14)
             ax.set_xlabel("Time [ms]", fontsize=14)
         else:
             ax = None
 
         # Assume that the highest value in the data is a peak
         highest_peak = int(np.argmax(merged_data))
-        current_peak = highest_peak
+
+        peaks.append(highest_peak)
+
+        current_left_peak = highest_peak
+        current_right_peak = highest_peak
+        left_valid = True
+        right_valid = True
 
         # Search for all peaks on the left
-        while 0 < current_peak < merged_data.size:
-            peaks.append(current_peak)
-            current_peak = self.get_next_peak(current_peak, "left", merged_data, avg_distance, ax=ax)
+        while left_valid or right_valid:
+            if left_valid:
+                current_left_peak = self.get_next_peak(current_left_peak, "left", merged_data, avg_distance, ax=ax)
 
-        # Then search for all the peaks on the right
-        current_peak = highest_peak
-        while 0 < current_peak < merged_data.size:
-            peaks.append(current_peak)
-            current_peak = self.get_next_peak(current_peak, "right", merged_data, avg_distance, ax=ax)
+                if 0 < current_left_peak < merged_data.size - 1:
+                    peaks.append(current_left_peak)
+                else:
+                    print("Found all left peaks.")
+                    left_valid = False
 
-        # We add the highest peak twice, so remove it once
-        peaks.remove(highest_peak)
+            if right_valid:
+                current_right_peak = self.get_next_peak(current_right_peak, "right", merged_data, avg_distance, ax=ax)
+
+                if 0 < current_right_peak < merged_data.size - 1:
+                    peaks.append(current_right_peak)
+                else:
+                    print("Found all right peaks")
+                    right_valid = False
+
         peaks.sort()
-
-        # TODO: The following section removes peaks based on the number of peaks we should receive
-        # This is fine if we have fixed-length messages. However, otherwise decoding the data requires knowing it's
-        # length, which is not feasible. As an alternative, we could use a threshold-based technique for this.
-        peak_heights = list(map(lambda peak: (peak, merged_data[peak]), peaks))
-        number_of_peaks = len(self.original_data_bits)
-        n_peaks_to_remove = len(peak_heights) - number_of_peaks
-        print(f"We have {n_peaks_to_remove} too many peaks")
-        peak_heights.sort(key=lambda peak: peak[1])
-        peaks_to_discard = peak_heights[:n_peaks_to_remove]
-        for peak in peaks_to_discard:
-            peaks.remove(peak[0])
+        peaks = self.select_valid_peaks(peaks, merged_data)
 
         print(f"Found {len(peaks)} peaks: {peaks}")
 
@@ -475,9 +502,9 @@ if __name__ == '__main__':
 
     from configuration import get_configuration_encoder, Configuration
 
-    encoder = get_configuration_encoder(Configuration.baseline_fast)
+    encoder = get_configuration_encoder(Configuration.baseline)
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
     # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_5_-33dB.wav", plot=True)
+    decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-50dB.wav", plot=True)
 
