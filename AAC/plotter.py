@@ -3,46 +3,67 @@ from OChirpEncode import OChirpEncode
 from OChirpDecode import OChirpDecode
 import numpy as np
 import pandas as pd
+from configuration import Configuration, get_configuration_encoder
 
 
 """
     This is file is meant to produce figures for the report in a consistent way
 """
+fontSize = 14
 
 
 def plot_example_ochirp():
-    encoder = OChirpEncode(fsample=44100*4)
-    ochirp = encoder.get_single_chirp(0)
+    encoder = OChirpEncode(fsample=4 * 44100, T=None, fs=500, fe=2500, minimize_sub_chirp_duration=True, required_number_of_cycles=3)
+    ochirp1 = encoder.get_single_chirp(0)
+    encoder.minimal_sub_chirp_duration = False
+    ochirp2 = encoder.get_single_chirp(0)[:-2]
+    print(ochirp1.size)
+    print(ochirp2.size)
 
-    t = np.linspace(0, encoder.T*1000, len(ochirp))
+    t = np.linspace(0, encoder.T*1000, len(ochirp1))
 
-    plt.figure(figsize=(6, 2))
-    plt.plot(t, ochirp)
-    plt.xlabel("Time [ms]")
+    fig, axs = plt.subplots(2, sharex=True, sharey=True)
+    axs[0].plot(t, ochirp2)
+    axs[0].set_xlabel("a)")
+    axs[1].plot(t, ochirp1)
+    axs[1].set_xlabel("b)\nTime [ms]")
+    axs[0].set_ylabel("Amplitude")
+    axs[1].set_ylabel("Amplitude")
     plt.tight_layout()
     plt.savefig("./images/example_ochirp.pdf", format="pdf", bbox_inches='tight')
+    np.savetxt("./images/example_ochirp_min.csv", ochirp1, delimiter=",")
+    np.savetxt("./images/example_ochirp_regular.csv", ochirp2, delimiter=",")
     plt.show()
 
 
 def plot_example_frame():
-    data = "Hello"
-    encoder = OChirpEncode(fsample=44100*4)
+    data = "H"
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 4 * 44100
     _, frame = encoder.convert_data_to_sound(data, filename="temp.wav")
+    frame = frame/np.max(frame)
 
     t = np.linspace(0, len(frame)/encoder.fsample*1000, len(frame))
 
     plt.figure(figsize=(6, 2))
+    plt.xlim(-1, 120)
     plt.plot(t, frame)
+    plt.fill_between([0, 48], -1.1, 1.1, alpha=0.5, color='green')
+    plt.fill_between([48.1, 120], -1.1, 1.1, alpha=0.5, color='red')
     plt.xlabel("Time [ms]")
+    plt.ylabel("Amplitude")
     plt.tight_layout()
     plt.savefig("./images/example_frame.pdf", format="pdf", bbox_inches='tight')
+    np.savetxt("./images/exaple_frame.csv", frame, delimiter=",")
     plt.show()
 
 
 def plot_example_decode():
-    data = "Hello"
-    encoder = OChirpEncode(fsample=44100*4)
+    data = "H"
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 4 * 44100
     _, frame = encoder.convert_data_to_sound(data, filename="temp.wav")
+    frame = frame/np.max(frame)
 
     decoder = OChirpDecode(original_data=data, encoder=encoder)
 
@@ -55,9 +76,11 @@ def plot_example_decode():
 
 
 def plot_example_peak_detection():
-    data = "Hello"
-    encoder = OChirpEncode(fsample=44100*4)
+    data = "H"
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 4 * 44100
     _, frame = encoder.convert_data_to_sound(data, filename="temp.wav")
+    frame = frame / np.max(frame)
 
     decoder = OChirpDecode(original_data=data, encoder=encoder)
 
@@ -65,26 +88,27 @@ def plot_example_peak_detection():
 
     plt.figure(2).suptitle("")
     plt.figure(2).set_size_inches(6, 3)
-    plt.xlim(encoder.T_preamble*encoder.fsample, encoder.T_preamble*encoder.fsample + 3*encoder.T*encoder.fsample)
+    plt.xlim(encoder.T_preamble * 1000, 1000 * (encoder.T_preamble + 3 * encoder.T))
     plt.tight_layout()
     plt.savefig("./images/example_peak_detection.pdf", format="pdf", bbox_inches='tight')
     plt.show()
 
 
 def plot_range_test_results():
-    df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
+    # df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
+    df = pd.read_csv('./data/results/20-12-2021-nlos/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
     config_list = ["Baseline (T=48ms)", "Baseline (T=24ms)", "Advanced (T~=24ms)", "Speed (T~=?)"]
-
+    print(df.Configuration.unique())
     plt.figure(figsize=(6, 3))
     index = 0
     labels = []
     for distance in df.distance.unique():
-        for i, config in enumerate(df.Configuration.unique()):
+        for i, config in enumerate(Configuration):
             print(f"{distance} {config}")
-            data = df[(df.Configuration == config) & (df.distance == distance)]
+            data = df[(df.Configuration == str(config)) & (df.distance == distance)]
 
             medianprops = {'color': color_list[i], 'linewidth': 2}
             boxprops = {'color': color_list[i], 'linestyle': '-'}
@@ -98,19 +122,21 @@ def plot_range_test_results():
                 plt.text(x=index-0.5, y=0.725, s=f"{distance}", color='black', horizontalalignment='center',
                          verticalalignment='center')
 
-            labels.append(f"{config}")
+            labels.append(f"{config.name}")
             index += 1
             plt.axvline(x=index - 0.5, color='black', alpha=0.2)
 
         if distance < df.distance.max():
             plt.axvline(x=index - 0.5, color='r', linestyle="dashed")
 
-    plt.ylim(-0.025, 0.7)
-    plt.xlim(-0.5, 11.5)
+    # plt.ylim(-0.025, 0.7)
+    # plt.xlim(-0.5, 5.5)
     plt.text(x=9 - 0.5, y=0.8, s=f"Distance [m]", color='black', horizontalalignment='center',
              verticalalignment='center')
     plt.ylabel("BER")
     plt.xlabel("Configurations")
+    plt.xticks(rotation=45)
+    # labels.append("")
     plt.xticks(np.arange(index), labels)
     plt.tight_layout()
     plt.savefig("./images/range_test_results.pdf", format="pdf", bbox_inches='tight')

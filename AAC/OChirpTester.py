@@ -304,6 +304,6 @@ if __name__ == '__main__':
     # test_orthogonality()
     # range_test()
     # get_range_test_results()
-    # test_baseline_configuration()
+    test_baseline_configuration()
     # test_advanced_configuration()
-    test_fast_configuration()
+    # test_fast_configuration()
