@@ -14,7 +14,7 @@ def rec_done_callback(client, userdata, message):
     print("rec_done")
 
 
-def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, location="", top=True, test=False):
+def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, location="0", top=True, test=False):
     args = ""
     if test:
         args = "{} -t".format(args)
@@ -39,13 +39,14 @@ def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, 
 distance_cm = 50
 
 music_location = '../AAC/sample_chirps/'
-music_names = ['baseline', 'baseline_fast', 'balanced', 'fast']
-# music_names = ['fast']
+# music_names = ['baseline', 'baseline_fast', 'balanced', 'fast']
+music_names = ['fast']
 
 # Length of the music files (seconds)
 durations = []
+music_padding_s = 0.15
 for music in music_names:
-    d = get_sound_file_length(music_location + music + '.wav')
+    d = get_sound_file_length(music_location + music + '.wav') + music_padding_s
     durations.append(d * 1.25)
 
 rec_done = False
@@ -81,7 +82,7 @@ for i in range(len(music_names)):
         client.publish("playrec", tx_args)
 
         music = '../AAC/sample_chirps/{}.wav'.format(music_names[i])
-        play_file(music, padding_duration_ms=1000, add_padding_to_end=True)
+        play_file(music, padding_duration_ms=music_padding_s*1000, add_padding_to_end=True)
 
         while not (rec_done and play_done):
             pass
