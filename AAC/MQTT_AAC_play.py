@@ -1,55 +1,47 @@
 #!/usr/bin/env python
 
 import paho.mqtt.client as mqtt
-import subprocess
-# from pixel_ring import pixel_ring
-# from gpiozero import LED
+
+try:
+    from pixel_ring import pixel_ring
+    from gpiozero import LED
+    on_pi = True
+except ImportError:
+    on_pi = False
+
 import sounddevice as sd
 from scipy.io.wavfile import read
 import time
+from generic_audio_functions import play_file
 
-# playing music
+
 def playing(args):
     args = args.split()
 
     test = '-t' in args
     
     music_name = args[args.index('--music')+1]
-    #music_file = '../Music_files/{}.wav'.format(music_name)
     music_file = '../AAC/sample_chirps/{}.wav'.format(music_name)
     
     duration = float(args[args.index('--duration')+1])
+    padding = float(args[args.index('--padding')+1])
 
-    
-    # power = LED(5)
-    # power.on()
-    # pixel_ring.set_brightness(100)
-    #
-    # pixel_ring.listen()
-    
-    # wait to ensure recording started
-    time.sleep(1)
+    if on_pi:
+        power = LED(5)
+        power.on()
+        pixel_ring.set_brightness(100)
+        pixel_ring.listen()
+        # pixel_ring.think()
 
-    # pixel_ring.think()
     if test:
         #test mode
         time.sleep(duration)
     else:
-        # subprocess.call(['aplay', \
-        #                  '-d', str(int(duration)),\
-        #                  '-r 44100',\
-        #                  music_file])
-        fs, data = read(music_file)
+        play_file(music_file, add_padding_to_end=True, padding_duration_ms=padding*1000)
 
-        z = np.ones(5000)
-        z = add_wgn(z, -20)
-        # data = np.append(z, data)
-        data = np.append(data, z)
-
-        sd.play(data, samplerate=fs, blocking=True)
-    # pixel_ring.off()
-    # power.off()
-        
+    if on_pi:
+        pixel_ring.off()
+        power.off()
 
 
 # The callback for when the client receives a CONNACK response from the server.
