@@ -9,6 +9,7 @@ from configuration import Configuration, get_configuration_encoder
 """
     This is file is meant to produce figures for the report in a consistent way
 """
+fontSize = 14
 
 
 def plot_example_ochirp():
@@ -95,7 +96,7 @@ def plot_example_peak_detection():
 
 def plot_range_test_results():
     # df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
-    df = pd.read_csv('./data/results/19-12-2021-los/parsed_results.csv')
+    df = pd.read_csv('./data/results/20-12-2021-nlos/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
@@ -146,8 +147,8 @@ def main():
     # plot_example_ochirp()
     # plot_example_frame()
     # plot_example_decode()
-    plot_example_peak_detection()
-    # plot_range_test_results()
+    # plot_example_peak_detection()
+    plot_range_test_results()
 
 
 if __name__ == "__main__":

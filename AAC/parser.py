@@ -4,7 +4,7 @@ from configuration import Configuration, get_configuration_encoder
 from OChirpDecode import OChirpDecode
 import pandas as pd
 
-directory = './data/results/19-12-2021-los/'
+directory = './data/results/20-12-2021-nlos/'
 configurations = ['baseline', 'baseline_fast', 'balanced', 'fast']
 
 if __name__ == '__main__':
@@ -26,13 +26,15 @@ if __name__ == '__main__':
 
         ber = decoder.decode_file(file, plot=False)
         bers.append((conf, distance, ber))
-        if (conf == Configuration.baseline_fast or conf == Configuration.fast) and distance == 50 and ber > 0:
+        if (conf == Configuration.fast) and distance == 50 and ber > 0:
             print("\nINFORMATION")
             print(file)
             print(conf)
             print(f"{distance}cm")
-            decoder.decode_file(file, plot=True)
+            # decoder.decode_file(file, plot=True)
 
     df = pd.DataFrame(bers, columns=['Configuration', 'distance', 'ber'])
 
     df.to_csv(directory + 'parsed_results.csv', index=False)
+
+    print(f"avg ber: {df.ber.mean()}")

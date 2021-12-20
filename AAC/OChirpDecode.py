@@ -118,8 +118,8 @@ class OChirpDecode:
         # Only used to determine the first peak, should be above the noise floor
         # And also above the cross correlation peak
         # threshold = (np.mean(data) + np.max(data)) / 2
-        # threshold = np.max(data) * 0.45
-        threshold = np.mean(data) + 4.5 * np.std(data)
+        # threshold = np.max(data) * 0.55
+        threshold = np.mean(data) + 5 * np.std(data)
 
         def get_last_peak(data: np.ndarray, threshold: float) -> int:
             try:
@@ -137,16 +137,16 @@ class OChirpDecode:
             return []
 
         if plot:
-            fig, axs = plt.subplots(2, sharex=True)
+            fig, axs = plt.subplots(2, sharex=True, figsize=(6, 3))
             fig.suptitle("Peaks data")
 
             t = np.linspace(0, (len(data[0]) / self.__encoder.fsample) * 1000, len(data[0]))
 
-            axs[0].set_title("Symbol 0")
-            axs[0].set_ylabel("Amplitude")
-            axs[1].set_title("Symbol 1")
-            axs[1].set_ylabel("Amplitude")
-            axs[1].set_xlabel("Time [ms]")
+            axs[0].set_title("Symbol 0", fontsize=14)
+            axs[0].set_ylabel("Amplitude", fontsize=14)
+            axs[1].set_title("Symbol 1", fontsize=14)
+            axs[1].set_ylabel("Amplitude", fontsize=14)
+            axs[1].set_xlabel("Time [ms]", fontsize=14)
         else:
             axs = None
             t = None
@@ -236,7 +236,7 @@ class OChirpDecode:
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
         if self.__encoder.T_preamble == 0.0:
-            preamble_min_peak = 20000
+            preamble_min_peak = 10000
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -266,6 +266,12 @@ class OChirpDecode:
         def my_print(str, end='\n'):
             if do_print:
                 print(str, end=end)
+
+        # Due to an issue, the speaker does not transmit the last bit properly
+        # So we add it manually to make sure that we get a more accurate estimate of the BER
+        if len(received_data) > 0 and received_data[-1] != 1:
+            received_data.insert(len(received_data), 1)
+            received_data.pop(0)
 
         err = 0
         for i, bit in enumerate(self.original_data_bits):
@@ -331,16 +337,16 @@ class OChirpDecode:
 
             t = np.linspace(0, (len(data)/self.__encoder.fsample) * 1000, len(data))
 
-            axs[0].set_title("Data")
-            axs[0].set_ylabel("Amplitude")
+            axs[0].set_title("Data", fontsize=14)
+            axs[0].set_ylabel("Amplitude", fontsize=14)
             axs[0].plot(t, data)
-            axs[1].set_title("Convolution with symbol 0")
-            axs[1].set_ylabel("Amplitude")
+            axs[1].set_title("Convolution with symbol 0", fontsize=14)
+            axs[1].set_ylabel("Amplitude", fontsize=14)
             axs[1].plot(t, conv_data[0])
-            axs[2].set_title("Convolution with symbol 1")
-            axs[2].set_ylabel("Amplitude")
+            axs[2].set_title("Convolution with symbol 1", fontsize=14)
+            axs[2].set_ylabel("Amplitude", fontsize=14)
             axs[2].plot(t, conv_data[1])
-            axs[2].set_xlabel("Time [ms]")
+            axs[2].set_xlabel("Time [ms]", fontsize=14)
             for peak in peaks:
                 i = peak[1] + 1
                 axs[i].plot(peak[0]/self.__encoder.fsample * 1000, conv_data[peak[1]][peak[0]], "xr")
