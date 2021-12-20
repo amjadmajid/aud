@@ -91,6 +91,74 @@ class OChirpDecode:
 
         return conv_data
 
+    def find_local_maximum(self, peak: int, data: np.ndarray, search_range: int, ax=None) -> int:
+        # Create a search range around the peak
+        start = peak - search_range
+        end = peak + search_range
+        if start < 0:
+            start = 0
+        if end > data.size - 1:
+            end = data.size - 1
+
+        # The possible search range for the actual peak
+        peak_range = data[start:end]
+
+        # We have reached the end of the file
+        if len(peak_range) == 0:
+            return 0
+
+        # Get the index of the actual peaks
+        local_max = peak + np.argmax(peak_range) - search_range
+
+        # print(f"Found {local_max} as local maximum in [{start}:{peak}:{end}]")
+
+        # Plot some debug information
+        if ax is not None:
+            plot_peak = peak / self.__encoder.fsample * 1000
+            plot_local_max = local_max / self.__encoder.fsample * 1000
+            plot_p_min = start / self.__encoder.fsample * 1000
+            plot_p_max = end / self.__encoder.fsample * 1000
+
+            ax.vlines(plot_p_min, 0, np.max(data), color="black", alpha=0.5)
+            ax.vlines(plot_p_max, 0, np.max(data), color="black", alpha=0.5)
+            ax.plot(plot_local_max, data[local_max], color="red", marker="x", zorder=3)
+            try:
+                ax.plot(plot_peak, data[peak], color="black", marker="D", alpha=0.75)
+                ax.plot(plot_peak, data[peak], color="black", marker="D", alpha=0.75)
+            except IndexError:
+                pass
+
+        return local_max
+
+    def get_next_peak(self, current_peak: int, direction: str, data: np.ndarray, avg_peak_distance: int, ax=None) -> int:
+        if 'l' in direction.lower():
+            next_peak = current_peak - avg_peak_distance
+        else:
+            next_peak = current_peak + avg_peak_distance
+
+        if next_peak < 0 or next_peak > data.size:
+            return -1
+
+        # Define a peak time to search for the actual peak around the predicted peak
+        peak_time = self.T * 0.075
+        peak_length = int(peak_time * self.fsample)
+
+        # Get the actual peak by finding the local maximum
+        actual_peak = self.find_local_maximum(next_peak, data, peak_length, ax=ax)
+
+        # Check whether this peak is much smaller than the previous
+        # If so, we might have gotten to the end.
+        # We create a threshold where we determine where the peak is not a peak anymore.
+        # peak_max_ratio = 0.33
+        # current_peak_height = data[current_peak]
+        # next_peak_height = data[actual_peak]
+        # if next_peak_height / current_peak_height < peak_max_ratio:
+        #     print(f"Found the {direction} end.")
+        #     return -1
+        # else:
+        #     return actual_peak
+        return actual_peak
+
     def get_peaks(self, data: list, N: int, plot: bool = False) -> list:
         """
             Try to decode the auto correlation result by correctly detecting the peaks.
@@ -102,119 +170,70 @@ class OChirpDecode:
 
             Moreover, every predicted peak is searched around for the actual peak to overcome drifting over time.
         """
+        # We get the peaks as list[np.array, np.array]
+        # But to make our lives easy, convert is to a 2D np.array
+        data = np.array(data)
 
         # Typical distance between peaks, to predict the next peak
-        avg_distance = int(self.T * self.fsample)
-
-        # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.05
-        peak_length = int(peak_time * self.fsample)
+        avg_distance = int(0.5 + (self.T * self.fsample))
 
         if data[0].size != data[1].size:
             print("get peaks data sizes not the same!")
             return []
 
-        # TODO: is this a good, robust threshold?
-        # Only used to determine the first peak, should be above the noise floor
-        # And also above the cross correlation peak
-        # threshold = (np.mean(data) + np.max(data)) / 2
-        # threshold = np.max(data) * 0.55
-        threshold = np.mean(data) + 5 * np.std(data)
-
-        def get_last_peak(data: np.ndarray, threshold: float) -> int:
-            try:
-                return np.where(data > threshold)[0][-1]
-            except IndexError:
-                return np.iinfo(int).min
-
-        # First, find the first point to cross the threshold, searching from the right.
-        peaks0 = get_last_peak(data[0], threshold)
-        peaks1 = get_last_peak(data[1], threshold)
-        peak = max(peaks0, peaks1)
-
-        if peak == np.iinfo(int).min:
-            print("Did not find peak!")
-            return []
-
-        if plot:
-            fig, axs = plt.subplots(2, sharex=True, figsize=(6, 3))
-            fig.suptitle("Peaks data")
-
-            t = np.linspace(0, (len(data[0]) / self.__encoder.fsample) * 1000, len(data[0]))
-
-            axs[0].set_title("Symbol 0", fontsize=14)
-            axs[0].set_ylabel("Amplitude", fontsize=14)
-            axs[1].set_title("Symbol 1", fontsize=14)
-            axs[1].set_ylabel("Amplitude", fontsize=14)
-            axs[1].set_xlabel("Time [ms]", fontsize=14)
-        else:
-            axs = None
-            t = None
-
-        # We now search for every next peak.
         peaks = []
-        while True:
-            # Create a search range around the peak
-            start = peak - peak_length
-            end = peak + peak_length
-            if start < 0:
-                start = 0
-            if end > data[0].size - 1:
-                end = data[0].size - 1
-
-            # The possible search range for the actual peak
-            peak_range_s0 = data[0][start:end]
-            peak_range_s1 = data[1][start:end]
-
-            # If this range is empty, then we're at the end
-            # if peak_range_s0.size == 0:
-            #     break
-
-            # Get the index of the actual peaks
-            actual_peak_s0 = peak + np.argmax(peak_range_s0) - peak_length
-            actual_peak_s1 = peak + np.argmax(peak_range_s1) - peak_length
-
-            # We take the highest peak of the two symbols as the actual symbol
-            # We also assume it is not noise, since we have the preamble
-            highest_peak, symbol = (actual_peak_s0, 0) if data[0][actual_peak_s0] > data[1][actual_peak_s1] else (actual_peak_s1, 1)
-            peaks.append((highest_peak, symbol))
-
-            # Plot some debug information
-            if plot:
-
-                plot_peak = peak / self.__encoder.fsample * 1000
-                plot_highest_peak = highest_peak / self.__encoder.fsample * 1000
-                plot_p_min = (peak - peak_length) / self.__encoder.fsample * 1000
-                plot_p_max = (peak + peak_length) / self.__encoder.fsample * 1000
-
-                axs[0].vlines(plot_p_min, 0, np.max(data), color="black", alpha=0.5)
-                axs[0].vlines(plot_p_max, 0, np.max(data), color="black", alpha=0.5)
-                axs[1].vlines(plot_p_min, 0, np.max(data), color="black", alpha=0.5)
-                axs[1].vlines(plot_p_max, 0, np.max(data), color="black", alpha=0.5)
-                axs[symbol].plot(plot_highest_peak, data[symbol][highest_peak], color="red", marker="x", zorder=3)
-                try:
-                    axs[0].plot(plot_peak, data[0][peak], color="black", marker="D", alpha=0.75)
-                    axs[1].plot(plot_peak, data[1][peak], color="black", marker="D", alpha=0.75)
-                except IndexError:
-                    pass
-
-            # Go to the predicted next peak based on the actual peak
-            peak = highest_peak - avg_distance
-
-            # If we've parsed all the data
-            if peak < 0:
-                break
-            elif len(peaks) >= N:
-                print(f"Reached the required number of peaks [{N}]!")
-                break
+        merged_data = np.max(data, axis=0)
 
         if plot:
-            axs[0].plot(t, data[0])
-            axs[1].plot(t, data[1])
-            axs[0].hlines(threshold, 0, data[0].size / self.__encoder.fsample * 1000, colors="black")
-            axs[1].hlines(threshold, 0, data[0].size / self.__encoder.fsample * 1000, colors="black")
+            plt.figure(figsize=(6, 3))
+            ax = plt.gca()
 
-        peaks.reverse()
+            t = np.linspace(0, (len(merged_data) / self.__encoder.fsample) * 1000, len(merged_data))
+            ax.plot(t, merged_data)
+            ax.set_title("Peak detection", fontsize=14)
+            ax.set_ylabel("Amplitude", fontsize=14)
+            # axs[1].set_title("Symbol 1", fontsize=14)
+            # axs[1].set_ylabel("Amplitude", fontsize=14)
+            ax.set_xlabel("Time [ms]", fontsize=14)
+        else:
+            ax = None
+
+        # Assume that the highest value in the data is a peak
+        highest_peak = int(np.argmax(merged_data))
+        current_peak = highest_peak
+
+        # Search for all peaks on the left
+        while 0 < current_peak < merged_data.size:
+            peaks.append(current_peak)
+            current_peak = self.get_next_peak(current_peak, "left", merged_data, avg_distance, ax=ax)
+
+        # Then search for all the peaks on the right
+        current_peak = highest_peak
+        while 0 < current_peak < merged_data.size:
+            peaks.append(current_peak)
+            current_peak = self.get_next_peak(current_peak, "right", merged_data, avg_distance, ax=ax)
+
+        # We add the highest peak twice, so remove it once
+        peaks.remove(highest_peak)
+        peaks.sort()
+
+        # TODO: The following section removes peaks based on the number of peaks we should receive
+        # This is fine if we have fixed-length messages. However, otherwise decoding the data requires knowing it's
+        # length, which is not feasible. As an alternative, we could use a threshold-based technique for this.
+        peak_heights = list(map(lambda peak: (peak, merged_data[peak]), peaks))
+        number_of_peaks = len(self.original_data_bits)
+        n_peaks_to_remove = len(peak_heights) - number_of_peaks
+        print(f"We have {n_peaks_to_remove} too many peaks")
+        peak_heights.sort(key=lambda peak: peak[1])
+        peaks_to_discard = peak_heights[:n_peaks_to_remove]
+        for peak in peaks_to_discard:
+            peaks.remove(peak[0])
+
+        print(f"Found {len(peaks)} peaks: {peaks}")
+
+        # We now need to find the which peak is related to which symbol
+        peaks = list(map(lambda peak: (peak, np.argmax(data[:, peak])), peaks))
+
         return peaks
 
     def contains_preamble(self, data: np.ndarray, plot: bool = False, preamble_index: bool = False,
@@ -269,9 +288,9 @@ class OChirpDecode:
 
         # Due to an issue, the speaker does not transmit the last bit properly
         # So we add it manually to make sure that we get a more accurate estimate of the BER
-        if len(received_data) > 0 and received_data[-1] != 1:
-            received_data.insert(len(received_data), 1)
-            received_data.pop(0)
+        # if len(received_data) > 0 and received_data[-1] != 1:
+        #     received_data.insert(len(received_data), 1)
+        #     received_data.pop(0)
 
         err = 0
         for i, bit in enumerate(self.original_data_bits):
@@ -460,5 +479,5 @@ if __name__ == '__main__':
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
     # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_0_-5dB.wav", plot=False)
+    decoder.decode_file("sample_chirps\\noised\\baseline_fast\\baseline_fast_5_-33dB.wav", plot=True)
 
