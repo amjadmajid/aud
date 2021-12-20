@@ -14,7 +14,8 @@ def rec_done_callback(client, userdata, message):
     print("rec_done")
 
 
-def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, location="0", top=True, test=False):
+def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, location="0", top=True, test=False
+                  , padding: float = 0):
     args = ""
     if test:
         args = "{} -t".format(args)
@@ -33,6 +34,8 @@ def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, 
     args = "{} --location {}".format(args, location)
     args = "{} --duration {}".format(args, duration)
 
+    args = "{} --padding {}".format(args, padding)
+
     return args
 
 
@@ -44,10 +47,10 @@ music_names = ['fast']
 
 # Length of the music files (seconds)
 durations = []
-music_padding_s = 0.15
+music_padding_s = 0.15  # Speaker cuts off too early at 0.1, so use 0.15
 for music in music_names:
     d = get_sound_file_length(music_location + music + '.wav') + music_padding_s
-    durations.append(d * 1.25)
+    durations.append(d * 1.4)
 
 rec_done = False
 play_done = False
@@ -65,7 +68,7 @@ client.message_callback_add("play_done", play_done_callback)
 # loop
 client.loop_start()
 
-msg = Input_parsing(dist=distance_cm, duration=durations[0])
+msg = Input_parsing(dist=distance_cm, duration=durations[0], padding=music_padding_s)
 print("playrec settings \n{}\n".format(msg))
 
 for i in range(len(music_names)):
@@ -76,13 +79,13 @@ for i in range(len(music_names)):
         play_done = True
 
         # Construct message
-        msg = Input_parsing(dist=distance_cm, duration=durations[0])
+        msg = Input_parsing(dist=distance_cm, duration=durations[0], padding=music_padding_s)
 
         tx_args = "{} --music {}".format(msg, music_names[i])
         client.publish("playrec", tx_args)
 
-        music = '../AAC/sample_chirps/{}.wav'.format(music_names[i])
-        play_file(music, padding_duration_ms=music_padding_s*1000, add_padding_to_end=True)
+        # music = '../AAC/sample_chirps/{}.wav'.format(music_names[i])
+        # play_file(music, padding_duration_ms=music_padding_s*1000, add_padding_to_end=True)
 
         while not (rec_done and play_done):
             pass
