@@ -48,7 +48,7 @@ def generate_noisy_samples():
     babble_noise_file = "./babble_noise.wav"
     pure_signals = glob("./sample_chirps/*.wav")
     snrs = np.arange(-45, 1, 2)
-    num_iterations = 300
+    num_iterations = 1000
 
     fs, bubble_noise = read(babble_noise_file)
     bubble_noise = bubble_noise
@@ -94,10 +94,14 @@ def decode_noisy_sample(sample: str) -> (Configuration, int, float):
     config_name = sample.split("/")[-1].split("\\")[1]
     config = Configuration[config_name]
     snr = float(sample.split("_")[-1].replace("dB.wav", ""))
+    iteration = int(sample.split("_")[-2])
 
-    encoder = get_configuration_encoder(config)
-    decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
-    return config, snr, decoder.decode_file(sample, plot=False)
+    if iteration < 300:
+        encoder = get_configuration_encoder(config)
+        decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
+        return config, snr, decoder.decode_file(sample, plot=False)
+    else:
+        return None, None, None
 
 
 def process_noisy_samples():
@@ -105,10 +109,11 @@ def process_noisy_samples():
 
     # decode_noisy_sample(noisy_samples[0])
 
-    with Pool(12) as p:
+    with Pool(9) as p:
         results = p.map(decode_noisy_sample, noisy_samples)
 
     df = pd.DataFrame(results, columns=['Configuration', 'snr', 'ber'])
+    df = df.dropna()
     df.to_csv("./data/results/snr_ber_data.csv", index=False)
 
 
@@ -124,16 +129,16 @@ def plot_noisy_samples():
     plt.figure()
     plt.ylabel("BER")
     plt.xlabel("SNR [dB]")
-    plt.yscale('symlog', linthresh=2 * 10**-4)
-    print(df.snr.unique())
+    plt.yscale('symlog', linthresh=10**-5)
+    plt.ylim(-0.00000075, 1.1)
+    plt.grid(True)
+    # print(df.snr.unique())
     for i, conf in enumerate(configurations):
         data = df[df.Configuration == conf]
 
         plt.plot(data.snr, data['mean'], label=conf.split(".")[-1], marker=markers[i])
         # plt.fill_between(data.snr, data['mean'] - data['std'], data['mean'] + data['std'], alpha=0.33)
 
-    plt.ylim(-0.000075, 1.1)
-    plt.grid(True)
     plt.legend()
     plt.show()
 
