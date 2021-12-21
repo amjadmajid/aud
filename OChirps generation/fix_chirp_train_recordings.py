@@ -148,47 +148,48 @@ def generate_sample(chirp_train: str):
     # We use this to make sure that we center the sample nicely.
     sample_offset = sample_width * 0.2
 
-##    # plotting
-##    fig, axs = plt.subplots(6, sharex=True, sharey=True)
-##    for j in range(6):
-##        dataset = data[:, j]
-##        ax = axs[j]
-##        ax.plot(dataset)
-##
-##    for i, peak in enumerate(peaks):
-##        start = int(sample_offset + peak - sample_width/2)
-##        end = int(sample_offset + peak + sample_width/2)
-##        
-##        ax.vlines(start, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
-##        ax.vlines(end, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
-##
-##    plt.tight_layout()
-##    plt.show()
+    # plotting
+    if False:
+        fig, axs = plt.subplots(6, sharex=True, sharey=True)
+        for j in range(6):
+            dataset = data[:, j]
+            ax = axs[j]
+            ax.plot(dataset)
+
+        for i, peak in enumerate(peaks):
+            start = int(sample_offset + peak - sample_width/2)
+            end = int(sample_offset + peak + sample_width/2)
+            
+            ax.vlines(start, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+            ax.vlines(end, np.min(dataset), np.max(dataset), color="black", alpha=0.5)
+
+        plt.tight_layout()
+        plt.show()
         
 
     # Sanity checks
     correct_peak_diff = 5474 if T == 0.024 else 6530
     peak_diff = np.diff(peaks)
     mean_peak_diff = np.mean(peak_diff)
-    correct_heights_std = 20000
+    correct_heights_std = 100000
     heights_std = np.std(conv_data[0][np.array(peaks)])
+    peak_diff_std_threshold = 200
     if len(peaks) != 200 or \
             np.abs(mean_peak_diff - correct_peak_diff) > (sample_width * 0.005) or \
-
-            np.std(peak_diff) > 50 or \
+            np.std(peak_diff) > peak_diff_std_threshold or \
             heights_std > correct_heights_std:
         print(f"ERROR! {chirp_train}\nWe cannot decode this file! mean peak diff: {mean_peak_diff}, but should be {correct_peak_diff}\n"
               f"or the avg peak interval differs too much: {np.abs(mean_peak_diff - correct_peak_diff)} > {(sample_width * 0.005)}\n"
-              f"or there is too much variance in the typical peak dfference: {np.std(peak_diff)} > 50\n"
+              f"or there is too much variance in the typical peak dfference: {np.std(peak_diff)} > {peak_diff_std_threshold}\n"
               f"or there are not enough peaks {len(peaks)} != 200\n"
-              f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}")
+              f"or the height of the peaks is inconsistent: {heights_std} > {correct_heights_std}\n")
 
-        # Plot some results to show the issues
-        decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
-        plt.figure()
-        plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
-        plt.plot(conv_data[0])
-        plt.show()
+        if False: # Plot some results to show the issues
+            decoder.get_peaks(conv_data, plot=True, N=len(decoder.original_data_bits))
+            plt.figure()
+            plt.scatter(peaks, conv_data[0][np.array(peaks)], color="red", marker='X', zorder=5)
+            plt.plot(conv_data[0])
+            plt.show()
         return
 
     
@@ -201,12 +202,12 @@ def generate_sample(chirp_train: str):
         real_destination = destination.replace(placeholder_marker, str(i).zfill(3))
 
         # Skip the file if it exists
-        #if not os.path.isfile(real_destination):
-        Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
-            # print(f"writing {real_destination}")
-        write(real_destination, fsample, sample)
-        # else:
-        #     print(f"skipping {real_destination}")
+        if not os.path.isfile(real_destination):
+            Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
+            print(f"writing {real_destination}")
+            write(real_destination, fsample, sample)
+        #else:
+            #print(f"skipping {real_destination}")
 
 
 
@@ -220,12 +221,8 @@ def generate_samples():
     #print(files)
     print("{} files found".format(len(files)))
 
-    for file in files:
-        generate_sample(file)
-        return
-
-    # with Pool(12) as p:
-    #     p.map(generate_sample, files)
+    with Pool(12) as p:
+        p.map(generate_sample, files)
 
 
 def main():

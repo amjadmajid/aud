@@ -1,7 +1,7 @@
 clearvars
 close all
 
-locs = zeros(120, 2);
+locs = zeros(96, 2);
 
 for i = 1:length(locs)
     if i <= 24
@@ -25,10 +25,39 @@ end
 
 locs(:,1) = deg2rad(locs(:,1));
 
+%Scatter plot
 polarscatter(locs(:,1),locs(:,2),'filled');
 hold on
+
+%voronoi
+[x, y] = pol2cart(locs(:,1),locs(:,2));
+[v, c, xy] = VoronoiLimit(x,y,'bs_ext', 3.1*[1 1 -1 -1 1; 1 -1 -1 1 1]','figure','off');
+hold on
+A = zeros(length(c),1);
+for i = 1:length(c)
+    v1 = v([c{i}(end);c{i}],1); 
+    v2 = v([c{i}(end);c{i}],2);
+
+    [t,r] = cart2pol(v1',v2');
+
+    polarplot(t,r,'Color',[0 0.4470 0.7410]+0.2)
+
+    A(i) = polyarea(v1,v2) ;
+end
+
+%Center
 polarscatter(0,0,500,[0.4660 0.6740 0.1880],'filled');
 
+r = 0.15*ones(1,8);
+D_theta = (2*pi)/6;
+theta = 0:D_theta:(2*pi+ D_theta);
+theta = theta - D_theta/2;
+polarplot(theta,r,Color=[0.4660 0.6740 0.1880],LineWidth=2)
+
+
+
+
+%figure settings
 pax = gca;
 pax.ThetaDir = 'clockwise';
 pax.ThetaZeroLocation = 'top';
@@ -38,26 +67,10 @@ pax.ThetaZeroLocation = 'top';
 pax.RMinorGrid = 'on';
 pax.RAxis.MinorTickValues = [0.5, 1.5, 2.5];
 rtickformat('%g m')
-set(gcf,'Position', [226   122   654   749])
+set(gcf,'Position', [0   0   750   750])
 
 pax.ThetaMinorGrid = 1;
 pax.ThetaAxis.MinorTickValues = 15:15:345;
 thetatickformat('degrees')
 
-%voronoi
-[x, y] = pol2cart(locs(:,1),locs(:,2));
-[v,c] = voronoin([x y]) ;
-figure
-hold on
-voronoi(x,y)
-A = zeros(length(c),1) ;
-for i = 1:length(c)
-    v1 = v(c{i},1) ; 
-    v2 = v(c{i},2) ;
-    patch(v1,v2,rand(1,3))
-    A(i) = polyarea(v1,v2) ;
-end
-
-pbaspect([1 1 1])
-xlim([-3.5, 3.5]);
-ylim([-3.5, 3.5]);
+rlim([0,2.75])

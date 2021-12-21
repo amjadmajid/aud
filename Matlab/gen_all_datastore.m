@@ -20,6 +20,8 @@ validation_partition    = 2;
 testing_partition       = 2;
 
 label_to_split = "location";
+
+num_sources = 2*16;
 %% Create general datastores
 
 multiWaitbar('all sample sets','reset');
@@ -59,7 +61,7 @@ for i = 1:length(Top_types)
             % Skip if there already exists a datastores folder
             if isfolder(fullfile(sample_path,"datastores"))
                 fprintf("already done: %s\n",sample_path)
-                multiWaitbar('all sample sets','increment', 1/32);
+                multiWaitbar('all sample sets','increment', 1/num_sources);
                 continue
             end
 
@@ -77,7 +79,7 @@ for i = 1:length(Top_types)
             source = lss.Source;
 
             % indices of measurements larger than 250 cm (which will be
-            % skipped
+            % skipped)
             to_remove = zeros(1,lss.NumMembers);
 
             % Give the labels the proper values
@@ -166,7 +168,7 @@ for i = 1:length(Top_types)
 
             multiWaitbar('Save datastores', 'close');
             fprintf("Finnished:\n%s\n",sample_path);
-            multiWaitbar('all sample sets','increment', 1/6);
+            multiWaitbar('all sample sets','increment', 1/num_sources);
         end
     end
 
