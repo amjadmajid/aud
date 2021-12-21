@@ -202,12 +202,12 @@ def generate_sample(chirp_train: str):
         real_destination = destination.replace(placeholder_marker, str(i).zfill(3))
 
         # Skip the file if it exists
-        #if not os.path.isfile(real_destination):
-        Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
-            # print(f"writing {real_destination}")
-        write(real_destination, fsample, sample)
-        # else:
-        #     print(f"skipping {real_destination}")
+        if not os.path.isfile(real_destination):
+            Path(os.path.split(destination)[0]).mkdir(parents=True, exist_ok=True)
+            print(f"writing {real_destination}")
+            write(real_destination, fsample, sample)
+        #else:
+            #print(f"skipping {real_destination}")
 
 
 
