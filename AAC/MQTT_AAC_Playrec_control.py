@@ -50,10 +50,10 @@ orthogonal_offsets = [0, 2, 4, 6]
 
 # Length of the music files (seconds)
 durations = []
-music_padding_s = 0.15  # Speaker cuts off too early at 0.1, so use 0.15
+music_padding_s = 0.175  # Speaker cuts off too early at 0.1, so use 0.175
 for music in music_names:
-    d = get_sound_file_length(music_location + music + '.wav') + music_padding_s
-    durations.append(d * 1.4)
+    d = get_sound_file_length(music_location + music + '0.wav') + music_padding_s
+    durations.append(d + 1)
 
 rec_done = False
 play_done = False
@@ -76,7 +76,7 @@ print("playrec settings \n{}\n".format(msg))
 
 for i in range(len(music_names)):
     for offset in orthogonal_offsets:
-        for _ in range(15):
+        for _ in range(1):
             music_file = music_names[i] + str(offset)
             print(music_names[i])
 
@@ -84,7 +84,7 @@ for i in range(len(music_names)):
             play_done = True
 
             # Construct message
-            msg = Input_parsing(dist=distance_cm, duration=durations[0], padding=music_padding_s, offset=offset)
+            msg = Input_parsing(dist=distance_cm, duration=durations[i], padding=music_padding_s, offset=offset)
 
             tx_args = "{} --music {}".format(msg, music_file)
             client.publish("playrec", tx_args)
