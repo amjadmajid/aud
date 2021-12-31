@@ -161,7 +161,7 @@ class OChirpDecode:
         #     return actual_peak
         return actual_peak
 
-    def select_valid_peaks(self, peaks: list, data: np.ndarray) -> list:
+    def select_valid_peaks(self, peaks: list, data: np.ndarray, plot: bool = False) -> list:
         """
             Since we use the highest peak as the first peak, we do not know where the data starts and ends.
             Determining what peaks to remove at the beginning and end proves to be quite difficult. However,
@@ -186,8 +186,9 @@ class OChirpDecode:
         sums = sums - np.min(sums)
         correct_offset = np.argmax(sums)
 
-        plt.figure()
-        plt.plot(sums)
+        if plot:
+            plt.figure()
+            plt.plot(sums)
 
         return peaks[correct_offset:correct_offset + number_of_data_peaks]
 
@@ -259,7 +260,7 @@ class OChirpDecode:
                     right_valid = False
 
         peaks.sort()
-        peaks = self.select_valid_peaks(peaks, merged_data)
+        peaks = self.select_valid_peaks(peaks, merged_data, plot=plot)
 
         print(f"Found {len(peaks)} peaks: {peaks}")
 
