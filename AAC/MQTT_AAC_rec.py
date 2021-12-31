@@ -39,6 +39,8 @@ def recording(args):
     file_name = '{}_loc{}.wav'.format(file_name,
                                       args[args.index('--location') + 1])
 
+    file_name = file_name.replace('.wav', f'{time.time()}.wav')
+
     # determine storage location and make it if it doesn't exist
 
     if top:
