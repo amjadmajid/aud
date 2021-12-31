@@ -24,7 +24,7 @@ def normalize(data: np.ndarray) -> np.ndarray:
     return ((data/np.max(data)) * np.iinfo(np.int16).max).astype(np.int16)
 
 
-def add_noise_to_data(data: np.ndarray, noise: np.ndarray, desired_snr_db: float):
+def get_desired_data_gain(data: np.ndarray, noise: np.ndarray, desired_snr_db: float):
     noise_power = get_mean_signal_power_db(noise)
     data_power = get_mean_signal_power_db(data)
 
@@ -33,7 +33,11 @@ def add_noise_to_data(data: np.ndarray, noise: np.ndarray, desired_snr_db: float
 
     snr_adjustment = current_snr_db - desired_snr_db
     data_gain = 10 ** (snr_adjustment/20)
-    # print(f"Calculated data gain {data_gain:.3f}")
+    return data_gain
+
+
+def add_noise_to_data(data: np.ndarray, noise: np.ndarray, desired_snr_db: float):
+    data_gain = get_desired_data_gain(data, noise, desired_snr_db)
 
     adjusted_data = data / data_gain
     # adjusted_data_power = get_mean_signal_power_db(adjusted_data)
@@ -47,15 +51,15 @@ def add_noise_to_data(data: np.ndarray, noise: np.ndarray, desired_snr_db: float
 def generate_noisy_samples():
     babble_noise_file = "./babble_noise.wav"
     pure_signals = glob("./sample_chirps/*.wav")
-    snrs = np.arange(-45, 1, 2)
-    num_iterations = 1000
+    snrs = np.arange(-50, 1, 5)
+    num_iterations = 30
 
     fs, bubble_noise = read(babble_noise_file)
-    bubble_noise = bubble_noise
-    bubble_noise = normalize(bubble_noise)
+    bubble_noise = bubble_noise.astype(np.float64)
 
     for i, signal in enumerate(pure_signals):
         fs_, data = read(signal)
+        data = data.astype(np.float64)
 
         if fs != fs_:
             print("Error! Sample speeds are not the same!")
@@ -65,29 +69,28 @@ def generate_noisy_samples():
             for iteration in range(num_iterations):
                 print(snr)
 
-                # Select a random section of noise and add it to the signal based on the given SNR
-                # We cast the array to float64 for processing to prevent overflows and increase accuracy
-                # normalizing converts everything back to int16
-                random_offset = np.random.randint(data.size, bubble_noise.size - data.size)
-                random_noise_selection = bubble_noise[random_offset:random_offset + data.size].astype(np.float64)
-                signal_with_noise = add_noise_to_data(data.astype(np.float64), random_noise_selection, desired_snr_db=snr)
-                signal_with_noise = normalize(signal_with_noise)
+                data_gain = get_desired_data_gain(data, bubble_noise, snr)
+                scaled_data = data / data_gain
 
-                # Add a second of the other noise at the beginning and end to make the clip more realistic
-                # This also tests how good we can ignore noise before the measurement has started
+                # Select a random section of noise
+                # And add a second of the other noise at the beginning and end to make the clip more realistic
+                random_offset = np.random.randint(data.size, bubble_noise.size - data.size)
+
                 begin = random_offset - fs
                 if begin < 0:
                     begin = 0
                 end = random_offset + data.size + fs
                 if end > bubble_noise.size:
                     end = bubble_noise.size
-                begin_sample = bubble_noise[begin:random_offset]
-                end_sample = bubble_noise[random_offset + data.size:end]
-                signal_with_noise = np.concatenate((begin_sample, signal_with_noise, end_sample))
+                random_noise = np.array(bubble_noise[begin:end], copy=True)
 
-                # Safe the file for processing
+                random_noise[fs:fs + scaled_data.size] += scaled_data
+                noised_data = random_noise
+
+                noised_data = noised_data.astype(np.int16)
+
                 config = signal.split('\\')[-1].replace('.wav', '')
-                write(filename=f'./sample_chirps/noised/{config}/{config}_{iteration}_{snr}dB.wav', data=signal_with_noise, rate=fs)
+                write(filename=f'./sample_chirps/noised/{config}/{config}_{iteration}_{snr}dB.wav', data=noised_data, rate=fs)
 
 
 def decode_noisy_sample(sample: str) -> (Configuration, int, float):
@@ -143,13 +146,9 @@ def plot_noisy_samples():
     plt.show()
 
 
-# def get_snr_from_recording(recording:str):
-
-
-
 if __name__ == '__main__':
     # generate_noisy_samples()
-    # process_noisy_samples()
+    process_noisy_samples()
     plot_noisy_samples()
 
 
