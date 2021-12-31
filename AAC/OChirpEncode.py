@@ -3,6 +3,7 @@ import numpy as np
 from scipy.io.wavfile import write
 from scipy.signal import chirp
 from BitManipulation import tobits
+import libscrc
 
 
 class OChirpEncode:
@@ -366,7 +367,8 @@ class OChirpEncode:
             no_window = self.no_window
 
         print(f"raw data: {data}")
-        bits_to_send = tobits(data)
+        crc8 = chr(libscrc.autosar8(bytes(data, 'UTF-8')))
+        bits_to_send = tobits(data + crc8)
         chirps = self.get_chirps_from_bits(symbols, bits_to_send, no_window=no_window)
 
         preamble = self.get_preamble()

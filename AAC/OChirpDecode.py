@@ -8,6 +8,7 @@ from scipy.signal import oaconvolve
 from scipy.io.wavfile import read
 import pyaudio
 import time
+import libscrc
 
 
 class OChirpDecode:
@@ -24,7 +25,7 @@ class OChirpDecode:
         might not be realistic for deployment.
     """
 
-    def __init__(self, original_data: str, encoder: OChirpEncode, plot_symbols: bool = False):
+    def __init__(self, original_data: str, encoder: OChirpEncode, plot_symbols: bool = False, crc_length: int = 8):
         self.__encoder = encoder
 
         self.T = encoder.T
@@ -33,6 +34,7 @@ class OChirpDecode:
 
         self.original_data = original_data
         self.original_data_bits = tobits(original_data)
+        self.crc_length = crc_length
 
     def get_preamble(self, flipped: bool = True) -> list:
         """
@@ -167,9 +169,9 @@ class OChirpDecode:
             in this window and then shift it one place over, then we can find the offset that will give us the highest
             peaks on average.
         """
-        number_of_data_peaks = len(self.original_data_bits)
+        number_of_data_peaks = len(self.original_data_bits) + self.crc_length
         number_of_signal_peaks = len(peaks)
-        offset = number_of_signal_peaks - number_of_data_peaks
+        offset = number_of_signal_peaks - number_of_data_peaks + 1
 
         if offset < 1:
             return peaks
@@ -183,6 +185,9 @@ class OChirpDecode:
         # This is purely for visualization and printing
         sums = sums - np.min(sums)
         correct_offset = np.argmax(sums)
+
+        plt.figure()
+        plt.plot(sums)
 
         return peaks[correct_offset:correct_offset + number_of_data_peaks]
 
@@ -233,7 +238,7 @@ class OChirpDecode:
         left_valid = True
         right_valid = True
 
-        # Search for all peaks on the left
+        # Search for all peaks on the left and right
         while left_valid or right_valid:
             if left_valid:
                 current_left_peak = self.get_next_peak(current_left_peak, "left", merged_data, avg_distance, ax=ax)
@@ -368,13 +373,23 @@ class OChirpDecode:
         conv_data = self.get_conv_results(data, symbols)
 
         # Find the peaks
-        peaks = self.get_peaks(conv_data, plot=plot, N=len(self.original_data_bits))
+        peaks = self.get_peaks(conv_data, plot=plot, N=len(self.original_data_bits)+self.crc_length)
 
         # Convert the peaks to bits
         bits = self.get_bits_from_peaks(peaks)
 
         # Convert the bits to data (string)
         received_data = frombits(bits)
+
+        # Calculate the crc
+        crc8_payload = ord(received_data[-1])
+        crc8_calc = libscrc.autosar8(bytes(received_data[:-1], 'UTF-8'))
+
+        # Remove crc from received data
+        received_data = received_data[:-1]
+
+        if crc8_payload != crc8_calc:
+            print(f"Warning! CRC incorrect! {crc8_payload} != {crc8_calc}")
 
         # Plot the results
         if plot:
@@ -446,7 +461,7 @@ class OChirpDecode:
         n = 4
         CHUNK = int(n * self.T * self.fsample)
 
-        data_len = len(self.original_data_bits)
+        data_len = len(self.original_data_bits) + self.crc_length
 
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.fsample, input=True, frames_per_buffer=CHUNK)
@@ -505,6 +520,5 @@ if __name__ == '__main__':
     encoder = get_configuration_encoder(Configuration.baseline)
     decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
 
-    # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
+    decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
     decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-50dB.wav", plot=True)
-
