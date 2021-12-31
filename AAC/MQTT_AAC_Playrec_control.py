@@ -14,7 +14,7 @@ def rec_done_callback(client, userdata, message):
     print("rec_done")
 
 
-def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, location="0", top=True, test=False
+def Input_parsing(dist, duration, offset=0, direction=0, LoS=True, edist=0, edirection=0, location="0", top=True, test=False
                   , padding: float = 0):
     args = ""
     if test:
@@ -22,6 +22,7 @@ def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, 
 
     args = "{} --distance {}".format(args, dist)
     args = "{} --direction {}".format(args, direction)
+    args = "{} --offset {}".format(args, offset)
 
     if not LoS:
         args = "{} --LoS".format(args)
@@ -42,8 +43,10 @@ def Input_parsing(dist, duration, direction=0, LoS=True, edist=0, edirection=0, 
 distance_cm = 50
 
 music_location = '../AAC/sample_chirps/'
-# music_names = ['baseline', 'baseline_fast', 'balanced', 'fast']
-music_names = ['fast']
+music_names = ['baseline', 'baseline_fast', 'balanced', 'fast']
+# music_names = ['fast']
+
+orthogonal_offsets = [0, 2, 4, 6]
 
 # Length of the music files (seconds)
 durations = []
@@ -72,25 +75,27 @@ msg = Input_parsing(dist=distance_cm, duration=durations[0], padding=music_paddi
 print("playrec settings \n{}\n".format(msg))
 
 for i in range(len(music_names)):
-    for _ in range(15):
-        print(music_names[i])
+    for offset in orthogonal_offsets:
+        for _ in range(15):
+            music_file = music_names[i] + str(offset)
+            print(music_names[i])
 
-        rec_done = False
-        play_done = True
+            rec_done = False
+            play_done = True
 
-        # Construct message
-        msg = Input_parsing(dist=distance_cm, duration=durations[0], padding=music_padding_s)
+            # Construct message
+            msg = Input_parsing(dist=distance_cm, duration=durations[0], padding=music_padding_s, offset=offset)
 
-        tx_args = "{} --music {}".format(msg, music_names[i])
-        client.publish("playrec", tx_args)
+            tx_args = "{} --music {}".format(msg, music_file)
+            client.publish("playrec", tx_args)
 
-        # music = '../AAC/sample_chirps/{}.wav'.format(music_names[i])
-        # play_file(music, padding_duration_ms=music_padding_s*1000, add_padding_to_end=True)
+            music = '../AAC/sample_chirps/{}.wav'.format(music_file)
+            play_file(music, padding_duration_ms=music_padding_s*1000, add_padding_to_end=True)
 
-        while not (rec_done and play_done):
-            pass
+            while not (rec_done and play_done):
+                pass
 
-        print("")
+            print("")
 
 print("done")
 print("playrec settings \n{}\n".format(msg))
