@@ -96,7 +96,7 @@ def plot_example_peak_detection():
 
 def plot_range_test_results():
     # df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
-    df = pd.read_csv('./data/results/20-12-2021-nlos/parsed_results.csv')
+    df = pd.read_csv('./data/results/31-12-2021-multi-transmitter-los/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
@@ -143,12 +143,69 @@ def plot_range_test_results():
     plt.show()
 
 
+def plot_multi_transmitter_range_test_results():
+    df = pd.read_csv('./data/results/31-12-2021-multi-transmitter-los/parsed_results.csv')
+
+    color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+
+    Configurations = ['Configuration.baseline', 'Configuration.baseline_fast', 'Configuration.balanced',
+                      'Configuration.fast']
+    bit_rates = [21, 42, 42, 125]
+
+    print(df.Configuration.unique())
+    plt.figure(figsize=(6, 3))
+    index = 0
+    labels = []
+    for distance in df.distance.unique():
+        for transmitters in df.transmitters.unique():
+            for i, config in enumerate(Configuration):
+                print(f"{distance} {transmitters} {config}")
+                data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
+
+                medianprops = {'color': color_list[i], 'linewidth': 2}
+                boxprops = {'color': color_list[i], 'linestyle': '-'}
+                whiskerprops = {'color': color_list[i], 'linestyle': '-'}
+                capprops = {'color': color_list[i], 'linestyle': '-'}
+
+                plt.boxplot(data['ber'], positions=[-0.375 + index + i*0.25], showfliers=False, medianprops=medianprops, boxprops=boxprops,
+                            whiskerprops=whiskerprops, capprops=capprops, widths=0.65/4)
+
+            # hardcoded to be at the middle on the x-axis
+            if int(index + len(df.transmitters.unique())/2) % len(df.transmitters.unique()) == 0:
+                plt.text(x=index - 0.5, y=0.82, s=f"{distance}", color='black', horizontalalignment='center',
+                         verticalalignment='center')
+
+            labels.append(f"{transmitters}")
+            index += 1
+            plt.axvline(x=index - 0.5, color='black', alpha=0.2)
+
+        if distance < df.distance.max():
+            plt.axvline(x=index - 0.5, color='r', linestyle="dashed")
+
+    plt.ylim(-0.025, 0.8)
+    plt.xlim(-0.5, index - 0.5)
+    plt.text(x=index/2 - 0.5, y=0.9, s=f"Distance [cm]", color='black', horizontalalignment='center',
+             verticalalignment='center')
+    plt.ylabel("BER")
+    plt.xlabel("Transmitters")
+    plt.xticks(np.arange(index), labels, rotation=0, ha='center')
+
+    for i, _ in enumerate(df.Configuration.unique()):
+        plt.scatter(0, -1, color=color_list[i], marker=None, label=Configurations[i].split('.')[-1])
+    plt.legend(title="Configurations [bps]")
+
+    plt.tight_layout()
+    plt.savefig("./images/range_test_results.pdf", format="pdf", bbox_inches='tight')
+    plt.show()
+
+
 def main():
     # plot_example_ochirp()
     # plot_example_frame()
     # plot_example_decode()
     # plot_example_peak_detection()
-    plot_range_test_results()
+    # plot_range_test_results()
+    plot_multi_transmitter_range_test_results()
 
 
 if __name__ == "__main__":
