@@ -4,8 +4,13 @@
 - [ ] Related Work
 
 ## Lucan
-- [x] done
-- [ ] to be done
+- [ ] Finish initial Related Work
+- [ ] Gather 50cm los test with new chirp designs
+- [ ] Gather all (n)los tests with new chirp designs
+- [ ] Update Results with new data
+- [ ] Process Amjads feedback for 4.1 AAC implementation
+- [ ] Update figure 8, 9, 10
+- [ ] Re-run SNR simulation results with new chirp designs
 
 ## Casper
 - [x] done
