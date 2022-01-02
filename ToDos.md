@@ -1,6 +1,6 @@
 ## Amjad
-- [ ] Section 4.1 AAC  __[On hold, waiting Lucan]__
-- [ ] Section 3.4.2 DL Localization
+- [x] Section 4.1 AAC  __[On hold, waiting Lucan]__
+- [x] Section 3.4.2 DL Localization __Done, Capser please check__
 - [ ] Related Work
 
 ## Lucan
