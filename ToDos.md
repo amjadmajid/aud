@@ -1,6 +1,7 @@
 ## Amjad
-- [x] done
-- [ ] to be done
+- [ ] Section 4.1 AAC
+- [ ] Section 3.4.2 DL Localization
+- [ ] Related Work
 
 ## Lucan
 - [x] done
