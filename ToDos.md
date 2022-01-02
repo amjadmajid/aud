@@ -1,5 +1,5 @@
 ## Amjad
-- [ ] Section 4.1 AAC
+- [ ] Section 4.1 AAC  __[On hold, waiting Lucan]__
 - [ ] Section 3.4.2 DL Localization
 - [ ] Related Work
 
