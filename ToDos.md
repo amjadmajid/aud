@@ -11,6 +11,7 @@
 - [ ] Process Amjads feedback for 4.1 AAC implementation
 - [ ] Update figure 4, 8, 9, 10
 - [ ] Re-run SNR simulation results with new chirp designs
+- [ ] Add algorithm for constructing chirps with (2) and (3)
 
 ## Casper
 - [x] done
