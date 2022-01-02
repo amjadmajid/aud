@@ -161,7 +161,7 @@ class OChirpDecode:
         #     return actual_peak
         return actual_peak
 
-    def select_valid_peaks(self, peaks: list, data: np.ndarray, plot: bool = False) -> list:
+    def select_valid_peaks(self, peaks: list, data: np.ndarray, ax = None) -> list:
         """
             Since we use the highest peak as the first peak, we do not know where the data starts and ends.
             Determining what peaks to remove at the beginning and end proves to be quite difficult. However,
@@ -186,9 +186,8 @@ class OChirpDecode:
         sums = sums - np.min(sums)
         correct_offset = np.argmax(sums)
 
-        if plot:
-            plt.figure()
-            plt.plot(sums)
+        if ax is not None:
+            ax.plot(sums)
 
         return peaks[correct_offset:correct_offset + number_of_data_peaks]
 
@@ -218,15 +217,17 @@ class OChirpDecode:
         merged_data = np.max(data, axis=0)
 
         if plot:
-            plt.figure(figsize=(6, 3))
-            ax = plt.gca()
+            fig, axs = plt.subplots(2, figsize=(6, 4))
+            ax = axs[0]
+
+            fig.suptitle("Peak detection")
 
             t = np.linspace(0, (len(merged_data) / self.__encoder.fsample) * 1000, len(merged_data))
             ax.plot(t, merged_data)
-            ax.set_title("Peak detection", fontsize=14)
             ax.set_ylabel("Amplitude", fontsize=14)
             ax.set_xlabel("Time [ms]", fontsize=14)
         else:
+            axs = None
             ax = None
 
         # Assume that the highest value in the data is a peak
@@ -260,7 +261,7 @@ class OChirpDecode:
                     right_valid = False
 
         peaks.sort()
-        peaks = self.select_valid_peaks(peaks, merged_data, plot=plot)
+        peaks = self.select_valid_peaks(peaks, merged_data, ax=axs[1])
 
         print(f"Found {len(peaks)} peaks: {peaks}")
 
@@ -509,17 +510,17 @@ class OChirpDecode:
 
 
 if __name__ == '__main__':
-    # data_to_send = "Hello, World!"
+    data_to_send = "Hello, World!"
+
+    encoder = OChirpEncode()
+    file, data = encoder.convert_data_to_sound(data_to_send)
+    oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
+    oc.decode_file("temp.wav", plot=True)
+
+    # from configuration import get_configuration_encoder, Configuration
     #
-    # encoder = OChirpEncode()
-    # file, data = encoder.convert_data_to_sound(data_to_send)
-    # oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
-    # oc.decode_file("temp.wav", plot=True)
-
-    from configuration import get_configuration_encoder, Configuration
-
-    encoder = get_configuration_encoder(Configuration.baseline)
-    decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
-
-    decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-50dB.wav", plot=True)
+    # encoder = get_configuration_encoder(Configuration.baseline)
+    # decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
+    #
+    # # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
+    # decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-2dB.wav", plot=True)
