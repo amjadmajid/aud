@@ -17,5 +17,7 @@
 - [ ] to be done
 
 ## Mees
-- [x] done
-- [ ] to be done
+- [ ] Finish the related work section for the classical approach
+- [ ] Try to improve the NLOS results
+- [ ] Get the multi-source localization working
+- [ ] Add the plots and explanation for the multi-source and NLOS experiments to the paper
