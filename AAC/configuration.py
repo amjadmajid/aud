@@ -6,7 +6,9 @@ class Configuration(enum):
     baseline = 0,
     baseline_fast = 1,
     balanced = 2,
-    fast = 3
+    fast = 3,
+    baseline_optimized = 4,
+    baseline_fast_optimized = 5
 
 
 def get_configuration_encoder(config: Configuration) -> OChirpEncode:
@@ -17,13 +19,20 @@ def get_configuration_encoder(config: Configuration) -> OChirpEncode:
         everything to optimize the bitrate.
     """
     if config == Configuration.baseline:
-        return OChirpEncode(T=0.048, T_preamble=0, blank_space_time=0)
+        return OChirpEncode(T=None, T_preamble=0.096, orthogonal_preamble=True, required_number_of_cycles=34.5, minimize_sub_chirp_duration=False)
     elif config == Configuration.baseline_fast:
-        return OChirpEncode(T=0.024, T_preamble=0)
+        return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=17.25, minimize_sub_chirp_duration=False)
+    elif config == Configuration.optimized:
+        return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=34.5, minimize_sub_chirp_duration=True)
+    elif config == Configuration.optimized_fast:
+        return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=17.25, minimize_sub_chirp_duration=True)
+
     elif config == Configuration.balanced:
+        print(f"Warning using old config! {Configuration}")
         return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=22,
                             minimize_sub_chirp_duration=True)
     elif config == Configuration.fast:
+        print(f"Warning using old config! {Configuration}")
         return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=12,
                             minimize_sub_chirp_duration=True, fs=12500, fe=20000, blank_space_time=0.002)
 

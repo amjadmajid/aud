@@ -516,7 +516,7 @@ if __name__ == '__main__':
     from configuration import Configuration, get_configuration_encoder
     data_to_send = "Hell"
 
-    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder = get_configuration_encoder(Configuration.baseline)
     encoder.fsample = 44100*4
     file, data = encoder.convert_data_to_sound(data_to_send)
     oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
