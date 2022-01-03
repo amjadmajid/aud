@@ -10,6 +10,8 @@ import pyaudio
 import time
 import libscrc
 
+color_list = ['#0072BD','#D95319','#EDB120','#7E2F8E','#77AC30','#4DBEEE', '#A2142F']
+
 
 class OChirpDecode:
 
@@ -219,6 +221,7 @@ class OChirpDecode:
         if plot:
             fig, axs = plt.subplots(2, figsize=(6, 4))
             ax = axs[0]
+            sum_ax = axs[1]
 
             fig.suptitle("Peak detection")
 
@@ -230,7 +233,7 @@ class OChirpDecode:
             axs[1].set_ylabel("Window Sum", fontsize=14)
             fig.tight_layout()
         else:
-            axs = None
+            sum_ax = None
             ax = None
 
         # Assume that the highest value in the data is a peak
@@ -264,7 +267,7 @@ class OChirpDecode:
                     right_valid = False
 
         peaks.sort()
-        peaks = self.select_valid_peaks(peaks, merged_data, ax=axs[1])
+        peaks = self.select_valid_peaks(peaks, merged_data, ax=sum_ax)
 
         print(f"Found {len(peaks)} peaks: {peaks}")
 
@@ -398,7 +401,7 @@ class OChirpDecode:
 
         # Plot the results
         if plot:
-            fig, axs = plt.subplots(3, sharex=True)
+            fig, axs = plt.subplots(2, sharex=True, figsize=(6, 4))
             fig.suptitle("Decode data results")
 
             t = np.linspace(0, (len(data)/self.__encoder.fsample) * 1000, len(data))
@@ -406,16 +409,17 @@ class OChirpDecode:
             axs[0].set_title("Data", fontsize=14)
             axs[0].set_ylabel("Amplitude", fontsize=14)
             axs[0].plot(t, data)
-            axs[1].set_title("Convolution with symbol 0", fontsize=14)
+            axs[1].set_title("Convolution with symbols", fontsize=14)
             axs[1].set_ylabel("Amplitude", fontsize=14)
-            axs[1].plot(t, conv_data[0])
-            axs[2].set_title("Convolution with symbol 1", fontsize=14)
-            axs[2].set_ylabel("Amplitude", fontsize=14)
-            axs[2].plot(t, conv_data[1])
-            axs[2].set_xlabel("Time [ms]", fontsize=14)
+            axs[1].plot(t, conv_data[0], label="symbol 0", color=color_list[1])
+            # axs[2].set_title("Convolution with symbol 1", fontsize=14)
+            # axs[2].set_ylabel("Amplitude", fontsize=14)
+            axs[1].plot(t, conv_data[1], label="symbol 1", color=color_list[2])
+            # axs[2].set_xlabel("Time [ms]", fontsize=14)
             for peak in peaks:
                 i = peak[1] + 1
-                axs[i].plot(peak[0]/self.__encoder.fsample * 1000, conv_data[peak[1]][peak[0]], "xr")
+                axs[1].plot(peak[0]/self.__encoder.fsample * 1000, conv_data[peak[1]][peak[0]], "xr")
+            axs[1].legend()
 
         return received_data, bits
 

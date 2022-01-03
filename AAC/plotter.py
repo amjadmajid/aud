@@ -144,21 +144,18 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    df = pd.read_csv('./data/results/31-12-2021-multi-transmitter-los/parsed_results.csv')
+    df = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
-    Configurations = ['Configuration.baseline', 'Configuration.baseline_fast', 'Configuration.balanced',
-                      'Configuration.fast']
-    bit_rates = [21, 42, 42, 125]
-
     print(df.Configuration.unique())
+
     plt.figure(figsize=(6, 3))
     index = 0
     labels = []
     for distance in df.distance.unique():
         for transmitters in df.transmitters.unique():
-            for i, config in enumerate(Configuration):
+            for i, config in enumerate(df.Configuration.unique()):
                 print(f"{distance} {transmitters} {config}")
                 data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
 
@@ -191,11 +188,11 @@ def plot_multi_transmitter_range_test_results():
     plt.xticks(np.arange(index), labels, rotation=0, ha='center')
 
     for i, _ in enumerate(df.Configuration.unique()):
-        plt.scatter(0, -1, color=color_list[i], marker=None, label=Configurations[i].split('.')[-1])
-    plt.legend(title="Configurations [bps]")
+        plt.scatter(0, -1, color=color_list[i], marker=None, label=df.Configuration.unique()[i].split('.')[-1])
+    plt.legend(title="Configurations", loc='upper left')
 
     plt.tight_layout()
-    plt.savefig("./images/range_test_results.pdf", format="pdf", bbox_inches='tight')
+    plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
     plt.show()
 
 

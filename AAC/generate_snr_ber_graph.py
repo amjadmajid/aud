@@ -7,7 +7,7 @@ from multiprocessing import Pool
 from configuration import Configuration, get_configuration_encoder
 from OChirpDecode import OChirpDecode
 import pandas as pd
-
+from pathlib import Path
 
 # Noise source: https://freesound.org/people/InspectorJ/sounds/403180/
 
@@ -90,18 +90,23 @@ def generate_noisy_samples():
                 noised_data = noised_data.astype(np.int16)
 
                 config = signal.split('\\')[-1].replace('.wav', '')
-                write(filename=f'./sample_chirps/noised/{config}/{config}_{iteration}_{snr}dB.wav', data=noised_data, rate=fs)
+
+                dir = f'./sample_chirps/noised/{config}/'
+                Path(dir).mkdir(parents=True, exist_ok=True)
+                write(filename=dir + f"{config}_{iteration}_{snr}dB.wav", data=noised_data, rate=fs)
 
 
 def decode_noisy_sample(sample: str) -> (Configuration, int, float):
     config_name = sample.split("/")[-1].split("\\")[1]
-    config = Configuration[config_name]
+    offset = int(config_name[-1])
+    config = Configuration[config_name[:-1]]
     snr = float(sample.split("_")[-1].replace("dB.wav", ""))
     iteration = int(sample.split("_")[-2])
 
     if iteration < 300:
         encoder = get_configuration_encoder(config)
-        decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
+        encoder.orthogonal_pair_offset = offset
+        decoder = OChirpDecode(encoder=encoder, original_data="Help")
         return config, snr, decoder.decode_file(sample, plot=False)
     else:
         return None, None, None
@@ -112,7 +117,7 @@ def process_noisy_samples():
 
     # decode_noisy_sample(noisy_samples[0])
 
-    with Pool(9) as p:
+    with Pool(10) as p:
         results = p.map(decode_noisy_sample, noisy_samples)
 
     df = pd.DataFrame(results, columns=['Configuration', 'snr', 'ber'])
@@ -148,7 +153,7 @@ def plot_noisy_samples():
 
 if __name__ == '__main__':
     # generate_noisy_samples()
-    process_noisy_samples()
+    # process_noisy_samples()
     plot_noisy_samples()
 
 

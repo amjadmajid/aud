@@ -6,8 +6,8 @@ import os
 import numpy as np
 from scipy.io.wavfile import read
 
-directory = './data/results/31-12-2021-multi-transmitter-los/'
-configurations = ['baseline', 'baseline_fast', 'balanced', 'fast']
+directory = './data/results/03-01-2022-multi-transmitter-los/'
+configurations = ['baseline', 'baseline_fast', 'optimized', 'optimized_fast']
 chirp_pair_offsets = [0, 2, 4, 6]
 
 all_configs = []
@@ -36,7 +36,7 @@ def parse(n_extra_transmitters: int = 0):
         conf = Configuration[conf]
         encoder = get_configuration_encoder(conf)
         encoder.orthogonal_pair_offset = offset
-        decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
+        decoder = OChirpDecode(encoder=encoder, original_data="Help")
         filename = os.path.split(file)[1]
         file_path = os.path.split(file)[0]
 
@@ -83,6 +83,8 @@ def parse(n_extra_transmitters: int = 0):
 
                 # decode the data
                 ber = decoder.decode_data(original_data, plot=False)
+                if ber > 0:
+                    decoder.decode_data(original_data, plot=true)
                 bers.append((conf, distance, transmitters, ber))
 
         # if ber > 0:
