@@ -1,6 +1,6 @@
 ## Amjad
 - [x] Section 4.1 AAC  __[On hold, waiting Lucan]__
-- [x] Section 3.4.2 DL Localization __Done, Capser please check__
+- [x] Section 3.4.2 DL Localization __Done, Capser please check__ C: Checked 
 - [ ] Related Work
 
 ## Lucan
@@ -19,7 +19,7 @@
   - [x] ... sample generation
   - [ ] ... training
   - [ ] ... results gathering
-- [ ] check section 3.4.2 DL
+- [x] check section 3.4.2 DL
 - [ ] Training proces graphs
 - [ ] update figure 7 (larger letters)
 - [ ] Update references to the NN to AudioLocNet
