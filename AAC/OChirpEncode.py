@@ -68,7 +68,7 @@ class OChirpEncode:
 
     def __init__(self, fsample: int = 44100, T: float = 0.024, M: int = 8, fs: int = 5500, fe: int = 9500,
                  f_preamble_start: int = 5500, f_preamble_end: int = 9500, blank_space_time: float = 0.000,
-                 T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
+                 T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: float = 5,
                  minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False,
                  window_beta: float = 4, orthogonal_preamble: bool = False):
 
