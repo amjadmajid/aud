@@ -21,6 +21,8 @@
   - [ ] ... results gathering
 - [ ] check section 3.4.2 DL
 - [ ] Training proces graphs
+- [ ] update figure 7 (larger letters)
+- [ ] Update references to the NN to AudioLocNet
 
 ## Mees
 - [ ] Finish the related work section for the classical approach
