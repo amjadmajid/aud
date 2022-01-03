@@ -7,8 +7,8 @@ class Configuration(enum):
     baseline_fast = 1,
     balanced = 2,
     fast = 3,
-    baseline_optimized = 4,
-    baseline_fast_optimized = 5
+    optimized = 4,
+    optimized_fast = 5
 
 
 def get_configuration_encoder(config: Configuration) -> OChirpEncode:
