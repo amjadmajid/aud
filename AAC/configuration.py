@@ -19,9 +19,9 @@ def get_configuration_encoder(config: Configuration) -> OChirpEncode:
         everything to optimize the bitrate.
     """
     if config == Configuration.baseline:
-        return OChirpEncode(T=None, T_preamble=0.096, orthogonal_preamble=True, required_number_of_cycles=34.5, minimize_sub_chirp_duration=False)
+        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=34.5, minimize_sub_chirp_duration=False)
     elif config == Configuration.baseline_fast:
-        return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=17.25, minimize_sub_chirp_duration=False)
+        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=17.25, minimize_sub_chirp_duration=False)
     elif config == Configuration.optimized:
         return OChirpEncode(T=None, T_preamble=0.048, orthogonal_preamble=True, required_number_of_cycles=34.5, minimize_sub_chirp_duration=True)
     elif config == Configuration.optimized_fast:
