@@ -300,7 +300,7 @@ def test_fast_configuration():
 
 
 def generate_sample_chirps(conf: Configuration):
-    data_to_send = "Help"
+    data_to_send = "UUUU"
     offsets = [0, 2, 4, 6]
 
     for offset in offsets:
