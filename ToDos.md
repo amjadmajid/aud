@@ -5,13 +5,13 @@
 
 ## Lucan
 - [x] Finish initial Related Work
-- [ ] Gather 50cm los test with new chirp designs
+- [x] Gather 50cm los test with new chirp designs
 - [ ] Gather all (n)los tests with new chirp designs
 - [ ] Update Results with new data
 - [x] Process Amjads feedback for 4.1 AAC implementation
 - [x] Update figure 4, 8, 9, 10
 - [ ] Re-run SNR simulation results with new chirp designs
-- [ ] Add algorithm for constructing chirps with (2) and (3)
+- [x] Add algorithm for constructing chirps with (2) and (3)
 
 ## Casper
 - [ ] Related work 2.2 DL section
