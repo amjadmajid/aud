@@ -144,9 +144,17 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    df = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results.csv')
+    df1 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_50_100.csv')
+    df2 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_150.csv')
+    df2 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_200.csv')
+    df3 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results.csv')
+
+    df = pd.concat([df1, df2, df3])
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    configurations = ['Configuration.baseline', 'Configuration.halved_cycles', 'Configuration.increased_freq', 'Configuration.dynamic_subchirp']
+
+    df = df.sort_values(by=["distance", "transmitters"])
 
     print(df.Configuration.unique())
 
@@ -155,7 +163,7 @@ def plot_multi_transmitter_range_test_results():
     labels = []
     for distance in df.distance.unique():
         for transmitters in df.transmitters.unique():
-            for i, config in enumerate(df.Configuration.unique()):
+            for i, config in enumerate(configurations):
                 print(f"{distance} {transmitters} {config}")
                 data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
 
@@ -188,7 +196,7 @@ def plot_multi_transmitter_range_test_results():
     plt.xticks(np.arange(index), labels, rotation=0, ha='center')
 
     for i, _ in enumerate(df.Configuration.unique()):
-        plt.scatter(0, -1, color=color_list[i], marker=None, label=df.Configuration.unique()[i].split('.')[-1])
+        plt.scatter(0, -1, color=color_list[i], marker=None, label=configurations[i].split('.')[-1])
     plt.legend(title="Configurations", loc='upper left')
 
     plt.tight_layout()
