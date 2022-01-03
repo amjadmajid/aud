@@ -315,7 +315,7 @@ class OChirpEncode:
 
                 if minimal_sub_chirp_duration:
                     Tb = self.get_min_symbol_time(1, self.required_number_of_cycles, subchirp[0], subchirp[1])
-                    t = np.linspace(0, Tb, int(np.ceil(Tb * self.fsample)))
+                    t = np.linspace(0, Tb, int(np.round(Tb * self.fsample)))
 
                 # Maybe shape the chirp with a window function, to reduce the phase difference click
                 if not no_window:
