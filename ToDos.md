@@ -22,9 +22,6 @@
 - [ ] check section 3.4.2 DL
 - [ ] Training proces graphs
 
-%- [x] done
-%- [ ] to be done
-
 ## Mees
 - [ ] Finish the related work section for the classical approach
 - [ ] Try to improve the NLOS results
