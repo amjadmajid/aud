@@ -226,6 +226,9 @@ class OChirpDecode:
             ax.plot(t, merged_data)
             ax.set_ylabel("Amplitude", fontsize=14)
             ax.set_xlabel("Time [ms]", fontsize=14)
+            axs[1].set_xlabel("Offset", fontsize=14)
+            axs[1].set_ylabel("Window Sum", fontsize=14)
+            fig.tight_layout()
         else:
             axs = None
             ax = None
@@ -510,9 +513,11 @@ class OChirpDecode:
 
 
 if __name__ == '__main__':
-    data_to_send = "Hello, World!"
+    from configuration import Configuration, get_configuration_encoder
+    data_to_send = "Hell"
 
-    encoder = OChirpEncode()
+    encoder = get_configuration_encoder(Configuration.balanced)
+    encoder.fsample = 44100*4
     file, data = encoder.convert_data_to_sound(data_to_send)
     oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
     oc.decode_file("temp.wav", plot=True)
