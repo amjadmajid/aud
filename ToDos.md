@@ -14,8 +14,16 @@
 - [ ] Add algorithm for constructing chirps with (2) and (3)
 
 ## Casper
-- [x] done
-- [ ] to be done
+- [ ] Related work 2.2 DL section
+- [ ] Multi Source
+  - [x] ... sample generation
+  - [ ] ... training
+  - [ ] ... results gathering
+- [ ] check section 3.4.2 DL
+- [ ] Training proces graphs
+
+%- [x] done
+%- [ ] to be done
 
 ## Mees
 - [ ] Finish the related work section for the classical approach
