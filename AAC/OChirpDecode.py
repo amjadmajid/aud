@@ -219,7 +219,7 @@ class OChirpDecode:
         merged_data = np.max(data, axis=0)
 
         if plot:
-            fig, axs = plt.subplots(2, figsize=(6, 4))
+            fig, axs = plt.subplots(2, figsize=(6, 3), gridspec_kw={'height_ratios': [5, 4]})
             ax = axs[0]
             sum_ax = axs[1]
 
@@ -232,6 +232,7 @@ class OChirpDecode:
             axs[1].set_xlabel("Offset", fontsize=14)
             axs[1].set_ylabel("Window Sum", fontsize=14)
             fig.tight_layout()
+            fig.subplots_adjust(hspace=0.75)
         else:
             sum_ax = None
             ax = None
@@ -401,7 +402,7 @@ class OChirpDecode:
 
         # Plot the results
         if plot:
-            fig, axs = plt.subplots(2, sharex=True, figsize=(6, 4))
+            fig, axs = plt.subplots(2, sharex=True, figsize=(6, 3), gridspec_kw={'height_ratios': [5, 4]})
             fig.suptitle("Decode data results")
 
             t = np.linspace(0, (len(data)/self.__encoder.fsample) * 1000, len(data))
