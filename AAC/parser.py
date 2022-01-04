@@ -6,7 +6,7 @@ import os
 import numpy as np
 from scipy.io.wavfile import read
 
-directory = './data/results/03-01-2022-multi-transmitter-los/'
+directory = './data/results/04-01-2022-multi-transmitter-los/'
 configurations = ['baseline', 'halved_cycles', 'increased_freq', 'dynamic_subchirp']
 chirp_pair_offsets = [0, 2, 4, 6]
 
@@ -54,7 +54,7 @@ def parse(n_extra_transmitters: int = 0):
 
     # We randomly superimpose other transmitters on this one, so we need to make sure that we randomize it a bit
     # So this is how often we repeat (randomly) every file/transmitter combination
-    extra_transmitters_iterations = 10
+    extra_transmitters_iterations = 5
 
     bers = []
 
@@ -79,7 +79,7 @@ def parse(n_extra_transmitters: int = 0):
 
         distance = int(filename.split('_')[1].replace('cm', ''))
 
-        if distance != 250:
+        if distance != 200:
             continue
 
         if n_extra_transmitters == 0:

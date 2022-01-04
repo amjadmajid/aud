@@ -144,12 +144,14 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    df1 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_50_100.csv')
-    df2 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_150.csv')
-    df2 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_200.csv')
-    df3 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results.csv')
+    # df1 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_50_100.csv')
+    # df2 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_150.csv')
+    # df3 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_200.csv')
+    # df4 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_250.csv')
+    df1 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_250.csv')
+    df2 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results.csv')
 
-    df = pd.concat([df1, df2, df3])
+    df = pd.concat([df1, df2])
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
     configurations = ['Configuration.baseline', 'Configuration.halved_cycles', 'Configuration.increased_freq', 'Configuration.dynamic_subchirp']
@@ -157,6 +159,7 @@ def plot_multi_transmitter_range_test_results():
     df = df.sort_values(by=["distance", "transmitters"])
 
     print(df.Configuration.unique())
+    print(df.distance.unique())
 
     plt.figure(figsize=(6, 3))
     index = 0
