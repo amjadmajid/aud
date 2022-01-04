@@ -164,6 +164,34 @@ def main():
     plot_noisy_samples()
 
 
+def run_iteration_async(settings):
+    # (L, encoders[conf][offset], datas, decoders[conf][offset], offsets, conf, offset, n, r)
+    L = settings[0]
+    encoder = settings[1]
+    datas = settings[2]
+    decoder = settings[3]
+    offsets = settings[4]
+    conf = settings[5]
+    offset = settings[6]
+    n = settings[7]
+
+    data = datas[conf][offset]
+
+    other_offsets = offsets.copy()
+    other_offsets.remove(offset)
+    np.random.shuffle(other_offsets)
+
+    for i in range(n):
+        noise_data = datas[conf][2 * i]
+        start = np.random.randint(0, data.size // 2)
+        end = noise_data.size
+        data[start:end] += noise_data[:end - start]
+
+    ber = decoder.decode_data(data, plot=False)
+
+    return L, conf, 1 / encoder.T, offset, n, ber
+
+
 def generate_effective_bit_rate_per_snr(file_to_save: str = "./effective_bitrate_snr_simulation_results.csv"):
     from OChirpEncode import OChirpEncode
 
@@ -229,44 +257,43 @@ def generate_effective_bit_rate_per_snr(file_to_save: str = "./effective_bitrate
             }
         }
 
-        def run_iteration(conf, offset, n):
-            encoder = encoders[conf][offset]
-            data = datas[conf][offset]
-            decoder = decoders[conf][offset]
+        # def run_iteration(conf, offset, n):
+        #     encoder = encoders[conf][offset]
+        #     data = datas[conf][offset]
+        #     decoder = decoders[conf][offset]
+        #
+        #     other_offsets = offsets.copy()
+        #     other_offsets.remove(offset)
+        #     np.random.shuffle(other_offsets)
+        #
+        #     for i in range(n):
+        #         noise_data = datas[conf][2 * i]
+        #         start = np.random.randint(0, data.size // 2)
+        #         end = noise_data.size
+        #         data[start:end] += noise_data[:end - start]
+        #
+        #     ber = decoder.decode_data(data, plot=False)
+        #
+        #     return L, conf, 1/encoder.T, offset, n, ber
 
-            other_offsets = offsets.copy()
-            other_offsets.remove(offset)
-            np.random.shuffle(other_offsets)
-
-            for i in range(n):
-                noise_data = datas[conf][2 * i]
-                start = np.random.randint(0, data.size // 2)
-                end = noise_data.size
-                data[start:end] += noise_data[:end - start]
-
-            ber = decoder.decode_data(data, plot=False)
-
-            return L, conf, 1/encoder.T, offset, n, ber
-
-        # def run_iteration_async(setting):
-        #     return run_iteration(setting[0], setting[1], setting[2])
-
+        # Generate settings
         settings = []
         for conf in configurations:
             for offset in offsets:
                 for n in extra_transmitters:
                     for r in repeats:
-                        settings.append((conf, offset, n, r))
+                        settings.append((L, encoders[conf][offset], datas, decoders[conf][offset], offsets, conf, offset, n, r))
 
-        # with Pool(9) as p:
-        #     results = p.map(run_iteration_async, settings)
+        # Process the settings in parallel
+        with Pool(9) as p:
+            results.extend(p.map(run_iteration_async, settings))
 
-        for conf in configurations:
-            for offset in offsets:
-                for n in extra_transmitters:
-                    for _ in repeats:
-                        res = run_iteration(conf, offset, n)
-                        results.append(res)
+        # for conf in configurations:
+        #     for offset in offsets:
+        #         for n in extra_transmitters:
+        #             for _ in repeats:
+        #                 res = run_iteration(conf, offset, n)
+        #                 results.append(res)
 
     df = pd.DataFrame(results, columns=["L", "configuration", "bitrate", "offset", "transmitters", "ber"])
     df.to_csv(file_to_save, index=False)
