@@ -14,13 +14,15 @@
 - [x] Add algorithm for constructing chirps with (2) and (3)
 
 ## Casper
-- [ ] Related work 2.2 DL section
+- [x] Related work 2.2 DL section initial
+- [ ] Related work 2.2 DL section final
 - [ ] Multi Source
   - [x] ... sample generation
   - [ ] ... training
   - [ ] ... results gathering
 - [x] check section 3.4.2 DL
 - [ ] Training proces graphs
+- [x] Figure 10 same hight subfigures
 - [ ] update figure 7 (larger letters)
 - [ ] Update references to the NN to AudioLocNet
 
