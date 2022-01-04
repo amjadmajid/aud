@@ -144,17 +144,16 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    # df1 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_50_100.csv')
-    # df2 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_150.csv')
-    # df3 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_200.csv')
-    # df4 = pd.read_csv('./data/results/03-01-2022-multi-transmitter-los/parsed_results_250.csv')
     df1 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_250.csv')
-    df2 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results.csv')
+    df2 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_200.csv')
+    df3 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_150.csv')
+    df4 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_100.csv')
+    df5 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_50.csv')
 
-    df = pd.concat([df1, df2])
+    df = pd.concat([df1, df2, df3, df4, df5])
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
-    configurations = ['Configuration.baseline', 'Configuration.halved_cycles', 'Configuration.increased_freq', 'Configuration.dynamic_subchirp']
+    configurations = ['Configuration.baseline', 'Configuration.optimized']
 
     df = df.sort_values(by=["distance", "transmitters"])
 
@@ -167,8 +166,9 @@ def plot_multi_transmitter_range_test_results():
     for distance in df.distance.unique():
         for transmitters in df.transmitters.unique():
             for i, config in enumerate(configurations):
-                print(f"{distance} {transmitters} {config}")
                 data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
+
+                print(f"{distance} {transmitters} {config} {np.mean(data.ber)}")
 
                 medianprops = {'color': color_list[i], 'linewidth': 2}
                 boxprops = {'color': color_list[i], 'linestyle': '-'}
@@ -207,13 +207,54 @@ def plot_multi_transmitter_range_test_results():
     plt.show()
 
 
+def plot_effective_bit_rate():
+    df1 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_250.csv')
+    df2 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_200.csv')
+    df3 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_150.csv')
+    df4 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_100.csv')
+    df5 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_50.csv')
+
+    df = pd.concat([df1, df2, df3, df4, df5])
+
+    color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    configurations = ['Configuration.baseline', 'Configuration.optimized']
+    bitrates = {'Configuration.baseline': 41.67,
+                'Configuration.optimized': 53.2
+                }
+    markers = ['+', 'D']
+
+    df = df.sort_values(by=["distance", "transmitters"])
+
+    print(df.Configuration.unique())
+    print(df.distance.unique())
+
+    df = df.groupby(["distance", "transmitters", "Configuration"]).ber.agg(["mean", "std"]).reset_index()
+    df['bitrate'] = df.Configuration
+    df = df.replace({"bitrate": bitrates})
+    df['eff_bitrate'] = (1 - df["mean"]) * df.bitrate
+
+    # print(df)
+
+    plt.figure(figsize=(6, 3))
+    for transmitters in df.transmitters.unique():
+        for i, config in enumerate(configurations):
+            data = df[(df.Configuration == str(config)) & (df.transmitters == transmitters)]
+
+            print(f"{transmitters} {config} {np.mean(data['mean'])}")
+            plt.plot(data.distance, data.eff_bitrate, label=f'{config}-{transmitters}', marker=markers[i])
+
+    plt.legend()
+    plt.show()
+
+
 def main():
     # plot_example_ochirp()
     # plot_example_frame()
     # plot_example_decode()
     # plot_example_peak_detection()
     # plot_range_test_results()
-    plot_multi_transmitter_range_test_results()
+    # plot_multi_transmitter_range_test_results()
+    plot_effective_bit_rate()
 
 
 if __name__ == "__main__":

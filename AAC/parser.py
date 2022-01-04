@@ -7,7 +7,7 @@ import numpy as np
 from scipy.io.wavfile import read
 
 directory = './data/results/04-01-2022-multi-transmitter-los/'
-configurations = ['baseline', 'halved_cycles', 'increased_freq', 'dynamic_subchirp']
+configurations = ['baseline', 'optimized']
 chirp_pair_offsets = [0, 2, 4, 6]
 
 all_configs = []
@@ -79,7 +79,7 @@ def parse(n_extra_transmitters: int = 0):
 
         distance = int(filename.split('_')[1].replace('cm', ''))
 
-        if distance != 200:
+        if distance != 50:
             continue
 
         if n_extra_transmitters == 0:
