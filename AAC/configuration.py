@@ -4,9 +4,7 @@ from OChirpEncode import OChirpEncode
 
 class Configuration(enum):
     baseline = 0,
-    halved_cycles = 1,
-    increased_freq = 2,
-    dynamic_subchirp = 3
+    optimized = 1
 
 
 def get_configuration_encoder(config: Configuration) -> OChirpEncode:
@@ -17,13 +15,9 @@ def get_configuration_encoder(config: Configuration) -> OChirpEncode:
         everything to optimize the bitrate.
     """
     if config == Configuration.baseline:
-        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=34.5, minimize_sub_chirp_duration=False)
-    elif config == Configuration.halved_cycles:
         return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=17.25, minimize_sub_chirp_duration=False)
-    elif config == Configuration.increased_freq:
-        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=41.25, minimize_sub_chirp_duration=False, fs=13500, fe=17500)
-    elif config == Configuration.dynamic_subchirp:
-        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=22, minimize_sub_chirp_duration=True)
+    elif config == Configuration.optimized:
+        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=17.25, minimize_sub_chirp_duration=True)
 
 
 if __name__ == '__main__':
