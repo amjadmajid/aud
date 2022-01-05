@@ -24,9 +24,14 @@ def recording(args):
     music_name = args[args.index('--music') + 1]
     duration = float(args[args.index('--duration') + 1])
 
+    file_name = ""
+
     # make file name for recorded file
-    file_name = 'rec_{:03d}cm_{:03d}'.format(int(args[args.index('--distance') + 1]),
-                                             int(args[args.index('--direction') + 1]))
+    if '--distance' in args:
+        file_name = '{}rec_{:03d}'.format(file_name, int(args[args.index('--distance') + 1]))
+
+    if '--direction' in args:
+        file_name = '{}_{:03d}'.format(file_name, int(args[args.index('--direction') + 1]))
 
     if LoS:
         file_name = '{}_euclid_{:03d}cm_{:03d}'.format(file_name,
@@ -36,13 +41,16 @@ def recording(args):
     else:
         LoS_state = 'Line_of_Sight'
 
-    file_name = '{}_loc{}.wav'.format(file_name,
-                                      args[args.index('--location') + 1])
+    if '--location' in args:
+        file_name = '{}_loc{}.wav'.format(file_name,
+                                          args[args.index('--location') + 1])
 
-    file_name = file_name.replace('.wav', f'{time.time()}.wav')
+    if '.wav' in file_name:
+        file_name = file_name.replace('.wav', f'{time.time()}.wav')
+    else:
+        file_name = '{}_{}.wav'.format(file_name, time.time())
 
     # determine storage location and make it if it doesn't exist
-
     if top:
         top_state = 'Obstructed_Top'
     else:
@@ -66,13 +74,13 @@ def recording(args):
         time.sleep(duration)
 
     else:
-        record_sound(file_path + "/" + file_name, duration_s=duration, channels=8)
-        # subprocess.call(['arecord', \
-        #                  '-r 44100', \
-        #                  '-f', 'S16_LE', \
-        #                  '-c 8', \
-        #                  '-d', str(int(duration)), \
-        #                  '{}/{}'.format(file_path, file_name)])
+        # record_sound(file_path + "/" + file_name, duration_s=duration, channels=8)
+        subprocess.call(['arecord',
+                         '-r 44100',
+                         '-f', 'S16_LE',
+                         '-c 8',
+                         '-d', str(int(duration)),
+                         '{}/{}'.format(file_path, file_name)])
 
     pixel_ring.off()
     power.off()

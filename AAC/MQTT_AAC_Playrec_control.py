@@ -1,5 +1,7 @@
 import paho.mqtt.client as mqtt
 from generic_audio_functions import play_file, get_sound_file_length
+import time
+import numpy as np
 
 
 def play_done_callback(client, userdata, message):
@@ -43,15 +45,15 @@ def Input_parsing(dist, duration, offset=0, direction=0, LoS=True, edist=0, edir
 distance_cm = 50
 
 music_location = '../AAC/sample_chirps/'
-music_names = ['baseline', 'baseline_fast', 'optimized', 'optimized_fast']
+music_names = ['baseline', 'optimized']
 orthogonal_offsets = [0, 2, 4, 6]
 
 # Length of the music files (seconds)
 durations = []
-music_padding_s = 0.175  # Speaker cuts off too early at 0.1, so use 0.175
+music_padding_s = 0.2
 for music in music_names:
     d = get_sound_file_length(music_location + music + '0.wav') + music_padding_s
-    durations.append(d + 0.5)
+    durations.append(np.ceil(d + 0.5))
 
 rec_done = False
 play_done = False
