@@ -4,16 +4,14 @@
 - [ ] Related Work
 
 ## Lucan
-- [x] Finish initial Related Work
-- [x] Gather 50cm los test with new chirp designs
-- [ ] Gather all (n)los tests with new chirp designs
-- [ ] Gather all reverberent tests with new chirp designs
 - [x] Convert the MT to an average, not fixed distance
-- [ ] Update Results with new data
-- [x] Process Amjads feedback for 4.1 AAC implementation
-- [x] Update figure 4, 8, 9, 10
-- [ ] Re-run SNR simulation results with new chirp designs
-- [x] Add algorithm for constructing chirps with (2) and (3)
+- [x] Update Results with new data
+- [x] Re-run SNR simulation results with new chirp designs
+- [ ] Run the SNR simulation with more granularity
+- [ ] Run the MT scenarios with more iterations (50 vs 5)
+- [ ] Update related work
+- [ ] Figure out a way to compress the plots
+- [ ] Gather data for real-live comparison of dynamic vs fixed over different symbol times
 
 ## Casper
 - [x] Related work 2.2 DL section initial
