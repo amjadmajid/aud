@@ -144,14 +144,14 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_250.csv')
-    df2 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_200.csv')
-    df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
-    df4 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_100.csv')
-    df5 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_50.csv')
+    # df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_250.csv')
+    # df2 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_200.csv')
+    # df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
+    # df4 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_100.csv')
+    # df5 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_50.csv')
 
-    df = pd.concat([df1, df2, df3, df4, df5])
-    # df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_50.csv')
+    # df = pd.concat([df1, df2, df3, df4, df5])
+    df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_all.csv')
     df.to_csv("./all_data.csv", index=False)
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
