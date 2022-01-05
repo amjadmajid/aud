@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import numpy as np
 from scipy.io.wavfile import read
+from multiprocessing import Pool
 
 directory = './data/results/04-01-2022-multi-transmitter-los/'
 configurations = ['baseline', 'optimized']
@@ -14,6 +15,15 @@ all_configs = []
 for c in configurations:
     for o in chirp_pair_offsets:
         all_configs.append(c + str(o))
+
+
+def calculate_ber_multi_transmitter_async(settings):
+    file = settings[0]
+    number_of_transmitters = settings[1]
+    possible_files = settings[2]
+    decoder = settings[3]
+
+    return calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files, decoder)
 
 
 def calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files, decoder):
@@ -54,7 +64,7 @@ def parse(n_extra_transmitters: int = 0):
 
     # We randomly superimpose other transmitters on this one, so we need to make sure that we randomize it a bit
     # So this is how often we repeat (randomly) every file/transmitter combination
-    extra_transmitters_iterations = 5
+    extra_transmitters_iterations = 50
 
     bers = []
 
@@ -79,8 +89,8 @@ def parse(n_extra_transmitters: int = 0):
 
         distance = int(filename.split('_')[1].replace('cm', ''))
 
-        if distance != 50:
-            continue
+        # if distance != 250:
+        #     continue
 
         if n_extra_transmitters == 0:
             ber = decoder.decode_file(file, plot=False)
@@ -88,7 +98,7 @@ def parse(n_extra_transmitters: int = 0):
         else:
             ber = decoder.decode_file(file, plot=False)
             bers.append((conf, distance, 1, ber))
-            for extra_transmitters in range(1, n_extra_transmitters + 1):
+            for extra_transmitters in range(0, n_extra_transmitters+1):
                 # Get possible configs that may operate as noise
                 possible_configs = all_configs.copy()
                 print(config_name)
@@ -101,10 +111,20 @@ def parse(n_extra_transmitters: int = 0):
                         new_file_path = file_path.replace(config_name, possible_config)
                         random_files_selection.extend(glob(new_file_path + '\\*.wav', recursive=False))
 
-                # Make sure we average the randomness of the noise
+                settings = []
                 for _ in range(extra_transmitters_iterations):
-                    ber = calculate_ber_multi_transmitter(file, extra_transmitters, random_files_selection, decoder)
-                    bers.append((conf, distance, extra_transmitters + 1, ber))
+                    settings.append((file, extra_transmitters, random_files_selection, decoder))
+
+                # Make sure we average the randomness of the noise
+                with Pool(9) as p:
+                    res = p.map(calculate_ber_multi_transmitter_async, settings)
+
+                for r in res:
+                    bers.append((conf, distance, extra_transmitters, r))
+
+                # for _ in range(extra_transmitters_iterations):
+                #     ber = calculate_ber_multi_transmitter(file, extra_transmitters, random_files_selection, decoder)
+                #     bers.append((conf, distance, extra_transmitters, ber))
 
         # if ber > 0:
         #     print("\nINFORMATION")

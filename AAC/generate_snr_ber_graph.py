@@ -104,23 +104,25 @@ def generate_noisy_samples(sample_location: str = "./sample_chirps/", num_iterat
 
 
 def decode_noisy_sample(sample: str) -> (Configuration, int, float):
-    config_name = sample.split("/")[-1].split("\\")[1]
-    offset = int(config_name[-1])
-    config = Configuration[config_name[:-1]]
+    config_name = sample.split("\\")[-1].split("_")[0][:-1]
+    print(sample)
+    print(config_name)
+    offset = int(sample.split("\\")[-1].split("_")[0][-1])
+    config = Configuration[config_name]
     snr = float(sample.split("_")[-1].replace("dB.wav", ""))
     iteration = int(sample.split("_")[-2])
 
     if iteration < 300:
         encoder = get_configuration_encoder(config)
         encoder.orthogonal_pair_offset = offset
-        decoder = OChirpDecode(encoder=encoder, original_data="Help")
+        decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
         return config, snr, decoder.decode_file(sample, plot=False)
     else:
         return None, None, None
 
 
-def process_noisy_samples(noised_samples: str = "./sample_chirps/noised/"):
-    noisy_samples = glob(f'.{noised_samples}**/*.wav', recursive=True)
+def process_noisy_samples(noised_samples: str = ".\\AAC\\sample_chirps\\noised\\"):
+    noisy_samples = glob(f'.{noised_samples}**\\*.wav', recursive=True)
 
     # decode_noisy_sample(noisy_samples[0])
 
@@ -160,7 +162,7 @@ def plot_noisy_samples(data: str = "./data/results/snr_ber_data.csv"):
 
 def main():
     # generate_noisy_samples()
-    # process_noisy_samples()
+    process_noisy_samples()
     plot_noisy_samples()
 
 
@@ -192,7 +194,7 @@ def run_iteration_async(settings):
     return L, conf, 1 / encoder.T, offset, n, ber
 
 
-def generate_effective_bit_rate_per_snr(file_to_save: str = "./effective_bitrate_snr_simulation_results.csv"):
+def generate_effective_bit_rate_per_snr(file_to_save: str = "./data/results/effective_bitrate_snr_simulation_results.csv"):
     from OChirpEncode import OChirpEncode
 
     results = []
@@ -200,9 +202,9 @@ def generate_effective_bit_rate_per_snr(file_to_save: str = "./effective_bitrate
     configurations = ["baseline", "optimized"]
     offsets = [0, 2, 4, 6]
 
-    cycles_to_test = range(1, 21, 5)
+    cycles_to_test = range(1, 23)
     extra_transmitters = range(0, 4)
-    repeats = range(2)
+    repeats = range(2000)
 
     for L in cycles_to_test:
         # Generate all configurations for this L
@@ -285,7 +287,7 @@ def generate_effective_bit_rate_per_snr(file_to_save: str = "./effective_bitrate
                         settings.append((L, encoders[conf][offset], datas, decoders[conf][offset], offsets, conf, offset, n, r))
 
         # Process the settings in parallel
-        with Pool(9) as p:
+        with Pool(11) as p:
             results.extend(p.map(run_iteration_async, settings))
 
         # for conf in configurations:
@@ -300,16 +302,21 @@ def generate_effective_bit_rate_per_snr(file_to_save: str = "./effective_bitrate
     print(df)
 
 
-def plot_effective_bit_rate_per_snr(file_to_read: str = "./effective_bitrate_snr_simulation_results.csv"):
+def plot_effective_bit_rate_per_snr(file_to_read: str = "./data/results/effective_bitrate_snr_simulation_results.csv"):
     df = pd.read_csv(file_to_read)
+
+    color_list = ['#0072BD', '#D95319', '#EDB120', '#7E2F8E', '#77AC30', '#4DBEEE', '#A2142F']
 
     df = df.groupby(["L", "configuration", "bitrate", "transmitters"]).ber.agg(["mean", "std"]).reset_index()
     df['eff_bitrate'] = (1 - df["mean"]) * df.bitrate
+    df['std'] = df["std"] * df.bitrate
 
     df = df.sort_values(by="L")
 
+    # df.to_csv("test.csv", index=False)
+
     configurations = ["baseline", "optimized"]
-    markers = ['+', "D"]
+    markers = ['x', "D"]
     transmitters = range(0, 4)
 
     plt.figure(figsize=(6, 3))
@@ -317,9 +324,12 @@ def plot_effective_bit_rate_per_snr(file_to_read: str = "./effective_bitrate_snr
         for transmitter in transmitters:
             data = df[(df.configuration == conf) & (df.transmitters == transmitter)]
             print(data)
-            plt.plot(data.L, data.eff_bitrate, label=conf + "-" + str(transmitter), marker=markers[i])
+            plt.plot(data.L, data.eff_bitrate, label=conf + "-" + str(transmitter), marker=markers[i], color=color_list[transmitter])
+            # plt.errorbar(data.L, data.eff_bitrate, label=conf + "-" + str(transmitter), marker=markers[i],
+            #          color=color_list[transmitter], yerr=data['std'], capsize=5, elinewidth=1)
+            # plt.fill_between(data.L, data.eff_bitrate - data['std'], data.eff_bitrate + data['std'], alpha=.25)
 
-    plt.yscale("log")
+    # plt.yscale("log")
     plt.legend()
     plt.tight_layout()
     plt.savefig("./images/effective_bit_rate_over_L.pdf", format="pdf", bbox_inches="tight")
@@ -327,8 +337,8 @@ def plot_effective_bit_rate_per_snr(file_to_read: str = "./effective_bitrate_snr
 
 
 if __name__ == '__main__':
-    # main()
-    generate_effective_bit_rate_per_snr()
-    plot_effective_bit_rate_per_snr()
+    main()
+    # generate_effective_bit_rate_per_snr()
+    # plot_effective_bit_rate_per_snr()
 
 

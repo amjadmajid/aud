@@ -144,13 +144,15 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    df1 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_250.csv')
-    df2 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_200.csv')
-    df3 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_150.csv')
-    df4 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_100.csv')
-    df5 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_50.csv')
+    df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_250.csv')
+    df2 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_200.csv')
+    df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
+    df4 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_100.csv')
+    df5 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_50.csv')
 
     df = pd.concat([df1, df2, df3, df4, df5])
+    # df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_50.csv')
+    df.to_csv("./all_data.csv", index=False)
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
     configurations = ['Configuration.baseline', 'Configuration.optimized']
@@ -175,8 +177,8 @@ def plot_multi_transmitter_range_test_results():
                 whiskerprops = {'color': color_list[i], 'linestyle': '-'}
                 capprops = {'color': color_list[i], 'linestyle': '-'}
 
-                plt.boxplot(data['ber'], positions=[-0.375 + index + i*0.25], showfliers=False, medianprops=medianprops, boxprops=boxprops,
-                            whiskerprops=whiskerprops, capprops=capprops, widths=0.65/4)
+                plt.boxplot(data['ber'], positions=[-0.25 + index + i*0.5], showfliers=False, medianprops=medianprops, boxprops=boxprops,
+                            whiskerprops=whiskerprops, capprops=capprops, widths=0.65/2)
 
             # hardcoded to be at the middle on the x-axis
             if int(index + len(df.transmitters.unique())/2) % len(df.transmitters.unique()) == 0:
@@ -200,7 +202,7 @@ def plot_multi_transmitter_range_test_results():
 
     for i, _ in enumerate(df.Configuration.unique()):
         plt.scatter(0, -1, color=color_list[i], marker=None, label=configurations[i].split('.')[-1])
-    plt.legend(title="Configurations", loc='upper left')
+    plt.legend(loc='upper left')
 
     plt.tight_layout()
     plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
@@ -208,11 +210,11 @@ def plot_multi_transmitter_range_test_results():
 
 
 def plot_effective_bit_rate():
-    df1 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_250.csv')
-    df2 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_200.csv')
-    df3 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_150.csv')
-    df4 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_100.csv')
-    df5 = pd.read_csv('./data/results/04-01-2022-multi-transmitter-los/parsed_results_50.csv')
+    df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_250.csv')
+    df2 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_200.csv')
+    df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_150.csv')
+    df4 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_100.csv')
+    df5 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_50.csv')
 
     df = pd.concat([df1, df2, df3, df4, df5])
 
@@ -244,6 +246,7 @@ def plot_effective_bit_rate():
             plt.plot(data.distance, data.eff_bitrate, label=f'{config}-{transmitters}', marker=markers[i])
 
     plt.legend()
+    plt.savefig("./images/effective_bit_rates.pdf", format="pdf", bbox_inches='tight')
     plt.show()
 
 
@@ -253,8 +256,8 @@ def main():
     # plot_example_decode()
     # plot_example_peak_detection()
     # plot_range_test_results()
-    # plot_multi_transmitter_range_test_results()
-    plot_effective_bit_rate()
+    plot_multi_transmitter_range_test_results()
+    # plot_effective_bit_rate()
 
 
 if __name__ == "__main__":
