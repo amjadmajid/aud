@@ -46,7 +46,7 @@ def recording(args):
                                           args[args.index('--location') + 1])
 
     if '.wav' in file_name:
-        file_name = file_name.replace('.wav', f'{time.time()}.wav')
+        file_name = file_name.replace('.wav', f'_{time.time()}.wav')
     else:
         file_name = '{}_{}.wav'.format(file_name, time.time())
 

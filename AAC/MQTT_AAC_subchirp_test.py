@@ -3,8 +3,7 @@ import numpy as np
 import contextlib
 import sys
 from tqdm.contrib import DummyTqdmFile
-import time
-from generic_audio_functions import play_file
+from generic_audio_functions import play_file, get_sound_file_length
 from OChirpEncode import OChirpEncode
 import paho.mqtt.client as mqtt
 
@@ -31,11 +30,10 @@ def std_out_err_redirect_tqdm():
         sys.stdout, sys.stderr = orig_out_err
 
 
-def encode_message(setting: dict) -> str:
-    return f"--configuration {setting['configuration']} " \
-           f"--symbol_time {setting['symbol_time']} " \
-           f"--fstart {setting['fstart']} " \
-           f"--fend {setting['fend']}"
+def encode_message(config: str, filename: str, duration: float) -> str:
+    return f"--music {config} " \
+           f"--duration {np.ceil(duration)} " \
+           f"--location {filename} "
 
 
 def generate_settings(configurations: list, symbol_times: list, fstart: int, fend: int, repeats: int) -> list:
@@ -93,7 +91,16 @@ with std_out_err_redirect_tqdm() as orig_stdout:
 
         file, data = encoder.convert_data_to_sound("UUUU")
 
-        msg = encode_message(setting)
+        msg = encode_message(setting["configuration"], str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
         client.publish("playrec", msg)
 
         play_file(file, padding_duration_ms=200, add_padding_to_end=True)
+
+        while not rec_done:
+            pass
+
+        rec_done = False
+
+        print("")
+
+print("DONE!")
