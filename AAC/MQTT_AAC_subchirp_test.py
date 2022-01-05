@@ -11,9 +11,9 @@ import paho.mqtt.client as mqtt
 configurations = ["fixed", "dynamic"]
 offsets = [0, 2, 4, 6]
 symbol_times = np.arange(1, 25, 1) / 1000
-fstart = 5500
-fend = 9500
-repeats = 1
+fstart = 9500
+fend = 13500
+repeats = 40
 
 
 @contextlib.contextmanager
