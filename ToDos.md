@@ -8,7 +8,7 @@
 - [x] Gather 50cm los test with new chirp designs
 - [ ] Gather all (n)los tests with new chirp designs
 - [ ] Gather all reverberent tests with new chirp designs
-- [ ] Convert the MT to an average, not fixed distance
+- [x] Convert the MT to an average, not fixed distance
 - [ ] Update Results with new data
 - [x] Process Amjads feedback for 4.1 AAC implementation
 - [x] Update figure 4, 8, 9, 10
