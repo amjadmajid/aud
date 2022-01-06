@@ -36,17 +36,19 @@ def encode_message(config: str, filename: str, duration: float) -> str:
            f"--location {filename} "
 
 
-def generate_settings(configurations: list, symbol_times: list, fstart: int, fend: int, repeats: int) -> list:
+def generate_settings(configurations: list, symbol_times: list, offsets: list, fstart: int, fend: int, repeats: int) -> list:
     settings = []
-    for conf in configurations:
-        for symbol_time in symbol_times:
-            for _ in range(repeats):
-                settings.append({
-                    "configuration": conf,
-                    "symbol_time": symbol_time,
-                    "fstart": fstart,
-                    "fend": fend
-                })
+    for _ in range(repeats):
+        for conf in configurations:
+            for offset in offsets:
+                for symbol_time in symbol_times:
+                    settings.append({
+                        "configuration": conf,
+                        "symbol_time": symbol_time,
+                        "offset": offset,
+                        "fstart": fstart,
+                        "fend": fend
+                    })
     return settings
 
 
@@ -91,7 +93,7 @@ with std_out_err_redirect_tqdm() as orig_stdout:
 
         file, data = encoder.convert_data_to_sound("UUUU")
 
-        msg = encode_message(setting["configuration"], str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
+        msg = encode_message(setting["configuration"], str(setting["offset"] + "_" + str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
         client.publish("playrec", msg)
 
         play_file(file, padding_duration_ms=200, add_padding_to_end=True)
