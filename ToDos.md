@@ -29,7 +29,7 @@
 - [x] check section 3.4.2 DL
 - [x] Training proces graphs
 - [x] Figure 10 same hight subfigures
-- [x] update figure 7 (larger letters)
+- [x] update figure 7 (larger letters & same height) __@amjad, could you check it?__
 - [ ] Update references to the NN to AudioLocNet
 
 ## Mees
