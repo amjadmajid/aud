@@ -24,11 +24,12 @@
 - [ ] Multi Source
   - [x] ... sample generation
   - [x] ... training
-  - [ ] ... results gathering
+  - [x] ... results gathering
+  - [ ] ... results writing
 - [x] check section 3.4.2 DL
 - [x] Training proces graphs
 - [x] Figure 10 same hight subfigures
-- [ ] update figure 7 (larger letters)
+- [x] update figure 7 (larger letters)
 - [ ] Update references to the NN to AudioLocNet
 
 ## Mees
