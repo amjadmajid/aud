@@ -34,7 +34,7 @@
 
 ## Mees
 - [ ] Finish the related work section for the classical approach
-- [ ] Try to improve the NLOS results
+- [x] Try to improve the NLOS results
 - [x] Process the data for the reverberant environment
-- [ ] Get the multi-source localization working
-- [ ] Add the plots and explanation for the multi-source and NLOS/reverberant experiments to the paper
+- [x] Get the multi-source localization working
+- [x] Add the plots and explanation for the multi-source and NLOS/reverberant experiments to the paper
