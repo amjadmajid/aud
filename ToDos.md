@@ -34,6 +34,7 @@
 
 ## Mees
 - [ ] Finish the related work section for the classical approach
+- [ ] Update the system overview figure with the 6mic array
 - [x] Try to improve the NLOS results
 - [x] Process the data for the reverberant environment
 - [x] Get the multi-source localization working
