@@ -144,15 +144,15 @@ def plot_range_test_results():
 
 
 def plot_multi_transmitter_range_test_results():
-    # df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_250.csv')
-    df2 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_200cm.csv')
+    # df1 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_250cm.csv')
+    # df2 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_200cm.csv')
     # df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
-    df4 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_100_150cm.csv')
-    df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
+    # df4 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_100_150cm.csv')
+    # df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
 
-    df = pd.concat([df2, df4, df5])
-    # df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
-    df.to_csv("./all_data.csv", index=False)
+    # df = pd.concat([df1, df2, df4, df5])
+    df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
+    # df.to_csv("./all_data.csv", index=False)
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
     configurations = ['Configuration.baseline', 'Configuration.optimized', 'Configuration.baseline48']
@@ -276,6 +276,43 @@ def plot_subchirp_test():
     plt.show()
 
 
+def scatter_multi_transmitter_range_test_results():
+    df1 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
+    # df2 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_200cm.csv')
+    # # df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
+    # df4 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_100_150cm.csv')
+    # df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
+
+    # df = pd.concat([df1, df2, df4, df5])
+    df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
+    # df.to_csv("./all_data.csv", index=False)
+
+    color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    configurations = ['Configuration.baseline', 'Configuration.optimized', 'Configuration.baseline48']
+
+    df = df.sort_values(by=["distance", "transmitters"])
+
+    print(df.Configuration.unique())
+    print(df.distance.unique())
+
+    plt.figure(figsize=(6, 3))
+    for distance in df.distance.unique():
+        for transmitters in df.transmitters.unique():
+            for i, config in enumerate(configurations):
+                data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
+
+                print(f"{distance} {transmitters} {config} {np.mean(data.ber)}")
+
+                if "48" in config and distance == 250:
+                    for j, point in enumerate(zip(data.distance, data["ber"])):
+                        plt.scatter(point[0] + j*0.1, point[1])
+
+
+
+    plt.tight_layout()
+    plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
+    plt.show()
+
 def main():
     # plot_example_ochirp()
     # plot_example_frame()
@@ -285,6 +322,7 @@ def main():
     plot_multi_transmitter_range_test_results()
     # plot_effective_bit_rate()
     # plot_subchirp_test()
+    # scatter_multi_transmitter_range_test_results()
 
 
 if __name__ == "__main__":
