@@ -76,7 +76,7 @@ print("playrec settings \n{}\n".format(msg))
 
 for i in range(len(music_names)):
     for offset in orthogonal_offsets:
-        for _ in range(1):
+        for _ in range(20):
             music_file = music_names[i] + str(offset)
             print(music_names[i])
 

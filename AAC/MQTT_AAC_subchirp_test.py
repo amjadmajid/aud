@@ -1,3 +1,5 @@
+import time
+
 from tqdm.auto import tqdm
 import numpy as np
 import contextlib
@@ -6,6 +8,7 @@ from tqdm.contrib import DummyTqdmFile
 from generic_audio_functions import play_file, get_sound_file_length
 from OChirpEncode import OChirpEncode
 import paho.mqtt.client as mqtt
+import time
 
 
 configurations = ["fixed", "dynamic"]
@@ -13,7 +16,7 @@ offsets = [0, 2, 4, 6]
 symbol_times = np.arange(1, 25, 1) / 1000
 fstart = 9500
 fend = 13500
-repeats = 40
+repeats = 20
 
 
 @contextlib.contextmanager
@@ -67,42 +70,45 @@ def rec_done_callback(client, userdata, message):
     rec_done = True
     print("rec_done")
 
-if __name__ == "__main__":
-    settings = generate_settings(configurations, symbol_times, fstart, fend, repeats)
 
-    rec_done = False
+settings = generate_settings(configurations, symbol_times, offsets, fstart, fend, repeats)
 
-    client = mqtt.Client()
+rec_done = False
 
-    client.connect("192.168.1.196")
+client = mqtt.Client()
 
-    client.subscribe("rec_done")
-    client.subscribe("play_done")
+client.connect("192.168.1.196")
 
-    client.message_callback_add("rec_done", rec_done_callback)
+client.subscribe("rec_done")
+client.subscribe("play_done")
 
-    # loop
-    client.loop_start()
+client.message_callback_add("rec_done", rec_done_callback)
 
-    with std_out_err_redirect_tqdm() as orig_stdout:
-        for setting in tqdm(settings, file=orig_stdout, dynamic_ncols=True):
-            cycles = get_cycles(setting)
-            encoder = OChirpEncode(T=None, fs=setting["fstart"], fe=setting["fend"], T_preamble=0,
-                                   minimize_sub_chirp_duration=setting["configuration"] == "dynamic",
-                                   required_number_of_cycles=cycles)
+# loop
+client.loop_start()
 
-            file, data = encoder.convert_data_to_sound("UUUU")
+time.sleep(10)
 
-            msg = encode_message(setting["configuration"], str(setting["offset"]) + "_" + str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
-            client.publish("playrec", msg)
 
-            play_file(file, padding_duration_ms=200, add_padding_to_end=True)
+with std_out_err_redirect_tqdm() as orig_stdout:
+    for setting in tqdm(settings, file=orig_stdout, dynamic_ncols=True):
+        cycles = get_cycles(setting)
+        encoder = OChirpEncode(T=None, fs=setting["fstart"], fe=setting["fend"], T_preamble=0,
+                               minimize_sub_chirp_duration=setting["configuration"] == "dynamic",
+                               required_number_of_cycles=cycles, orthogonal_pair_offset=setting["offset"])
 
-            while not rec_done:
-                pass
+        file, data = encoder.convert_data_to_sound("UUUU")
 
-            rec_done = False
+        msg = encode_message(setting["configuration"], str(setting["offset"]) + "_" + str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
+        client.publish("playrec", msg)
 
-            print("")
+        play_file(file, padding_duration_ms=200, add_padding_to_end=True)
 
-    print("DONE!")
+        while not rec_done:
+            pass
+
+        rec_done = False
+
+        print("")
+
+print("DONE!")
