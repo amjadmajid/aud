@@ -145,7 +145,7 @@ class OChirpDecode:
             return -1
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.075
+        peak_time = self.T * 0.05
         peak_length = int(peak_time * self.fsample)
 
         # Get the actual peak by finding the local maximum
@@ -217,6 +217,16 @@ class OChirpDecode:
             return []
 
         peaks = []
+
+        # def normalize(data: np.ndarray) -> np.ndarray:
+        #     w = 33
+        #     res = np.zeros(data.size)
+        #     for x in range(w, data.size):
+        #         res[x] = (data[x] * np.std(data[x-w:x])) / np.sum(data[x-w:x])  # np.std(data[x-w:x])
+        #     return res
+
+        # data[0] = normalize(data[0])
+        # data[1] = normalize(data[1])
         merged_data = np.max(data, axis=0)
 
         if plot:
@@ -334,20 +344,35 @@ class OChirpDecode:
         #     received_data.insert(len(received_data), 1)
         #     received_data.pop(0)
 
+        reduced_original_data_bits = np.array(self.original_data_bits[3:-3])
+        reduced_received_data = np.array(received_data)
+        offset = 0
+
+        sums = []
+        for off in range(6):
+            sums.append(np.sum(reduced_original_data_bits == received_data[off:off+len(reduced_original_data_bits)]))
+            # print(f"{original_data_bits}\n==\n{received_data[off:off+len(original_data_bits)]}\n = \n{original_data_bits == received_data[off:off+len(original_data_bits)]}")
+            # print(s)
+
+        print(sums)
+        offset = np.argmax(sums)
+        print(offset)
+        reduced_received_data = reduced_received_data[offset:offset + len(reduced_original_data_bits)]
+
         err = 0
-        for i, bit in enumerate(self.original_data_bits):
+        for i, bit in enumerate(reduced_original_data_bits):
             try:
-                my_print(f"{bit}:{received_data[i]}")
-                if bit != received_data[i]:
+                my_print(f"{bit}:{reduced_received_data[i]}")
+                if bit != reduced_received_data[i]:
                     err += 1
             except IndexError:
                 err += 1
                 my_print(f"{bit}:???")
 
-        if len(self.original_data_bits) != len(received_data):
-            my_print(f"received bits ({len(received_data)}) not the same length as transmitted ({len(self.original_data_bits)})!")
+        # if len(self.original_data_bits) != len(received_data):
+        #     my_print(f"received bits ({len(received_data)}) not the same length as transmitted ({len(self.original_data_bits)})!")
 
-        ber = err / len(self.original_data_bits)
+        ber = err / len(reduced_original_data_bits)
 
         # Only print detailed information if we have ber > 0
         if do_print is False and ber != 0.0:
@@ -519,19 +544,23 @@ class OChirpDecode:
 
 
 if __name__ == '__main__':
-    from configuration import Configuration, get_configuration_encoder
-    data_to_send = "Hell"
-
-    encoder = get_configuration_encoder(Configuration.baseline)
-    encoder.fsample = 44100*4
-    file, data = encoder.convert_data_to_sound(data_to_send)
-    oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
-    oc.decode_file("temp.wav", plot=True)
-
-    # from configuration import get_configuration_encoder, Configuration
+    # from configuration import Configuration, get_configuration_encoder
+    # data_to_send = "Hell"
     #
     # encoder = get_configuration_encoder(Configuration.baseline)
-    # decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
-    #
-    # # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    # decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-2dB.wav", plot=True)
+    # encoder.fsample = 44100*4
+    # file, data = encoder.convert_data_to_sound(data_to_send)
+    # oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
+    # oc.decode_file("temp.wav", plot=True)
+
+    from configuration import get_configuration_encoder, Configuration
+
+    encoder = get_configuration_encoder(Configuration.baseline48)
+    decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
+
+    data = np.genfromtxt('saved_array.csv', delimiter=',')
+
+    # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
+    # decoder.decode_file("./data/results/07-01-2022-multi-transmitter-los\Recorded_files\Obstructed_Top\Line_of_Sight\\baseline0\Raw_recordings\\rec_250_000_loc0_1641546938.273994.wav", plot=True)
+
+    decoder.decode_data(data, plot=True)
