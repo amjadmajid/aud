@@ -67,42 +67,42 @@ def rec_done_callback(client, userdata, message):
     rec_done = True
     print("rec_done")
 
+if __name__ == "__main__":
+    settings = generate_settings(configurations, symbol_times, fstart, fend, repeats)
 
-settings = generate_settings(configurations, symbol_times, fstart, fend, repeats)
+    rec_done = False
 
-rec_done = False
+    client = mqtt.Client()
 
-client = mqtt.Client()
+    client.connect("192.168.1.196")
 
-client.connect("192.168.1.196")
+    client.subscribe("rec_done")
+    client.subscribe("play_done")
 
-client.subscribe("rec_done")
-client.subscribe("play_done")
+    client.message_callback_add("rec_done", rec_done_callback)
 
-client.message_callback_add("rec_done", rec_done_callback)
+    # loop
+    client.loop_start()
 
-# loop
-client.loop_start()
+    with std_out_err_redirect_tqdm() as orig_stdout:
+        for setting in tqdm(settings, file=orig_stdout, dynamic_ncols=True):
+            cycles = get_cycles(setting)
+            encoder = OChirpEncode(T=None, fs=setting["fstart"], fe=setting["fend"], T_preamble=0,
+                                   minimize_sub_chirp_duration=setting["configuration"] == "dynamic",
+                                   required_number_of_cycles=cycles)
 
-with std_out_err_redirect_tqdm() as orig_stdout:
-    for setting in tqdm(settings, file=orig_stdout, dynamic_ncols=True):
-        cycles = get_cycles(setting)
-        encoder = OChirpEncode(T=None, fs=setting["fstart"], fe=setting["fend"], T_preamble=0,
-                               minimize_sub_chirp_duration=setting["configuration"] == "dynamic",
-                               required_number_of_cycles=cycles)
+            file, data = encoder.convert_data_to_sound("UUUU")
 
-        file, data = encoder.convert_data_to_sound("UUUU")
+            msg = encode_message(setting["configuration"], str(setting["offset"]) + "_" + str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
+            client.publish("playrec", msg)
 
-        msg = encode_message(setting["configuration"], str(setting["offset"] + "_" + str(setting["symbol_time"]) + "_" + str(cycles), get_sound_file_length(file) + 0.75)
-        client.publish("playrec", msg)
+            play_file(file, padding_duration_ms=200, add_padding_to_end=True)
 
-        play_file(file, padding_duration_ms=200, add_padding_to_end=True)
+            while not rec_done:
+                pass
 
-        while not rec_done:
-            pass
+            rec_done = False
 
-        rec_done = False
+            print("")
 
-        print("")
-
-print("DONE!")
+    print("DONE!")

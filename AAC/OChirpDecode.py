@@ -37,6 +37,7 @@ class OChirpDecode:
         self.original_data = original_data
         self.original_data_bits = tobits(original_data)
         self.crc_length = crc_length
+        self.preamble_min_peak = 10000
 
     def get_preamble(self, flipped: bool = True) -> list:
         """
@@ -296,7 +297,7 @@ class OChirpDecode:
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
         if self.__encoder.T_preamble == 0.0:
-            preamble_min_peak = 10000
+            preamble_min_peak = self.preamble_min_peak
 
         if plot:
             fig, axs = plt.subplots(2)

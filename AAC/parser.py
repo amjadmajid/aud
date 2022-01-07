@@ -1,13 +1,14 @@
 from glob import glob
 from configuration import Configuration, get_configuration_encoder
 from OChirpDecode import OChirpDecode
+from OChirpEncode import OChirpEncode
 import pandas as pd
 import os
 import numpy as np
 from scipy.io.wavfile import read
 from multiprocessing import Pool
 
-directory = './data/results/05-01-2022-multi-transmitter-nlos/'
+directory = './data/results/05-01-2022-multi-transmitter-reverberend/'
 configurations = ['baseline', 'optimized']
 chirp_pair_offsets = [0, 2, 4, 6]
 
@@ -101,7 +102,7 @@ def parse(n_extra_transmitters: int = 0):
             bers.append((conf, distance, 1, ber))
         else:
             # Move the pool to here, otherwise we reconstruct too often
-            with Pool(9) as p:
+            with Pool(8) as p:
                 ber = decoder.decode_file(file, plot=False)
                 bers.append((conf, distance, 1, ber))
 
@@ -138,5 +139,51 @@ def parse(n_extra_transmitters: int = 0):
     print(f"avg ber: {df.ber.mean()}")
 
 
+def parse_subchirp_file(file: str) -> (str, int, float, float, float):
+    from MQTT_AAC_subchirp_test import get_cycles
+
+    print(file)
+
+    if "fixed" in file:
+        conf: str = "fixed"
+    else:
+        conf: str = "dynamic"
+
+    offset: int = int(file.split("_")[-4][-1])
+    Ts: float = float(file.split("_")[-3])
+    cycles_: float = float(file.split("_")[-2])  # Seems to be incorrect
+    cycles: float = get_cycles({"configuration": conf, "symbol_time": Ts, "fstart": 9500, "fend": 13500})
+
+    encoder = OChirpEncode(T=None, fs=9500, fe=13500, T_preamble=0, orthogonal_pair_offset=offset,
+                           minimize_sub_chirp_duration=conf == "dynamic",
+                           required_number_of_cycles=cycles)
+
+    print(f"{cycles_} == {cycles}")
+    print(f"{Ts} == {encoder.T}")
+
+    decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
+    decoder.preamble_min_peak = 1000
+
+    ber = decoder.decode_file(file, plot=False)
+
+    # conf, offset, cycles, ber
+    return conf, offset, cycles, ber
+
+
+def parse_subchirp_test():
+    dir = './data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/'
+    files = glob(dir + '**/*.wav', recursive=True)
+
+    results = []
+    with Pool(10) as p:
+        results.extend(p.map(parse_subchirp_file, files))
+
+    df = pd.DataFrame(results, columns=["configuration", "offset", "cycles", "ber"])
+    print(df)
+    df.to_csv(dir + 'parsed_results.csv', index=False)
+
+
 if __name__ == '__main__':
-    parse(n_extra_transmitters=3)
+    # parse(n_extra_transmitters=3)
+
+    parse_subchirp_test()
