@@ -8,8 +8,8 @@ import numpy as np
 from scipy.io.wavfile import read
 from multiprocessing import Pool
 
-directory = './data/results/05-01-2022-multi-transmitter-reverberend/'
-configurations = ['baseline', 'optimized']
+directory = './data/results/07-01-2022-multi-transmitter-los/'
+configurations = ['baseline', 'optimized', 'baseline48']
 chirp_pair_offsets = [0, 2, 4, 6]
 
 all_configs = []
@@ -69,7 +69,7 @@ def parse(n_extra_transmitters: int = 0):
 
     # We randomly superimpose other transmitters on this one, so we need to make sure that we randomize it a bit
     # So this is how often we repeat (randomly) every file/transmitter combination
-    extra_transmitters_iterations = 50
+    extra_transmitters_iterations = 5
 
     bers = []
 
@@ -94,8 +94,8 @@ def parse(n_extra_transmitters: int = 0):
 
         distance = int(filename.split('_')[1].replace('cm', ''))
 
-        # if distance != 250:
-        #     continue
+        if distance != 250:
+            continue
 
         if n_extra_transmitters == 0:
             ber = decoder.decode_file(file, plot=False)
@@ -114,23 +114,24 @@ def parse(n_extra_transmitters: int = 0):
                 # Get all valid noise files
                 random_files_selection = []
                 for possible_config in possible_configs:
-                    if conf.name in possible_config and (('_' in conf.name) == ('_' in possible_config)):
+                    if conf.name in possible_config and (('_' in conf.name) == ('_' in possible_config))\
+                            and (('48' in conf.name) == ('48' in possible_config)):
                         new_file_path = file_path.replace(config_name, possible_config)
                         random_files_selection.extend(glob(new_file_path + '\\*.wav', recursive=False))
 
                 for extra_transmitters in range(0, n_extra_transmitters+1):
-                    settings = []
-                    for _ in range(extra_transmitters_iterations):
-                        settings.append((file, extra_transmitters, random_files_selection, decoder))
-
-                    # Make sure we average the randomness of the noise
-                    res = p.map(calculate_ber_multi_transmitter_async, settings)
-                    for r in res:
-                        bers.append((conf, distance, extra_transmitters, r))
-
+                    # settings = []
                     # for _ in range(extra_transmitters_iterations):
-                    #     ber = calculate_ber_multi_transmitter(file, extra_transmitters, random_files_selection, decoder)
-                    #     bers.append((conf, distance, extra_transmitters, ber))
+                    #     settings.append((file, extra_transmitters, random_files_selection, decoder))
+                    #
+                    # # Make sure we average the randomness of the noise
+                    # res = p.map(calculate_ber_multi_transmitter_async, settings)
+                    # for r in res:
+                    #     bers.append((conf, distance, extra_transmitters, r))
+
+                    for _ in range(extra_transmitters_iterations):
+                        ber = calculate_ber_multi_transmitter(file, extra_transmitters, random_files_selection, decoder)
+                        bers.append((conf, distance, extra_transmitters, ber))
 
     df = pd.DataFrame(bers, columns=['Configuration', 'distance', 'transmitters', 'ber'])
 
@@ -139,12 +140,12 @@ def parse(n_extra_transmitters: int = 0):
     print(f"avg ber: {df.ber.mean()}")
 
 
-def parse_subchirp_file(file: str) -> (str, int, float, float, float):
+def parse_subchirp_file(file: str) -> (str, int, float, float, float, float):
     from MQTT_AAC_subchirp_test import get_cycles
 
     print(file)
 
-    if "fixed" in file:
+    if "\\fixed\\" in file or "/fixed/" in file:
         conf: str = "fixed"
     else:
         conf: str = "dynamic"
@@ -167,7 +168,7 @@ def parse_subchirp_file(file: str) -> (str, int, float, float, float):
     ber = decoder.decode_file(file, plot=False)
 
     # conf, offset, cycles, ber
-    return conf, offset, cycles, ber
+    return conf, offset, Ts, cycles, ber
 
 
 def parse_subchirp_test():
@@ -178,12 +179,12 @@ def parse_subchirp_test():
     with Pool(10) as p:
         results.extend(p.map(parse_subchirp_file, files))
 
-    df = pd.DataFrame(results, columns=["configuration", "offset", "cycles", "ber"])
+    df = pd.DataFrame(results, columns=["configuration", "offset", "Ts", "cycles", "ber"])
     print(df)
     df.to_csv(dir + 'parsed_results.csv', index=False)
 
 
 if __name__ == '__main__':
-    # parse(n_extra_transmitters=3)
+    parse(n_extra_transmitters=3)
 
-    parse_subchirp_test()
+    # parse_subchirp_test()

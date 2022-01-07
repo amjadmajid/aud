@@ -145,17 +145,17 @@ def plot_range_test_results():
 
 def plot_multi_transmitter_range_test_results():
     # df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_250.csv')
-    # df2 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_200.csv')
+    df2 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_200cm.csv')
     # df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
-    # df4 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_100.csv')
-    # df5 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_50.csv')
+    df4 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_100_150cm.csv')
+    df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
 
-    # df = pd.concat([df1, df2, df3, df4, df5])
-    df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_all.csv')
+    df = pd.concat([df2, df4, df5])
+    # df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
     df.to_csv("./all_data.csv", index=False)
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
-    configurations = ['Configuration.baseline', 'Configuration.optimized']
+    configurations = ['Configuration.baseline', 'Configuration.optimized', 'Configuration.baseline48']
 
     df = df.sort_values(by=["distance", "transmitters"])
 
@@ -177,8 +177,8 @@ def plot_multi_transmitter_range_test_results():
                 whiskerprops = {'color': color_list[i], 'linestyle': '-'}
                 capprops = {'color': color_list[i], 'linestyle': '-'}
 
-                plt.boxplot(data['ber'], positions=[-0.25 + index + i*0.5], showfliers=False, medianprops=medianprops, boxprops=boxprops,
-                            whiskerprops=whiskerprops, capprops=capprops, widths=0.65/2)
+                plt.boxplot(data['ber'], positions=[-0.33 + index + i*0.33], showfliers=False, medianprops=medianprops, boxprops=boxprops,
+                            whiskerprops=whiskerprops, capprops=capprops, widths=0.65/3)
 
             # hardcoded to be at the middle on the x-axis
             if int(index + len(df.transmitters.unique())/2) % len(df.transmitters.unique()) == 0:
@@ -250,6 +250,32 @@ def plot_effective_bit_rate():
     plt.show()
 
 
+def plot_subchirp_test():
+    df = pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv')
+
+    configurations = ["dynamic", "fixed"]
+
+    df = df.groupby(["configuration", "Ts"]).ber.agg(["std", "mean"]).reset_index()
+
+    print(df)
+
+    plt.figure(figsize=(6, 3))
+    for i, conf in enumerate(configurations):
+        data = df[df.configuration == conf]
+
+        plt.errorbar(data.Ts * 1000, data["mean"], label=conf)
+
+    # plt.hlines(0.01, 0, 25, linestyles='dotted', color='black')
+    plt.ylim(-0.00001, 1.1)
+    plt.ylabel("BER")
+    plt.xlabel("Symbol Time [ms]")
+    plt.grid()
+    plt.yscale("symlog", linthresh=0.0001)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     # plot_example_ochirp()
     # plot_example_frame()
@@ -258,6 +284,7 @@ def main():
     # plot_range_test_results()
     plot_multi_transmitter_range_test_results()
     # plot_effective_bit_rate()
+    # plot_subchirp_test()
 
 
 if __name__ == "__main__":
