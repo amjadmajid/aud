@@ -8,15 +8,16 @@
 - [x] Update Results with new data
 - [x] Re-run SNR simulation results with new chirp designs
 - [ ] Run the SNR simulation with more granularity
-- [ ] Run the MT scenarios with more iterations (50 vs 5)
+- [x] Run the MT scenarios with more iterations (50 vs 5)
   - [x] LOS
   - [x] NLOS
-  - [ ] Reverb
+  - [x] Reverb
 - [x] Update related work
-- [ ] Figure out a way to compress the plots
-- [ ] Gather data for real-live comparison of dynamic vs fixed over different symbol times
+- [x] Figure out a way to compress the plots
+- [x] Gather data for real-live comparison of dynamic vs fixed over different symbol times
 - [ ] Clean Result section
 - [ ] Define chirp config in paper
+- [ ] Add plot of cross-correlations of all chirps
 
 ## Casper
 - [x] Related work 2.2 DL section initial
