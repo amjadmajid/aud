@@ -4,7 +4,8 @@ from OChirpEncode import OChirpEncode
 
 class Configuration(enum):
     baseline = 0,
-    optimized = 1
+    optimized = 1,
+    baseline48 = 2,
 
 
 def get_configuration_encoder(config: Configuration) -> OChirpEncode:
@@ -16,6 +17,8 @@ def get_configuration_encoder(config: Configuration) -> OChirpEncode:
     """
     if config == Configuration.baseline:
         return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=17.25, minimize_sub_chirp_duration=False)
+    elif config == Configuration.baseline48:
+        return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=17.25 * 2, minimize_sub_chirp_duration=False)
     elif config == Configuration.optimized:
         return OChirpEncode(T=None, T_preamble=0, required_number_of_cycles=17.25, minimize_sub_chirp_duration=True)
 
@@ -23,4 +26,4 @@ def get_configuration_encoder(config: Configuration) -> OChirpEncode:
 if __name__ == '__main__':
     for config in Configuration:
         encoder = get_configuration_encoder(config)
-        print(f"config {config} has a bit rate {1/encoder.T:.0f} bps")
+        print(f"config {config} has a bit rate {1/encoder.T:.1f} bps")

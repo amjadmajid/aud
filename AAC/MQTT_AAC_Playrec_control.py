@@ -45,7 +45,7 @@ def Input_parsing(dist, duration, offset=0, direction=0, LoS=True, edist=0, edir
 distance_cm = 50
 
 music_location = '../AAC/sample_chirps/'
-music_names = ['baseline', 'optimized']
+music_names = ['baseline', 'optimized', 'baseline48']
 orthogonal_offsets = [0, 2, 4, 6]
 
 # Length of the music files (seconds)
