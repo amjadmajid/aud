@@ -555,12 +555,12 @@ if __name__ == '__main__':
 
     from configuration import get_configuration_encoder, Configuration
 
-    encoder = get_configuration_encoder(Configuration.baseline48)
-    decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
+    encoder = get_configuration_encoder(Configuration.baseline)
+    decoder = OChirpDecode(encoder=encoder, original_data=chr(0b11111111) * 4)
 
-    data = np.genfromtxt('saved_array.csv', delimiter=',')
+    # data = np.genfromtxt('saved_array.csv', delimiter=',')
 
     # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    # decoder.decode_file("./data/results/07-01-2022-multi-transmitter-los\Recorded_files\Obstructed_Top\Line_of_Sight\\baseline0\Raw_recordings\\rec_250_000_loc0_1641546938.273994.wav", plot=True)
+    decoder.decode_file("./data/results/07-01-2022-0s\Recorded_files\Obstructed_Top\Line_of_Sight\\baseline0\Raw_recordings\\rec_250_000_loc0_1641570291.7856116.wav", plot=True)
 
-    decoder.decode_data(data, plot=True)
+    # decoder.decode_data(data, plot=True)

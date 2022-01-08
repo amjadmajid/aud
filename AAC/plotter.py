@@ -151,7 +151,10 @@ def plot_multi_transmitter_range_test_results():
     # df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
 
     # df = pd.concat([df1, df2, df4, df5])
-    df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
+    # df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_all.csv')
+    # df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_all.csv')
+    df = pd.read_csv('./data/results/07-01-2022-0s/parsed_results_all.csv')
+
     # df.to_csv("./all_data.csv", index=False)
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
@@ -251,7 +254,8 @@ def plot_effective_bit_rate():
 
 
 def plot_subchirp_test():
-    df = pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv')
+    df = pd.read_csv('./data/results/07-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv')
+    # df = pd.read_csv('E:/Recorded_files/parsed_results.csv')
 
     configurations = ["dynamic", "fixed"]
 
@@ -312,6 +316,7 @@ def scatter_multi_transmitter_range_test_results():
     plt.tight_layout()
     plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
     plt.show()
+
 
 def main():
     # plot_example_ochirp()

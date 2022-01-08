@@ -8,7 +8,7 @@ import numpy as np
 from scipy.io.wavfile import read
 from multiprocessing import Pool
 
-directory = './data/results/07-01-2022-multi-transmitter-los/'
+directory = './data/results/07-01-2022-1s/'
 configurations = ['baseline', 'optimized', 'baseline48']
 chirp_pair_offsets = [0, 2, 4, 6]
 
@@ -59,7 +59,9 @@ def calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files
 
     # decode the data
     ber = decoder.decode_data(original_data, plot=False)
-    # if ber > 0:
+    # if ber == 0.5:
+    #     print(file)
+    #     np.savetxt(f'saved_array.csv', original_data, delimiter=',')
     #     decoder.decode_data(original_data, plot=True)
     return ber
 
@@ -88,54 +90,55 @@ def parse(n_extra_transmitters: int = 0):
         conf = Configuration[conf]
         encoder = get_configuration_encoder(conf)
         encoder.orthogonal_pair_offset = offset
-        decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
+        decoder = OChirpDecode(encoder=encoder, original_data=chr(0b11111111) * 4)
         filename = os.path.split(file)[1]
         file_path = os.path.split(file)[0]
 
         distance = int(filename.split('_')[1].replace('cm', ''))
 
-        if distance != 250:
-            continue
+        # if distance != 250:
+        #     continue
 
         if n_extra_transmitters == 0:
             ber = decoder.decode_file(file, plot=False)
             bers.append((conf, distance, 1, ber))
         else:
             # Move the pool to here, otherwise we reconstruct too often
-            with Pool(8) as p:
-                ber = decoder.decode_file(file, plot=False)
-                bers.append((conf, distance, 1, ber))
+            # with Pool(8) as p:
+            ber = decoder.decode_file(file, plot=False)
+            bers.append((conf, distance, 1, ber))
 
-                # Get possible configs that may operate as noise
-                possible_configs = all_configs.copy()
-                print(config_name)
-                possible_configs.remove(config_name)
+            # Get possible configs that may operate as noise
+            possible_configs = all_configs.copy()
+            print(config_name)
+            possible_configs.remove(config_name)
 
-                # Get all valid noise files
-                random_files_selection = []
-                for possible_config in possible_configs:
-                    if conf.name in possible_config and (('_' in conf.name) == ('_' in possible_config))\
-                            and (('48' in conf.name) == ('48' in possible_config)):
-                        new_file_path = file_path.replace(config_name, possible_config)
-                        random_files_selection.extend(glob(new_file_path + '\\*.wav', recursive=False))
+            # Get all valid noise files
+            random_files_selection = []
+            for possible_config in possible_configs:
+                if conf.name in possible_config and (('_' in conf.name) == ('_' in possible_config))\
+                        and (('48' in conf.name) == ('48' in possible_config)):
+                    new_file_path = file_path.replace(config_name, possible_config)
+                    random_files_selection.extend(glob(new_file_path + '\\*.wav', recursive=False))
 
-                for extra_transmitters in range(0, n_extra_transmitters+1):
-                    # settings = []
-                    # for _ in range(extra_transmitters_iterations):
-                    #     settings.append((file, extra_transmitters, random_files_selection, decoder))
-                    #
-                    # # Make sure we average the randomness of the noise
-                    # res = p.map(calculate_ber_multi_transmitter_async, settings)
-                    # for r in res:
-                    #     bers.append((conf, distance, extra_transmitters, r))
+            for extra_transmitters in range(0, n_extra_transmitters+1):
+                # settings = []
+                # for _ in range(extra_transmitters_iterations):
+                #     settings.append((file, extra_transmitters, random_files_selection, decoder))
+                #
+                # # Make sure we average the randomness of the noise
+                # res = p.map(calculate_ber_multi_transmitter_async, settings)
+                # for r in res:
+                #     bers.append((conf, distance, extra_transmitters, r))
 
-                    for _ in range(extra_transmitters_iterations):
-                        ber = calculate_ber_multi_transmitter(file, extra_transmitters, random_files_selection, decoder)
-                        bers.append((conf, distance, extra_transmitters, ber))
+                for _ in range(extra_transmitters_iterations):
+                    ber = calculate_ber_multi_transmitter(file, extra_transmitters, random_files_selection, decoder)
+                    bers.append((conf, distance, extra_transmitters, ber))
 
     df = pd.DataFrame(bers, columns=['Configuration', 'distance', 'transmitters', 'ber'])
 
-    df.to_csv(directory + 'parsed_results.csv', index=False)
+    df.to_csv(directory + 'parsed_results_all48.csv', index=False)
+    df[df.Configuration != "baseline48"].to_csv(directory + 'parsed_results_all.csv', index=False)
 
     print(f"avg ber: {df.ber.mean()}")
 
@@ -172,11 +175,12 @@ def parse_subchirp_file(file: str) -> (str, int, float, float, float, float):
 
 
 def parse_subchirp_test():
-    dir = './data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/'
+    # dir = './data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/'
+    dir = 'E:/Recorded_files/'
     files = glob(dir + '**/*.wav', recursive=True)
 
     results = []
-    with Pool(10) as p:
+    with Pool(5) as p:
         results.extend(p.map(parse_subchirp_file, files))
 
     df = pd.DataFrame(results, columns=["configuration", "offset", "Ts", "cycles", "ber"])
