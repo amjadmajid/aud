@@ -31,17 +31,19 @@ def calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files
     print(f"{number_of_transmitters} transmitters")
 
     random_files_selection = possible_files.copy()
+    np.random.shuffle(random_files_selection)
 
     # Select number_of_transmitters random files from this array (no redraws)
     selected_files = []
-    for _ in range(number_of_transmitters):
-        selected_files.append(random_files_selection[np.random.randint(0, len(random_files_selection))])
-        random_files_selection.remove(selected_files[-1])
+    for i in range(number_of_transmitters):
+        selected_files.append(random_files_selection[i][np.random.randint(0, len(random_files_selection[i]))])
+        random_files_selection[i].remove(selected_files[-1])
 
     # Read data from extra transmitters and superimpose it on the original data
     _, original_data = read(file)
     original_data = original_data.astype(np.float64)
     for selected_file in selected_files:
+
         _, data = read(selected_file)
         data = data.astype(np.float64)
         offset = np.random.randint(0, original_data.size) - (original_data.size // 2)
@@ -52,15 +54,19 @@ def calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files
     original_data = original_data.astype(np.int16)
 
     # Get the channel with the highest energy
-    print(original_data.shape)
+    # print(original_data.shape)
     if len(original_data.shape) > 1 and original_data.shape[1] > 1:
         original_data = original_data[:, np.argmax(np.max(original_data, axis=0), axis=0)]
-    print(original_data.shape)
+    # print(original_data.shape)
 
     # decode the data
     ber = decoder.decode_data(original_data, plot=False)
-    # if ber == 0.5:
+    # if ber > 0.0:
+    #     print("INFORMATION:")
+    #     print(f"Ts: {decoder.T}")
+    #     print(f"Number of transmitters {number_of_transmitters}")
     #     print(file)
+    #     print(selected_files)
     #     np.savetxt(f'saved_array.csv', original_data, delimiter=',')
     #     decoder.decode_data(original_data, plot=True)
     return ber
@@ -119,7 +125,7 @@ def parse(n_extra_transmitters: int = 0):
                 if conf.name in possible_config and (('_' in conf.name) == ('_' in possible_config))\
                         and (('48' in conf.name) == ('48' in possible_config)):
                     new_file_path = file_path.replace(config_name, possible_config)
-                    random_files_selection.extend(glob(new_file_path + '\\*.wav', recursive=False))
+                    random_files_selection.append(glob(new_file_path + '\\*.wav', recursive=False))
 
             for extra_transmitters in range(0, n_extra_transmitters+1):
                 # settings = []
