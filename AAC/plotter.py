@@ -4,7 +4,7 @@ from OChirpDecode import OChirpDecode
 import numpy as np
 import pandas as pd
 from configuration import Configuration, get_configuration_encoder
-
+from scipy.signal import oaconvolve, hilbert
 
 """
     This is file is meant to produce figures for the report in a consistent way
@@ -317,7 +317,25 @@ def scatter_multi_transmitter_range_test_results():
 
 
 def plot_cross_correlations():
-    pass
+    offsets = range(0, 8)
+    chirps = {}
+
+    for config in Configuration:
+        encoder = get_configuration_encoder(config)
+        chirps[config.name] = {}
+        for offset in offsets:
+            chirps[config.name][offset] = encoder.get_single_chirp(offset)
+
+    fig, axs = plt.subplots(3, figsize=(6, 3))
+    for i, config in enumerate(Configuration):
+        for offset in offsets:
+            crosscorr = oaconvolve(chirps[config.name][0], np.flip(chirps[config.name][offset]))
+            crosscorr = np.abs(hilbert(crosscorr / np.max(oaconvolve(chirps[config.name][0], np.flip(chirps[config.name][0])))))
+
+            axs[i].plot(crosscorr)
+
+    plt.tight_layout()
+    plt.show()
 
 
 def main():
@@ -326,11 +344,11 @@ def main():
     # plot_example_decode()
     # plot_example_peak_detection()
     # plot_range_test_results()
-    plot_multi_transmitter_range_test_results()
+    # plot_multi_transmitter_range_test_results()
     # plot_effective_bit_rate()
     # plot_subchirp_test()
     # scatter_multi_transmitter_range_test_results()
-    # plot_cross_correlations()
+    plot_cross_correlations()
 
 
 if __name__ == "__main__":
