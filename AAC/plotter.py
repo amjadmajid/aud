@@ -153,7 +153,7 @@ def plot_multi_transmitter_range_test_results():
     # df = pd.concat([df1, df2, df4, df5])
     # df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_all.csv')
     # df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_all.csv')
-    df = pd.read_csv('./data/results/07-01-2022-0s/parsed_results_all.csv')
+    df = pd.read_csv('./data/results/07-01-2022-1s/parsed_results_all.csv')
 
     # df.to_csv("./all_data.csv", index=False)
 
@@ -311,11 +311,13 @@ def scatter_multi_transmitter_range_test_results():
                     for j, point in enumerate(zip(data.distance, data["ber"])):
                         plt.scatter(point[0] + j*0.1, point[1])
 
-
-
     plt.tight_layout()
     plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
     plt.show()
+
+
+def plot_cross_correlations():
+    pass
 
 
 def main():
@@ -328,6 +330,7 @@ def main():
     # plot_effective_bit_rate()
     # plot_subchirp_test()
     # scatter_multi_transmitter_range_test_results()
+    # plot_cross_correlations()
 
 
 if __name__ == "__main__":

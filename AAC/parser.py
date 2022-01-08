@@ -8,7 +8,7 @@ import numpy as np
 from scipy.io.wavfile import read
 from multiprocessing import Pool
 
-directory = './data/results/07-01-2022-1s/'
+directory = './data/results/05-01-2022-multi-transmitter-nlos/'
 configurations = ['baseline', 'optimized', 'baseline48']
 chirp_pair_offsets = [0, 2, 4, 6]
 
@@ -46,7 +46,7 @@ def calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files
 
         _, data = read(selected_file)
         data = data.astype(np.float64)
-        offset = np.random.randint(0, original_data.size) - (original_data.size // 2)
+        offset = np.random.randint(0.25 * 44100, original_data.size)  # - (original_data.size // 2)
         if offset < 0:
             offset = 0
         original_data[offset:] = original_data[offset:] + data[offset:]
@@ -96,7 +96,7 @@ def parse(n_extra_transmitters: int = 0):
         conf = Configuration[conf]
         encoder = get_configuration_encoder(conf)
         encoder.orthogonal_pair_offset = offset
-        decoder = OChirpDecode(encoder=encoder, original_data=chr(0b11111111) * 4)
+        decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
         filename = os.path.split(file)[1]
         file_path = os.path.split(file)[0]
 
@@ -186,7 +186,7 @@ def parse_subchirp_test():
     files = glob(dir + '**/*.wav', recursive=True)
 
     results = []
-    with Pool(5) as p:
+    with Pool(8) as p:
         results.extend(p.map(parse_subchirp_file, files))
 
     df = pd.DataFrame(results, columns=["configuration", "offset", "Ts", "cycles", "ber"])
@@ -195,6 +195,6 @@ def parse_subchirp_test():
 
 
 if __name__ == '__main__':
-    parse(n_extra_transmitters=3)
+    # parse(n_extra_transmitters=3)
 
-    # parse_subchirp_test()
+    parse_subchirp_test()

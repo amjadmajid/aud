@@ -78,7 +78,7 @@ def generate_noisy_sample(pure_signal: np.ndarray, noise_data: np.ndarray, snr: 
 def generate_noisy_samples(sample_location: str = "./sample_chirps/", num_iterations: int = 30):
     babble_noise_file = "./babble_noise.wav"
     pure_signals = glob(sample_location + '*.wav')
-    snrs = np.arange(-50, 1, 5)
+    snrs = np.arange(-50, 1, 1)
 
     fs, bubble_noise = read(babble_noise_file)
     bubble_noise = bubble_noise.astype(np.float64)
@@ -162,7 +162,7 @@ def plot_noisy_samples(data: str = "./data/results/snr_ber_data.csv"):
 
 def main():
     # generate_noisy_samples()
-    process_noisy_samples()
+    # process_noisy_samples()
     plot_noisy_samples()
 
 
