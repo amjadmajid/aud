@@ -18,6 +18,8 @@
 - [x] Clean Result section
 - [x] Define chirp config in paper
 - [ ] Add plot of cross-correlations of all chirps
+- [ ] Finalize Result section
+- [ ] Re-gather results in 9500-13500Hz band (discuss with Amjad)
 
 ## Casper
 - [x] Related work 2.2 DL section initial
