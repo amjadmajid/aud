@@ -7,7 +7,7 @@
 - [x] Convert the MT to an average, not fixed distance
 - [x] Update Results with new data
 - [x] Re-run SNR simulation results with new chirp designs
-- [ ] Run the SNR simulation with more granularity
+- [x] Run the SNR simulation with more granularity
 - [x] Run the MT scenarios with more iterations (50 vs 5)
   - [x] LOS
   - [x] NLOS
@@ -15,8 +15,8 @@
 - [x] Update related work
 - [x] Figure out a way to compress the plots
 - [x] Gather data for real-live comparison of dynamic vs fixed over different symbol times
-- [ ] Clean Result section
-- [ ] Define chirp config in paper
+- [x] Clean Result section
+- [x] Define chirp config in paper
 - [ ] Add plot of cross-correlations of all chirps
 
 ## Casper
