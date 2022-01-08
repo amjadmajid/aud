@@ -218,15 +218,16 @@ class OChirpDecode:
 
         peaks = []
 
-        # def normalize(data: np.ndarray) -> np.ndarray:
-        #     w = 33
-        #     res = np.zeros(data.size)
-        #     for x in range(w, data.size):
-        #         res[x] = (data[x] * np.std(data[x-w:x])) / np.sum(data[x-w:x])  # np.std(data[x-w:x])
-        #     return res
+        # def normalize(data: np.ndarray, N) -> np.ndarray:
+        #     return np.convolve(data, np.ones(N)/N, mode='same')
+        # w = 33
+        # res = np.zeros(data.size)
+        # for x in range(w, data.size):
+        #     res[x] = (data[x] * np.std(data[x-w:x])) / np.sum(data[x-w:x])  # np.std(data[x-w:x])
+        # return res
 
-        # data[0] = normalize(data[0])
-        # data[1] = normalize(data[1])
+        # data0 = normalize(data[0], int(44100 * 0.001))
+        # data1 = normalize(data[1], int(44100 * 0.001))
         merged_data = np.max(data, axis=0)
 
         if plot:
@@ -238,6 +239,9 @@ class OChirpDecode:
 
             t = np.linspace(0, (len(merged_data) / self.__encoder.fsample) * 1000, len(merged_data))
             ax.plot(t, merged_data)
+            # axs[2].plot(normalize(data[0], int(44100 * 0.003)) / 30000, label="1ms")
+            # axs[2].plot(normalize(data[0], int(44100 * 0.01)) / 30000, label="5ms")
+            # axs[2].plot((normalize(data[0], int(44100 * 0.001)) > normalize(data[0], int(44100 * 0.005))))
             ax.set_ylabel("Amplitude", fontsize=14)
             ax.set_xlabel("Time [ms]", fontsize=14)
             axs[1].set_xlabel("Offset", fontsize=14)
@@ -279,6 +283,10 @@ class OChirpDecode:
                     right_valid = False
 
         peaks.sort()
+
+        # from scipy.signal import find_peaks
+        # peaks = list(find_peaks(merged_data, distance=0.95 * avg_distance)[0])
+
         peaks = self.select_valid_peaks(peaks, merged_data, ax=sum_ax)
 
         print(f"Found {len(peaks)} peaks: {peaks}")
@@ -403,6 +411,8 @@ class OChirpDecode:
         else:
             print("NO PREAMBLE FOUND!")
             return "", []
+
+        data = np.convolve(data, np.ones(3)/3, mode='same')
 
         # Convolve the data with the original symbols, this produces periodic peaks
         conv_data = self.get_conv_results(data, symbols)
@@ -556,11 +566,11 @@ if __name__ == '__main__':
     from configuration import get_configuration_encoder, Configuration
 
     encoder = get_configuration_encoder(Configuration.baseline)
-    decoder = OChirpDecode(encoder=encoder, original_data=chr(0b11111111) * 4)
+    decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
 
     # data = np.genfromtxt('saved_array.csv', delimiter=',')
 
     # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("./data/results/07-01-2022-0s\Recorded_files\Obstructed_Top\Line_of_Sight\\baseline0\Raw_recordings\\rec_250_000_loc0_1641570291.7856116.wav", plot=True)
+    decoder.decode_file("./data/results/07-01-2022-multi-transmitter-los\Recorded_files\Obstructed_Top\Line_of_Sight\\baseline0\Raw_recordings\\rec_050_000_loc0_1641540996.2175593.wav", plot=True)
 
     # decoder.decode_data(data, plot=True)
