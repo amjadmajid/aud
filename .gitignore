@@ -32,6 +32,7 @@ octave-workspace
 
 # Files with sampled/cropped audio samples (to prevent storing the same data multiple times)
 Sampled_files/
+Multi_label_samples/
 
 # Files with the raw recordings
 Recorded_files/
@@ -49,6 +50,7 @@ Matlab/Trained_nets_old_set/
 Matlab/Training_process_images_old_set/
 Matlab/ds_selection_test.m
 Matlab/Sketchbook/
+Matlab/Multi_label/Training_images/
 
 ## Below is the default gitignore for Python projects
 # Byte-compiled / optimized / DLL files
