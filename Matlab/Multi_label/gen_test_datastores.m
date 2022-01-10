@@ -1,5 +1,6 @@
 clearvars
 
+root_folder = "C:\Users\caspe\Documents\TU_Delft\Master\Thesis\Matlab_ML\Audio_files\Multi_source_audio\";
 
 folders = ["Single_source"; num2str((2:4)') + "_sources"];
 
@@ -15,8 +16,8 @@ end
 
 
 
-source_files = ["H:\aud\Multi_label_samples\"+ folders + "\Test\"; ...
-    "H:\aud\Multi_label_samples\Single_source\Test\"+ configurations];
+source_files = [fullfile(root_folder, folders, "test"); ...
+    fullfile(root_folder,"Single_source","Test", configurations)];
 
 
 types = [folders;configurations];
@@ -32,12 +33,6 @@ for i = 1:length(source_files)
     multiWaitbar('ds gen', i/length(source_files));
 end
 
-
-
-
-
-
-
 fprintf("DS done\n")
 data = read(Test_sets{1}.DS);
 reset(Test_sets{1}.DS)
@@ -50,9 +45,12 @@ labels = categories(info);
 [sample_length, sample_channels] = size(audio);
 
 fprintf("saving\n")
-save("H:\aud\Multi_label_samples\Testing_datastores.mat", "Test_sets", "labels", "sample_length", "sample_channels", '-v7.3')
+save(fullfile(root_folder, "Testing_datastores.mat"), "Test_sets", "labels", "sample_length", "sample_channels", '-v7.3')
 fprintf("done\n")
 
+multiWaitbar('closeall');
+
+%% Helper functions
 function data = read_multi_labeled_audio(filename)
     info = audioinfo(filename);
 
