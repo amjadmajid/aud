@@ -1,14 +1,48 @@
 clearvars
 
 folders = [num2str((2:4)') + "_sources";"Single_source"];
+%base_folder = "H:\aud\Multi_label_samples\";
+base_folder = "C:\Users\caspe\Documents\TU_Delft\Master\Thesis\Matlab_ML\Audio_files\Multi_source_audio\";
 
-fs_train = matlab.io.datastore.FileSet("H:\aud\Multi_label_samples\" + folders + "\Train\",'FileExtensions','.wav');
+save_name = "1-4_sources_datastores_reduced";
+
+reduce = true;
+
+fs_train = matlab.io.datastore.FileSet(base_folder + folders + "\Train\",'FileExtensions','.wav');
+fs_val = matlab.io.datastore.FileSet(base_folder + folders + "\Val\",'FileExtensions','.wav');
+fs_test = matlab.io.datastore.FileSet(base_folder + folders + "\Test\",'FileExtensions','.wav');
+
+if reduce
+    max_total = 400000;
+    total = fs_train.NumFiles + fs_val.NumFiles + fs_test.NumFiles;
+
+    if max_total < total
+        remainder_fraction = max_total/total;
+
+        randIdx = randperm(fs_train.NumFiles);
+        nIdxToKeep = round(remainder_fraction*fs_train.NumFiles);
+        remainingIdx = randIdx(1:nIdxToKeep);
+        fs_train = subset(fs_train,remainingIdx);
+
+        randIdx = randperm(fs_val.NumFiles);
+        nIdxToKeep = round(remainder_fraction*fs_val.NumFiles);
+        remainingIdx = randIdx(1:nIdxToKeep);
+        fs_val = subset(fs_val,remainingIdx);
+
+        randIdx = randperm(fs_test.NumFiles);
+        nIdxToKeep = round(remainder_fraction*fs_test.NumFiles);
+        remainingIdx = randIdx(1:nIdxToKeep);
+        fs_test = subset(fs_test,remainingIdx);
+
+
+        new_total = fs_train.NumFiles + fs_val.NumFiles + fs_test.NumFiles;
+
+    end
+end
+
+
 Train_ds = fileDatastore(fs_train,'FileExtensions','.wav','ReadFcn',@read_multi_labeled_audio);
-
-fs_val = matlab.io.datastore.FileSet("H:\aud\Multi_label_samples\" + folders + "\Val\",'FileExtensions','.wav');
 Val_ds   = fileDatastore(fs_val,'FileExtensions','.wav','ReadFcn',@read_multi_labeled_audio);
-
-fs_test = matlab.io.datastore.FileSet("H:\aud\Multi_label_samples\" + folders + "\Test\",'FileExtensions','.wav');
 Test_ds  = fileDatastore(fs_test,'FileExtensions','.wav','ReadFcn',@read_multi_labeled_audio);
 
 fprintf("DS done\n")
@@ -23,7 +57,16 @@ labels = categories(info);
 [sample_length, sample_channels] = size(audio);
 
 fprintf("saving\n")
-save("H:\aud\Multi_label_samples\1-4_sources_datastores_2.mat", "Train_ds", "Val_ds", "Test_ds", "labels", "sample_length", "sample_channels", '-v7.3')
+
+if exist(fullfile(base_folder,save_name)+".mat", 'file')
+    i = 1;
+    while exist(fullfile(base_folder, sprintf("%s_%d.mat",save_name,i)),'file')
+        i = i +1;
+    end
+    save_name = sprintf("%s_%d",save_name,i);
+end
+
+save(fullfile(base_folder,save_name)+".mat", "Train_ds", "Val_ds", "Test_ds", "labels", "sample_length", "sample_channels", '-v7.3')
 fprintf("done\n")
 
 function data = read_multi_labeled_audio(filename)
