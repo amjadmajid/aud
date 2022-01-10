@@ -27,18 +27,18 @@ Output_layer_size = length(labels);
 labelThreshold = 0.5;
 
 % side_load network for continuation of training or layer input/
-side_load = true;
+side_load = false;
 if side_load
     load trained_net_1-4_sources_09-1-22.mat
 
     % add two fully connected layers before the final layer
     lgraph = layerGraph(best_net);
 
-    lnew = [fullyConnectedLayer(64,'name', 'fc_new_1','WeightLearnRateFactor',10, 'BiasLearnRateFactor',50),...
+    lnew = [fullyConnectedLayer(64,'name', 'fc_new_1','WeightLearnRateFactor',50, 'BiasLearnRateFactor',50),...
         reluLayer('name', 'relu_new_1'),...
-        fullyConnectedLayer(64,'name', 'fc_new_2','WeightLearnRateFactor',10, 'BiasLearnRateFactor',50),...
+        fullyConnectedLayer(64,'name', 'fc_new_2','WeightLearnRateFactor',50, 'BiasLearnRateFactor',50),...
         reluLayer('name', 'relu_new_2'),...
-        fullyConnectedLayer(Output_layer_size,'name', 'fc_new_out','WeightLearnRateFactor',50, 'BiasLearnRateFactor',10)];
+        fullyConnectedLayer(Output_layer_size,'name', 'fc_new_out','WeightLearnRateFactor',50, 'BiasLearnRateFactor',50)];
 
     lgraph_new = replaceLayer(lgraph,'fc_2', lnew);
 
@@ -62,7 +62,10 @@ else
         convolution2dLayer([50 3],32)
         reluLayer()
 
-        fullyConnectedLayer(64)
+        convolution2dLayer([50 2],32)
+        reluLayer()
+
+        fullyConnectedLayer(128)
         reluLayer()
 
         fullyConnectedLayer(Output_layer_size)
