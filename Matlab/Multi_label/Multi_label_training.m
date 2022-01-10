@@ -34,16 +34,16 @@ if side_load
     % add two fully connected layers before the final layer
     lgraph = layerGraph(best_net);
 
-    lnew = [fullyConnectedLayer(64,'name', 'fc_new_1','WeightLearnRateFactor',10, 'BiasLearnRateFactor',10),...
+    lnew = [fullyConnectedLayer(64,'name', 'fc_new_1','WeightLearnRateFactor',10, 'BiasLearnRateFactor',50),...
         reluLayer('name', 'relu_new_1'),...
-        fullyConnectedLayer(64,'name', 'fc_new_2','WeightLearnRateFactor',10, 'BiasLearnRateFactor',10),...
+        fullyConnectedLayer(64,'name', 'fc_new_2','WeightLearnRateFactor',10, 'BiasLearnRateFactor',50),...
         reluLayer('name', 'relu_new_2'),...
-        fullyConnectedLayer(Output_layer_size,'name', 'fc_new_out','WeightLearnRateFactor',10, 'BiasLearnRateFactor',10)];
+        fullyConnectedLayer(Output_layer_size,'name', 'fc_new_out','WeightLearnRateFactor',50, 'BiasLearnRateFactor',10)];
 
     lgraph_new = replaceLayer(lgraph,'fc_2', lnew);
 
 
-    dlnet = dlnetwork(lgraph);
+    dlnet = dlnetwork(lgraph_new);
 
     clear best_net
 
