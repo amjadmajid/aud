@@ -4,13 +4,13 @@ folders = [num2str((2:4)') + "_sources";"Single_source"];
 %base_folder = "H:\aud\Multi_label_samples\";
 base_folder = "C:\Users\caspe\Documents\TU_Delft\Master\Thesis\Matlab_ML\Audio_files\Multi_source_audio\";
 
-save_name = "1-4_sources_datastores_reduced";
+save_name = "1-4_sources_datastores";
 
-reduce = true;
+reduce = false;
 
-fs_train = matlab.io.datastore.FileSet(base_folder + folders + "\Train\",'FileExtensions','.wav');
-fs_val = matlab.io.datastore.FileSet(base_folder + folders + "\Val\",'FileExtensions','.wav');
-fs_test = matlab.io.datastore.FileSet(base_folder + folders + "\Test\",'FileExtensions','.wav');
+fs_train = matlab.io.datastore.FileSet(fullfile(base_folder, folders, "Train"),'FileExtensions','.wav');
+fs_val = matlab.io.datastore.FileSet(fullfile(base_folder, folders, "Val"),'FileExtensions','.wav');
+fs_test = matlab.io.datastore.FileSet(fullfile(base_folder, folders, "Test"),'FileExtensions','.wav');
 
 if reduce
     max_total = 400000;
