@@ -1,8 +1,9 @@
 clearvars
 close all
 %% Load audio data
-load H:\aud\Multi_label_samples\1-4_sources_datastores_2.mat
+%load H:\aud\Multi_label_samples\1-4_sources_datastores_2.mat
 %load H:\aud\Multi_label_samples\full_datastores.mat
+load C:\Users\caspe\Documents\TU_Delft\Master\Thesis\Matlab_ML\Audio_files\Multi_source_audio\1-4_sources_datastores_reduced.mat
 
 Reduce = false;
 if Reduce
@@ -19,46 +20,78 @@ end
 
 %% define network
 
-%patch, fix in datastore sample_channels
-sample_channels = 11;
 Input_layer_size = [sample_length, sample_channels ,1];
 Output_layer_size = length(labels);
 
 % treshold for determining whether to give the class a positive response
 labelThreshold = 0.5;
 
-layers = [
-    imageInputLayer(Input_layer_size,"Name","Input","Normalization","none")
+% side_load network for continuation of training or layer input/
+side_load = true;
+if side_load
+    load trained_net_1-4_sources_09-1-22.mat
 
-    %dropoutLayer(0.4)
-    convolution2dLayer([20 6],32)
-    reluLayer()
+    % add two fully connected layers before the final layer
+    lgraph = layerGraph(best_net);
 
-    convolution2dLayer([50 3],32)
-    reluLayer()    
-    
-    convolution2dLayer([50 3],32)
-    reluLayer()
+    lnew = [fullyConnectedLayer(64,'name', 'fc_new_1','WeightLearnRateFactor',10, 'BiasLearnRateFactor',10),...
+        reluLayer('name', 'relu_new_1'),...
+        fullyConnectedLayer(64,'name', 'fc_new_2','WeightLearnRateFactor',10, 'BiasLearnRateFactor',10),...
+        reluLayer('name', 'relu_new_2'),...
+        fullyConnectedLayer(Output_layer_size,'name', 'fc_new_out','WeightLearnRateFactor',10, 'BiasLearnRateFactor',10)];
 
-    fullyConnectedLayer(64)
-    reluLayer()
+    lgraph_new = replaceLayer(lgraph,'fc_2', lnew);
 
-    fullyConnectedLayer(Output_layer_size)
-    sigmoidLayer()
-    ];
-lgraph = layerGraph(layers);
-dlnet = dlnetwork(lgraph);
 
+    dlnet = dlnetwork(lgraph);
+
+    clear best_net
+
+else
+
+    layers = [
+        imageInputLayer(Input_layer_size,"Name","Input","Normalization","none")
+
+        %dropoutLayer(0.4)
+        convolution2dLayer([20 6],32)
+        reluLayer()
+
+        convolution2dLayer([50 3],32)
+        reluLayer()
+
+        convolution2dLayer([50 3],32)
+        reluLayer()
+
+        fullyConnectedLayer(64)
+        reluLayer()
+
+        fullyConnectedLayer(Output_layer_size)
+        sigmoidLayer()
+        ];
+
+    lgraph = layerGraph(layers);
+    dlnet = dlnetwork(lgraph);
+
+end
 %% Training setup
 
 % training options
 miniBatchSize = 1024;
 numEpochs   = 20;
-learnRate   = 0.005;
 gradDecay   = 0.9;
 sqGradDecay = 0.999;
 epsilon     = 1.0e-08;
 l2Regularization = 0.005;
+
+if side_load
+    % low learning rate for transfer learning (the settign of the weight
+    % factors in the new layers gives those a higher learning rate whilst
+    % the old layers are smaller
+    learnRate = 1e-4;
+else
+    learnRate = 0.005;
+end
+    
 
 batch_per_epoch = ceil(length(Train_ds.Files)/miniBatchSize);
 % have two validation steps per epoch
@@ -307,7 +340,10 @@ end
 
 fprintf("training complete\n");
 
-save("trained_net_reduced.mat","best_net")
+date = string(datetime('today','Format','dd_MM_yyyy'));
+save_name = "trained_net_1-4_sources_" + date;
+
+save(save_name +".mat","best_net")
 
 if validation_frequency > 0
     % compute results for best net
@@ -336,6 +372,11 @@ if validation_frequency > 0
         subplot(2,1,2)
         hold on
         scatter(best_net_iteration/batch_per_epoch, double(gather(extractdata(val_loss))),'filled','k')
+
+        if ~isfolder("Training_images")
+            mkdir("Training_images")
+        end
+        savefig(fullfile("Training_images",save_name))
     end
 end
 multiWaitbar('closeall');

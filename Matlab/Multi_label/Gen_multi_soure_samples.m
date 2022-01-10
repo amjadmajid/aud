@@ -127,5 +127,3 @@ multiWaitbar('closeall');
 %     system('shutdown -s')
 % end
 
-gen_datastore;
-Multi_label_training
