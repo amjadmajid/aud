@@ -254,20 +254,33 @@ def plot_effective_bit_rate():
 
 
 def plot_subchirp_test():
-    df = pd.read_csv('./data/results/07-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv')
+    df = pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/Recorded_files/parsed_results.csv')
     # df = pd.read_csv('E:/Recorded_files/parsed_results.csv')
+    # df1 = pd.read_csv('E:/Recorded_files/parsed_results_single_transmitter.csv')
+    # df1["transmitters"] = 1
+    # df2 = pd.read_csv('E:/Recorded_files/parsed_results.csv')
+    # df = pd.concat([df1, df2])
 
     configurations = ["dynamic", "fixed"]
+    markers = ["x", "D"]
+    df = df.drop(columns="cycles")
 
-    df = df.groupby(["configuration", "Ts"]).ber.agg(["std", "mean"]).reset_index()
+    # conf, offset, Ts, transmittor_count, ber
+    df = df.groupby(["configuration", "Ts"]).ber.agg(["mean", "std"]).reset_index()
 
-    print(df)
+    df = df.sort_values(by="Ts")
 
     plt.figure(figsize=(6, 3))
     for i, conf in enumerate(configurations):
-        data = df[df.configuration == conf]
+        # # for t in [1, 2, 3, 4]:
+        # data = df[(df.configuration == conf) &
+        #           (df.transmitters == t)]
+        data = df[(df.configuration == conf)]
 
-        plt.errorbar(data.Ts * 1000, data["mean"], label=conf)
+        print(data)
+
+        # plt.plot(data.Ts * 1000, data["mean"], label=conf + f"-{t}", marker=markers[i])
+        plt.plot(data.Ts * 1000, data["mean"], label=conf, marker=markers[i])
 
     # plt.hlines(0.01, 0, 25, linestyles='dotted', color='black')
     plt.ylim(-0.00001, 1.1)
@@ -346,9 +359,9 @@ def main():
     # plot_range_test_results()
     # plot_multi_transmitter_range_test_results()
     # plot_effective_bit_rate()
-    # plot_subchirp_test()
+    plot_subchirp_test()
     # scatter_multi_transmitter_range_test_results()
-    plot_cross_correlations()
+    # plot_cross_correlations()
 
 
 if __name__ == "__main__":
