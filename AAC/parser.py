@@ -6,7 +6,7 @@ import pandas as pd
 import os
 import numpy as np
 from scipy.io.wavfile import read
-from multiprocessing import Pool
+from multiprocessing import Pool, freeze_support
 
 directory = './data/results/05-01-2022-multi-transmitter-nlos/'
 configurations = ['baseline', 'optimized', 'baseline48']
@@ -149,10 +149,8 @@ def parse(n_extra_transmitters: int = 0):
     print(f"avg ber: {df.ber.mean()}")
 
 
-def parse_subchirp_file(file: str) -> (str, int, float, float, float, float):
+def parse_subchirp_file_mt(file: str, transmittor_count: int, files: list) -> (str, int, float, float, int, float):
     from MQTT_AAC_subchirp_test import get_cycles
-
-    print(file)
 
     if "\\fixed\\" in file or "/fixed/" in file:
         conf: str = "fixed"
@@ -162,34 +160,123 @@ def parse_subchirp_file(file: str) -> (str, int, float, float, float, float):
     offset: int = int(file.split("_")[-4][-1])
     Ts: float = float(file.split("_")[-3])
     cycles_: float = float(file.split("_")[-2])  # Seems to be incorrect
-    cycles: float = get_cycles({"configuration": conf, "symbol_time": Ts, "fstart": 9500, "fend": 13500})
+    cycles: float = get_cycles({"configuration": conf, "symbol_time": Ts, "fstart": 5500, "fend": 9500})
 
-    encoder = OChirpEncode(T=None, fs=9500, fe=13500, T_preamble=0, orthogonal_pair_offset=offset,
-                           minimize_sub_chirp_duration=conf == "dynamic",
+    # if conf != "fixed" or Ts != 0.024:
+    #     return None, None, None, None, None, None
+
+    encoder = OChirpEncode(T=None, fs=5500, fe=9500, T_preamble=0, orthogonal_pair_offset=offset,
+                           minimize_sub_chirp_duration=("dynamic" in conf),
                            required_number_of_cycles=cycles)
 
-    print(f"{cycles_} == {cycles}")
-    print(f"{Ts} == {encoder.T}")
-
     decoder = OChirpDecode(encoder=encoder, original_data="UUUU")
-    decoder.preamble_min_peak = 1000
+    decoder.preamble_min_peak = 1
 
-    ber = decoder.decode_file(file, plot=False)
+    print(f"{file} {conf} {offset} {cycles} {transmittor_count}")
+
+    _, original_data = read(file)
+    # Get the channel with the highest energy
+    if len(original_data.shape) > 1 and original_data.shape[1] > 1:
+        original_data = original_data[:, np.argmax(np.max(original_data, axis=0), axis=0)]
+    # Add extra noise
+    if transmittor_count > 1:
+
+        # Get possible configs that may operate as noise
+        possible_noise_files = files.copy()
+        possible_noise_files.remove(file)
+
+        # Get all valid noise files
+        random_files_selection = [[], [], [], []]
+        for possible_config in possible_noise_files:
+            possible_config_offset: int = int(possible_config.split("_")[-4][-1])
+            possible_config_Ts: float = float(possible_config.split("_")[-3])
+            if conf in possible_config and \
+                    possible_config_Ts == Ts and \
+                    possible_config_offset != offset:
+                random_files_selection[possible_config_offset//2].append(possible_config)
+
+        # print(random_files_selection)
+
+        random_files_selection.remove([])
+
+        # Some samples are incorrect and don't have any possible random selections
+        # So just return None. However, I think I removed all of them.
+        if len(random_files_selection[0]) == 0:
+            return None, None, None, None, None, None
+
+        # Randomize the selection
+        for off in range(3):
+            np.random.shuffle(random_files_selection[off])
+        np.random.shuffle(random_files_selection)
+
+        # Select number_of_transmitters random files from this array (no redraws)
+        selected_files = []
+        for i in range(transmittor_count-1):
+            end = len(random_files_selection[i])
+            if end == 0:
+                print(f"END IS 0!! {i} {selected_files}")
+            selected_files.append(random_files_selection[i][np.random.randint(0, end)])
+
+        # Construct the noised signal
+        original_data = original_data.astype(np.float64)
+
+        for selected_file in selected_files:
+            _, data = read(selected_file)
+            data = data.astype(np.float64)
+            # Get the channel with the highest energy
+            if len(data.shape) > 1 and data.shape[1] > 1:
+                data = data[:, np.argmax(np.max(data, axis=0), axis=0)]
+
+            end = min(original_data.size, data.size)
+            random_offset = np.random.randint(0.25 * 44100, original_data.size-1)  # - (original_data.size // 2)
+
+            # print(f"{random_offset} {end} {original_data[random_offset:].shape} {data[random_offset:].shape}")
+
+            print(f"{file} {selected_file}")
+            original_data[random_offset:] = original_data[random_offset:] + data[:end-random_offset]
+
+        original_data = original_data.astype(np.int16)
+
+    ber = decoder.decode_data(original_data, plot=False)
+
+    # if ber > 0 and Ts > 0.015 and Ts != 0.023:
+    #     ber = decoder.decode_data(original_data, plot=True)
 
     # conf, offset, cycles, ber
-    return conf, offset, Ts, cycles, ber
+    return conf, offset, Ts, cycles, transmittor_count, ber
 
 
 def parse_subchirp_test():
-    # dir = './data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/'
-    dir = 'E:/Recorded_files/'
+    from itertools import repeat
+    freeze_support()
+
+    dir = './data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/Recorded_files/'
+    # dir = 'C:/Users/lucan/Desktop/temp/11-02-2022/'
+    # dir = 'E:/Recorded_files/'
     files = glob(dir + '**/*.wav', recursive=True)
 
-    results = []
-    with Pool(8) as p:
-        results.extend(p.map(parse_subchirp_file, files))
+    transmitters = [1]
+    repeats = 1
 
-    df = pd.DataFrame(results, columns=["configuration", "offset", "Ts", "cycles", "ber"])
+    # results = []
+    # for file in files:
+    #     for n in transmitters:
+    #         if n > 1:
+    #             for _ in range(repeats):
+    #                 results.append(parse_subchirp_file_mt(file, n, files))
+    #         else:
+    #             results.append(parse_subchirp_file_mt(file, n, files))
+
+    results = []
+    with Pool(10) as p:
+        for n in transmitters:
+            if n > 1:
+                for _ in range(repeats):
+                    results.extend(p.starmap(parse_subchirp_file_mt, zip(files, repeat(n), repeat(files))))
+            else:
+                results.extend(p.starmap(parse_subchirp_file_mt, zip(files, repeat(n), repeat(files))))
+
+    df = pd.DataFrame(results, columns=["configuration", "offset", "Ts", "cycles", "transmitters", "ber"])
     print(df)
     df.to_csv(dir + 'parsed_results.csv', index=False)
 
