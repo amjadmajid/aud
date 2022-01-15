@@ -254,62 +254,68 @@ def plot_effective_bit_rate():
 
 
 def plot_subchirp_test():
-    # df = pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/Recorded_files/parsed_results.csv')
-    df = pd.read_csv('E:/7-1-2022/parsed_results.csv')
+    dfs = []
+    # dfs.append(pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/11-01-2022-try1/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/11-01-2022-try2/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/12-01-2022/parsed_results.csv'))
+    dfs.append(pd.read_csv("C:/Users/lucan/Desktop/temp/merged/parsed_results.csv"))
+    df = pd.concat(dfs)
 
-    # df1 = pd.read_csv('E:/Recorded_files/parsed_results_single_transmitter.csv')
-    # df1["transmitters"] = 1
-    # df2 = pd.read_csv('E:/Recorded_files/parsed_results.csv')
-    # df = pd.concat([df1, df2])
-
+    # df = df[df.Ts == 0.001]
+    # print(len(df))
     configurations = ["dynamic", "fixed"]
     markers = ["x", "D"]
-    df = df.drop(columns="cycles")
 
     # conf, offset, Ts, transmittor_count, ber
-    df = df.groupby(["configuration", "Ts", "transmitters"]).ber.agg(["mean", "std"]).reset_index()
+    df = df.groupby(["configuration", "Ts"]).ber.agg(["mean", "std"]).reset_index()
 
     df = df.sort_values(by="Ts")
 
     plt.figure(figsize=(6, 3))
     for i, conf in enumerate(configurations):
-        for t in [1, 2, 3, 4]:
-            data = df[(df.configuration == conf) &
-                  (df.transmitters == t)]
-            # data = df[(df.configuration == conf)]
+        # for t in [1, 2, 3, 4]:
+        #     data = df[(df.configuration == conf) &
+        #           (df.transmitters == t)]
+        data = df[(df.configuration == conf)]
 
-            print(data)
-
-            plt.plot(data.Ts * 1000, data["mean"], label=conf + f"-{t}", marker=markers[i])
-            # plt.plot(data.Ts * 1000, data["mean"], label=conf, marker=markers[i])
+        # print(data)
+        # plt.boxplot(data.ber, positions=[i], labels=[conf])
+        # plt.plot(data.Ts * 1000, data["mean"], label=conf + f"-{t}", marker=markers[i])
+        plt.plot(data.Ts * 1000, data["mean"], label=conf, marker=markers[i])
+        # plt.fill_between(data.Ts * 1000, data["mean"] - data["std"], data["mean"] + data["std"], alpha=0.5)
 
     # plt.hlines(0.01, 0, 25, linestyles='dotted', color='black')
-    plt.ylim(-0.00001, 1.1)
+    plt.ylim(0.0, 0.6)
+    # plt.xlim(0, 10)
     plt.ylabel("BER")
     plt.xlabel("Symbol Time [ms]")
     plt.grid()
-    plt.yscale("symlog", linthresh=0.0001)
+    # plt.yscale("symlog", linthresh=0.00001)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 
 def scatter_multi_transmitter_range_test_results():
-    # df1 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
-    # df2 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_200cm.csv')
-    # # df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
-    # df4 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_100_150cm.csv')
-    # df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
+    dfs = []
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_1_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_2_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_3_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_4_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/12-01-2022/parsed_results.csv'))
+    dfs.append(pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv'))
+    df = pd.concat(dfs)
 
-    # df = pd.concat([df1, df2, df4, df5])
-    df = pd.read_csv('E:/Recorded_files/parsed_results.csv')
-    # df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results.csv')
+    # df = pd.read_csv('E:/Recorded_files/parsed_results.csv')
+    # df = pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/Recorded_files/parsed_results.csv')
     # df.to_csv("./all_data.csv", index=False)
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
     configurations = ['Configuration.baseline', 'Configuration.optimized', 'Configuration.baseline48']
 
-    df = df.sort_values(by=["distance", "transmitters"])
+    df = df.sort_values(by=["distance", "transmitters", ""])
 
     print(df.Configuration.unique())
     print(df.distance.unique())

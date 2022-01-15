@@ -49,8 +49,10 @@ def calculate_ber_multi_transmitter(file, number_of_transmitters, possible_files
         offset = np.random.randint(0.25 * 44100, original_data.size)  # - (original_data.size // 2)
         if offset < 0:
             offset = 0
-        original_data[offset:] = original_data[offset:] + data[offset:]
-
+        try:
+            original_data[offset:] = original_data[offset:] + data[offset:]
+        except ValueError:
+            return None
     original_data = original_data.astype(np.int16)
 
     # Get the channel with the highest energy
@@ -158,8 +160,8 @@ def parse_subchirp_file_mt(file: str, transmittor_count: int, files: list) -> (s
         conf: str = "fixed"
     else:
         conf: str = "dynamic"
-    fstart = 9500
-    fend = 13500
+    fstart = 5500
+    fend = 9500
 
     offset: int = int(file.split("_")[-4][-1])
     Ts: float = float(file.split("_")[-3])
@@ -207,14 +209,14 @@ def parse_subchirp_file_mt(file: str, transmittor_count: int, files: list) -> (s
 
         # Some samples are incorrect and don't have any possible random selections
         # So just return None. However, I think I removed all of them.
-        if len(random_files_selection[0]) == 0 or  len(random_files_selection[1]) == 0 or len(random_files_selection[2]) == 0:
+        if len(random_files_selection[0]) == 0 or len(random_files_selection[1]) == 0 or len(random_files_selection[2]) == 0:
             return None, None, None, None, None, None
 
         ber = calculate_ber_multi_transmitter(file, transmittor_count-1, random_files_selection, decoder)
     else:
         ber = decoder.decode_data(original_data, plot=False)
 
-    # if ber > 0 and Ts > 0.015 and Ts != 0.023:
+    # if ber > 0 and Ts > 0.02:
     #     ber = decoder.decode_data(original_data, plot=True)
 
     # conf, offset, cycles, ber
@@ -226,13 +228,13 @@ def parse_subchirp_test():
     freeze_support()
 
     # dir = './data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/Recorded_files/'
-    # dir = 'C:/Users/lucan/Desktop/temp/11-02-2022/'
+    # dir = 'C:/Users/lucan/Desktop/temp/12-01-2022/'
     # dir = 'E:/Recorded_files/'
-    dir = 'E:/7-1-2022/'
+    dir = 'C:/Users/lucan/Desktop/temp/merged/'
     files = glob(dir + '**/*.wav', recursive=True)
 
-    transmitters = [2]
-    repeats = 5
+    transmitters = [1, 2, 3, 4]
+    repeats = 10
 
     # results = []
     # for file in files:
@@ -244,7 +246,7 @@ def parse_subchirp_test():
     #             results.append(parse_subchirp_file_mt(file, n, files))
 
     results = []
-    with Pool(10) as p:
+    with Pool(6) as p:
         for n in transmitters:
             if n > 1:
                 for _ in range(repeats):

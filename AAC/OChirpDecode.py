@@ -142,7 +142,7 @@ class OChirpDecode:
             return -1
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.075
+        peak_time = self.T * 0.05
         peak_length = int(peak_time * self.fsample)
 
         # Get the actual peak by finding the local maximum
@@ -319,6 +319,7 @@ class OChirpDecode:
         """
             Calculate the BER based on the received data bits (NOT STRING) and original data bits
         """
+
         def my_print(str, end='\n'):
             if do_print:
                 print(str, end=end)
@@ -329,20 +330,35 @@ class OChirpDecode:
         #     received_data.insert(len(received_data), 1)
         #     received_data.pop(0)
 
+        reduced_original_data_bits = np.array(self.original_data_bits[4:-4])
+        reduced_received_data = np.array(received_data)
+        offset = 0
+
+        sums = []
+        for off in range(6):
+            sums.append(np.sum(reduced_original_data_bits == received_data[off:off + len(reduced_original_data_bits)]))
+            # print(f"{original_data_bits}\n==\n{received_data[off:off+len(original_data_bits)]}\n = \n{original_data_bits == received_data[off:off+len(original_data_bits)]}")
+            # print(s)
+
+        print(sums)
+        offset = np.argmax(sums)
+        print(offset)
+        reduced_received_data = reduced_received_data[offset:offset + len(reduced_original_data_bits)]
+
         err = 0
-        for i, bit in enumerate(self.original_data_bits):
+        for i, bit in enumerate(reduced_original_data_bits):
             try:
-                my_print(f"{bit}:{received_data[i]}")
-                if bit != received_data[i]:
+                my_print(f"{bit}:{reduced_received_data[i]}")
+                if bit != reduced_received_data[i]:
                     err += 1
             except IndexError:
                 err += 1
                 my_print(f"{bit}:???")
 
-        if len(self.original_data_bits) != len(received_data):
-            my_print(f"received bits ({len(received_data)}) not the same length as transmitted ({len(self.original_data_bits)})!")
+        # if len(self.original_data_bits) != len(received_data):
+        #     my_print(f"received bits ({len(received_data)}) not the same length as transmitted ({len(self.original_data_bits)})!")
 
-        ber = err / len(self.original_data_bits)
+        ber = err / len(reduced_original_data_bits)
 
         # Only print detailed information if we have ber > 0
         if do_print is False and ber != 0.0:

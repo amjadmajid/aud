@@ -389,12 +389,13 @@ class OChirpEncode:
 
 
 if __name__ == '__main__':
+    import sounddevice as sd
     data_to_send = "Hello, World!"
 
-    oc = OChirpEncode(T=None)
+    oc = OChirpEncode(T=None, fs=100, fe=1100, required_number_of_cycles=3, minimize_sub_chirp_duration=True)
     file, data = oc.convert_data_to_sound(data_to_send)
-    # sd.play(data, oc.fsample, blocking=True)
+    sd.play(data, oc.fsample, blocking=True)
 
     plt.figure()
-    plt.plot(oc.get_single_chirp(4))
+    plt.plot(oc.get_single_chirp(1))
     plt.show()
