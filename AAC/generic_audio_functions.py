@@ -45,8 +45,8 @@ def record_sound(file: str, duration_s: float, samplerate: int = 44100, channels
 
         If file is "", we ignore it
     """
-    frames = int(0.5 + (duration_s * samplerate))
-    data = sd.rec(frames=frames, channels=channels, dtype=np.int16, blocking=True)
+    frames = int(duration_s * samplerate)
+    data = sd.rec(frames=frames, channels=channels, dtype=np.int16, blocking=True, samplerate=samplerate)
 
     if file != "":
         directory = path.split(file)[0]

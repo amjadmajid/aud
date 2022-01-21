@@ -10,17 +10,16 @@ import pyaudio
 import time
 import libscrc
 
+color_list = ['#0072BD','#D95319','#EDB120','#7E2F8E','#77AC30','#4DBEEE', '#A2142F']
+
 
 class OChirpDecode:
 
     """
         OChirpDecode
-
         This class is used to convert a sound back to data. This may be done live, with a pre-recorded file or with
         raw data.
-
         See decode_file, decode_live, decode_data.
-
         We pass the encoder to this constructor to get all relevant information about the decode. However, this
         might not be realistic for deployment.
     """
@@ -35,6 +34,7 @@ class OChirpDecode:
         self.original_data = original_data
         self.original_data_bits = tobits(original_data)
         self.crc_length = crc_length
+        self.preamble_min_peak = 10000
 
     def get_preamble(self, flipped: bool = True) -> list:
         """
@@ -142,7 +142,7 @@ class OChirpDecode:
             return -1
 
         # Define a peak time to search for the actual peak around the predicted peak
-        peak_time = self.T * 0.075
+        peak_time = self.T * 0.05
         peak_length = int(peak_time * self.fsample)
 
         # Get the actual peak by finding the local maximum
@@ -161,7 +161,7 @@ class OChirpDecode:
         #     return actual_peak
         return actual_peak
 
-    def select_valid_peaks(self, peaks: list, data: np.ndarray) -> list:
+    def select_valid_peaks(self, peaks: list, data: np.ndarray, ax = None) -> list:
         """
             Since we use the highest peak as the first peak, we do not know where the data starts and ends.
             Determining what peaks to remove at the beginning and end proves to be quite difficult. However,
@@ -186,20 +186,18 @@ class OChirpDecode:
         sums = sums - np.min(sums)
         correct_offset = np.argmax(sums)
 
-        plt.figure()
-        plt.plot(sums)
+        if ax is not None:
+            ax.plot(sums)
 
         return peaks[correct_offset:correct_offset + number_of_data_peaks]
 
     def get_peaks(self, data: list, N: int, plot: bool = False) -> list:
         """
             Try to decode the auto correlation result by correctly detecting the peaks.
-
             It works on the following principle:
                 - Every peak has a typical distance between them
                 - Find the first peak based on a threshold
                 - Find every peak after that by selecting the auto correlation result with the highest peak
-
             Moreover, every predicted peak is searched around for the actual peak to overcome drifting over time.
         """
         # We get the peaks as list[np.array, np.array]
@@ -217,15 +215,22 @@ class OChirpDecode:
         merged_data = np.max(data, axis=0)
 
         if plot:
-            plt.figure(figsize=(6, 3))
-            ax = plt.gca()
+            fig, axs = plt.subplots(2, figsize=(6, 3), gridspec_kw={'height_ratios': [5, 4]})
+            ax = axs[0]
+            sum_ax = axs[1]
+
+            fig.suptitle("Peak detection")
 
             t = np.linspace(0, (len(merged_data) / self.__encoder.fsample) * 1000, len(merged_data))
             ax.plot(t, merged_data)
-            ax.set_title("Peak detection", fontsize=14)
             ax.set_ylabel("Amplitude", fontsize=14)
             ax.set_xlabel("Time [ms]", fontsize=14)
+            axs[1].set_xlabel("Offset", fontsize=14)
+            axs[1].set_ylabel("Window Sum", fontsize=14)
+            fig.tight_layout()
+            fig.subplots_adjust(hspace=0.75)
         else:
+            sum_ax = None
             ax = None
 
         # Assume that the highest value in the data is a peak
@@ -259,7 +264,7 @@ class OChirpDecode:
                     right_valid = False
 
         peaks.sort()
-        peaks = self.select_valid_peaks(peaks, merged_data)
+        peaks = self.select_valid_peaks(peaks, merged_data, ax=sum_ax)
 
         print(f"Found {len(peaks)} peaks: {peaks}")
 
@@ -287,7 +292,7 @@ class OChirpDecode:
         # This is required for the situation with no preamble. (The first bit is also the preamble)
         # In this case, we require some arbitrary min threshold do determine if the sample is all-noise or all-data
         if self.__encoder.T_preamble == 0.0:
-            preamble_min_peak = 10000
+            preamble_min_peak = self.preamble_min_peak
 
         if plot:
             fig, axs = plt.subplots(2)
@@ -314,6 +319,7 @@ class OChirpDecode:
         """
             Calculate the BER based on the received data bits (NOT STRING) and original data bits
         """
+
         def my_print(str, end='\n'):
             if do_print:
                 print(str, end=end)
@@ -324,20 +330,35 @@ class OChirpDecode:
         #     received_data.insert(len(received_data), 1)
         #     received_data.pop(0)
 
+        reduced_original_data_bits = np.array(self.original_data_bits[4:-4])
+        reduced_received_data = np.array(received_data)
+        offset = 0
+
+        sums = []
+        for off in range(6):
+            sums.append(np.sum(reduced_original_data_bits == received_data[off:off + len(reduced_original_data_bits)]))
+            # print(f"{original_data_bits}\n==\n{received_data[off:off+len(original_data_bits)]}\n = \n{original_data_bits == received_data[off:off+len(original_data_bits)]}")
+            # print(s)
+
+        print(sums)
+        offset = np.argmax(sums)
+        print(offset)
+        reduced_received_data = reduced_received_data[offset:offset + len(reduced_original_data_bits)]
+
         err = 0
-        for i, bit in enumerate(self.original_data_bits):
+        for i, bit in enumerate(reduced_original_data_bits):
             try:
-                my_print(f"{bit}:{received_data[i]}")
-                if bit != received_data[i]:
+                my_print(f"{bit}:{reduced_received_data[i]}")
+                if bit != reduced_received_data[i]:
                     err += 1
             except IndexError:
                 err += 1
                 my_print(f"{bit}:???")
 
-        if len(self.original_data_bits) != len(received_data):
-            my_print(f"received bits ({len(received_data)}) not the same length as transmitted ({len(self.original_data_bits)})!")
+        # if len(self.original_data_bits) != len(received_data):
+        #     my_print(f"received bits ({len(received_data)}) not the same length as transmitted ({len(self.original_data_bits)})!")
 
-        ber = err / len(self.original_data_bits)
+        ber = err / len(reduced_original_data_bits)
 
         # Only print detailed information if we have ber > 0
         if do_print is False and ber != 0.0:
@@ -350,7 +371,6 @@ class OChirpDecode:
             Decode raw data. We have some things we can change here:
                 - Plotting or not
                 - Symbol window or not
-
             First, we get the original symbols for the matched filter.
             Then, we do the auto correlation
             Then, we do peak detection on the auto correlation result
@@ -393,7 +413,7 @@ class OChirpDecode:
 
         # Plot the results
         if plot:
-            fig, axs = plt.subplots(3, sharex=True)
+            fig, axs = plt.subplots(2, sharex=True, figsize=(6, 3), gridspec_kw={'height_ratios': [5, 4]})
             fig.suptitle("Decode data results")
 
             t = np.linspace(0, (len(data)/self.__encoder.fsample) * 1000, len(data))
@@ -401,16 +421,17 @@ class OChirpDecode:
             axs[0].set_title("Data", fontsize=14)
             axs[0].set_ylabel("Amplitude", fontsize=14)
             axs[0].plot(t, data)
-            axs[1].set_title("Convolution with symbol 0", fontsize=14)
+            axs[1].set_title("Convolution with symbols", fontsize=14)
             axs[1].set_ylabel("Amplitude", fontsize=14)
-            axs[1].plot(t, conv_data[0])
-            axs[2].set_title("Convolution with symbol 1", fontsize=14)
-            axs[2].set_ylabel("Amplitude", fontsize=14)
-            axs[2].plot(t, conv_data[1])
-            axs[2].set_xlabel("Time [ms]", fontsize=14)
+            axs[1].plot(t, conv_data[0], label="symbol 0", color=color_list[1])
+            # axs[2].set_title("Convolution with symbol 1", fontsize=14)
+            # axs[2].set_ylabel("Amplitude", fontsize=14)
+            axs[1].plot(t, conv_data[1], label="symbol 1", color=color_list[2])
+            # axs[2].set_xlabel("Time [ms]", fontsize=14)
             for peak in peaks:
                 i = peak[1] + 1
-                axs[i].plot(peak[0]/self.__encoder.fsample * 1000, conv_data[peak[1]][peak[0]], "xr")
+                axs[1].plot(peak[0]/self.__encoder.fsample * 1000, conv_data[peak[1]][peak[0]], "xr")
+            axs[1].legend()
 
         return received_data, bits
 
@@ -448,7 +469,6 @@ class OChirpDecode:
     def decode_live(self, plot: bool = True, do_not_process: bool = False) -> float:
         """
             Try to decode the signal live, while it is being played.
-
             First, we scan for the preamble, to know when the message starts.
             Then, we record for the (pre-determined) fixed length of the message
             Finally, decode the data to get the results.
@@ -508,17 +528,19 @@ class OChirpDecode:
 
 
 if __name__ == '__main__':
-    # data_to_send = "Hello, World!"
-    #
-    # encoder = OChirpEncode()
-    # file, data = encoder.convert_data_to_sound(data_to_send)
-    # oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
-    # oc.decode_file("temp.wav", plot=True)
-
-    from configuration import get_configuration_encoder, Configuration
+    from configuration import Configuration, get_configuration_encoder
+    data_to_send = "Hell"
 
     encoder = get_configuration_encoder(Configuration.baseline)
-    decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
+    encoder.fsample = 44100*4
+    file, data = encoder.convert_data_to_sound(data_to_send)
+    oc = OChirpDecode(original_data=data_to_send, encoder=encoder, plot_symbols=True)
+    oc.decode_file("temp.wav", plot=True)
 
-    decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
-    decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-50dB.wav", plot=True)
+    # from configuration import get_configuration_encoder, Configuration
+    #
+    # encoder = get_configuration_encoder(Configuration.baseline)
+    # decoder = OChirpDecode(encoder=encoder, original_data="Hello, World!")
+    #
+    # # decoder.decode_file("/home/pi/github/aud/Recorded_files/Obstructed_Top/Line_of_Sight/baseline/Raw_recordings/rec_050cm_000_locH2-IC02.wav", plot=True)
+    # decoder.decode_file("sample_chirps\\noised\\baseline\\baseline_3_-2dB.wav", plot=True)

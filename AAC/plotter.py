@@ -4,7 +4,7 @@ from OChirpDecode import OChirpDecode
 import numpy as np
 import pandas as pd
 from configuration import Configuration, get_configuration_encoder
-
+from scipy.signal import oaconvolve, hilbert
 
 """
     This is file is meant to produce figures for the report in a consistent way
@@ -96,7 +96,7 @@ def plot_example_peak_detection():
 
 def plot_range_test_results():
     # df = pd.read_csv("./data/results/30-11-2021/raw_test_results.csv")
-    df = pd.read_csv('./data/results/20-12-2021-nlos/parsed_results.csv')
+    df = pd.read_csv('./data/results/31-12-2021-multi-transmitter-los/parsed_results.csv')
 
     color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
 
@@ -143,12 +143,233 @@ def plot_range_test_results():
     plt.show()
 
 
+def plot_multi_transmitter_range_test_results():
+    # df1 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_250cm.csv')
+    # df2 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_200cm.csv')
+    # df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_150.csv')
+    # df4 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_100_150cm.csv')
+    # df5 = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_50cm.csv')
+
+    # df = pd.concat([df1, df2, df4, df5])
+    # df = pd.read_csv('./data/results/07-01-2022-multi-transmitter-los/parsed_results_all.csv')
+    # df = pd.read_csv('./data/results/05-01-2022-multi-transmitter-reverberend/parsed_results_all.csv')
+    df = pd.read_csv('./data/results/07-01-2022-1s/parsed_results_all.csv')
+
+    # df.to_csv("./all_data.csv", index=False)
+
+    color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    configurations = ['Configuration.baseline', 'Configuration.optimized', 'Configuration.baseline48']
+
+    df = df.sort_values(by=["distance", "transmitters"])
+
+    print(df.Configuration.unique())
+    print(df.distance.unique())
+
+    plt.figure(figsize=(6, 3))
+    index = 0
+    labels = []
+    for distance in df.distance.unique():
+        for transmitters in df.transmitters.unique():
+            for i, config in enumerate(configurations):
+                data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
+
+                print(f"{distance} {transmitters} {config} {np.mean(data.ber)}")
+
+                medianprops = {'color': color_list[i], 'linewidth': 2}
+                boxprops = {'color': color_list[i], 'linestyle': '-'}
+                whiskerprops = {'color': color_list[i], 'linestyle': '-'}
+                capprops = {'color': color_list[i], 'linestyle': '-'}
+
+                plt.boxplot(data['ber'], positions=[-0.33 + index + i*0.33], showfliers=False, medianprops=medianprops, boxprops=boxprops,
+                            whiskerprops=whiskerprops, capprops=capprops, widths=0.65/3)
+
+            # hardcoded to be at the middle on the x-axis
+            if int(index + len(df.transmitters.unique())/2) % len(df.transmitters.unique()) == 0:
+                plt.text(x=index - 0.5, y=0.82, s=f"{distance}", color='black', horizontalalignment='center',
+                         verticalalignment='center')
+
+            labels.append(f"{transmitters}")
+            index += 1
+            plt.axvline(x=index - 0.5, color='black', alpha=0.2)
+
+        if distance < df.distance.max():
+            plt.axvline(x=index - 0.5, color='r', linestyle="dashed")
+
+    plt.ylim(-0.025, 0.8)
+    plt.xlim(-0.5, index - 0.5)
+    plt.text(x=index/2 - 0.5, y=0.9, s=f"Distance [cm]", color='black', horizontalalignment='center',
+             verticalalignment='center')
+    plt.ylabel("BER")
+    plt.xlabel("Transmitters")
+    plt.xticks(np.arange(index), labels, rotation=0, ha='center')
+
+    for i, _ in enumerate(df.Configuration.unique()):
+        plt.scatter(0, -1, color=color_list[i], marker=None, label=configurations[i].split('.')[-1])
+    plt.legend(loc='upper left')
+
+    plt.tight_layout()
+    plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
+    plt.show()
+
+
+def plot_effective_bit_rate():
+    df1 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_250.csv')
+    df2 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_200.csv')
+    df3 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_150.csv')
+    df4 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_100.csv')
+    df5 = pd.read_csv('./data/results/05-01-2022-multi-transmitter-nlos/parsed_results_50.csv')
+
+    df = pd.concat([df1, df2, df3, df4, df5])
+
+    color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    configurations = ['Configuration.baseline', 'Configuration.optimized']
+    bitrates = {'Configuration.baseline': 41.67,
+                'Configuration.optimized': 53.2
+                }
+    markers = ['+', 'D']
+
+    df = df.sort_values(by=["distance", "transmitters"])
+
+    print(df.Configuration.unique())
+    print(df.distance.unique())
+
+    df = df.groupby(["distance", "transmitters", "Configuration"]).ber.agg(["mean", "std"]).reset_index()
+    df['bitrate'] = df.Configuration
+    df = df.replace({"bitrate": bitrates})
+    df['eff_bitrate'] = (1 - df["mean"]) * df.bitrate
+
+    # print(df)
+
+    plt.figure(figsize=(6, 3))
+    for transmitters in df.transmitters.unique():
+        for i, config in enumerate(configurations):
+            data = df[(df.Configuration == str(config)) & (df.transmitters == transmitters)]
+
+            print(f"{transmitters} {config} {np.mean(data['mean'])}")
+            plt.plot(data.distance, data.eff_bitrate, label=f'{config}-{transmitters}', marker=markers[i])
+
+    plt.legend()
+    plt.savefig("./images/effective_bit_rates.pdf", format="pdf", bbox_inches='tight')
+    plt.show()
+
+
+def plot_subchirp_test():
+    dfs = []
+    # dfs.append(pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/11-01-2022-try1/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/11-01-2022-try2/parsed_results.csv'))
+    # dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/12-01-2022/parsed_results.csv'))
+    dfs.append(pd.read_csv("C:/Users/lucan/Desktop/temp/merged/parsed_results.csv"))
+    df = pd.concat(dfs)
+
+    # df = df[df.Ts == 0.001]
+    # print(len(df))
+    configurations = ["dynamic", "fixed"]
+    markers = ["x", "D"]
+
+    # conf, offset, Ts, transmittor_count, ber
+    df = df.groupby(["configuration", "Ts"]).ber.agg(["mean", "std"]).reset_index()
+
+    df = df.sort_values(by="Ts")
+
+    plt.figure(figsize=(6, 3))
+    for i, conf in enumerate(configurations):
+        # for t in [1, 2, 3, 4]:
+        #     data = df[(df.configuration == conf) &
+        #           (df.transmitters == t)]
+        data = df[(df.configuration == conf)]
+
+        # print(data)
+        # plt.boxplot(data.ber, positions=[i], labels=[conf])
+        # plt.plot(data.Ts * 1000, data["mean"], label=conf + f"-{t}", marker=markers[i])
+        plt.plot(data.Ts * 1000, data["mean"], label=conf, marker=markers[i])
+        # plt.fill_between(data.Ts * 1000, data["mean"] - data["std"], data["mean"] + data["std"], alpha=0.5)
+
+    # plt.hlines(0.01, 0, 25, linestyles='dotted', color='black')
+    plt.ylim(0.0, 0.6)
+    # plt.xlim(0, 10)
+    plt.ylabel("BER")
+    plt.xlabel("Symbol Time [ms]")
+    plt.grid()
+    # plt.yscale("symlog", linthresh=0.00001)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def scatter_multi_transmitter_range_test_results():
+    dfs = []
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_1_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_2_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_3_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/07-01-2022/parsed_results_4_trans.csv'))
+    dfs.append(pd.read_csv('C:/Users/lucan/Desktop/temp/12-01-2022/parsed_results.csv'))
+    dfs.append(pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/parsed_results.csv'))
+    df = pd.concat(dfs)
+
+    # df = pd.read_csv('E:/Recorded_files/parsed_results.csv')
+    # df = pd.read_csv('./data/results/06-01-2022-dynamic-vs-fixed-sub-chirps/Recorded_files/parsed_results.csv')
+    # df.to_csv("./all_data.csv", index=False)
+
+    color_list = ["#7e1e9c", '#0343df', '#43a2ca', '#0868ac', '#eff3ff', '#0000ff']
+    configurations = ['Configuration.baseline', 'Configuration.optimized', 'Configuration.baseline48']
+
+    df = df.sort_values(by=["distance", "transmitters", ""])
+
+    print(df.Configuration.unique())
+    print(df.distance.unique())
+
+    plt.figure(figsize=(6, 3))
+    for distance in df.distance.unique():
+        for transmitters in df.transmitters.unique():
+            for i, config in enumerate(configurations):
+                data = df[(df.Configuration == str(config)) & (df.distance == distance) & (df.transmitters == transmitters)]
+
+                print(f"{distance} {transmitters} {config} {np.mean(data.ber)}")
+
+                if "48" in config and distance == 250:
+                    for j, point in enumerate(zip(data.distance, data["ber"])):
+                        plt.scatter(point[0] + j*0.1, point[1])
+
+    plt.tight_layout()
+    plt.savefig("./images/range_test_results_mt.pdf", format="pdf", bbox_inches='tight')
+    plt.show()
+
+
+def plot_cross_correlations():
+    offsets = range(0, 8)
+    chirps = {}
+
+    for config in Configuration:
+        encoder = get_configuration_encoder(config)
+        chirps[config.name] = {}
+        for offset in offsets:
+            chirps[config.name][offset] = encoder.get_single_chirp(offset)
+
+    fig, axs = plt.subplots(3, figsize=(6, 3))
+    for i, config in enumerate(Configuration):
+        for offset in offsets:
+            crosscorr = oaconvolve(chirps[config.name][0], np.flip(chirps[config.name][offset]))
+            crosscorr = np.abs(hilbert(crosscorr / np.max(oaconvolve(chirps[config.name][0], np.flip(chirps[config.name][0])))))
+
+            axs[i].plot(crosscorr)
+
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     # plot_example_ochirp()
     # plot_example_frame()
     # plot_example_decode()
     # plot_example_peak_detection()
-    plot_range_test_results()
+    # plot_range_test_results()
+    # plot_multi_transmitter_range_test_results()
+    # plot_effective_bit_rate()
+    plot_subchirp_test()
+    # scatter_multi_transmitter_range_test_results()
+    # plot_cross_correlations()
 
 
 if __name__ == "__main__":

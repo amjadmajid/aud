@@ -299,11 +299,23 @@ def test_fast_configuration():
     sd.wait()
 
 
+def generate_sample_chirps(conf: Configuration):
+    data_to_send = "UUUU"
+    offsets = [0, 2, 4, 6]
+
+    for offset in offsets:
+        encoder = get_configuration_encoder(conf)
+        encoder.orthogonal_pair_offset = offset
+        encoder.convert_data_to_sound(data_to_send, filename="sample_chirps./" + conf.name + str(offset) + '.wav')
+
+
 if __name__ == '__main__':
     # play_and_record()
     # test_orthogonality()
     # range_test()
     # get_range_test_results()
-    test_baseline_configuration()
+    # test_baseline_configuration()
     # test_advanced_configuration()
     # test_fast_configuration()
+    for conf in Configuration:
+        generate_sample_chirps(conf)

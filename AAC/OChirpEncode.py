@@ -68,7 +68,7 @@ class OChirpEncode:
 
     def __init__(self, fsample: int = 44100, T: float = 0.024, M: int = 8, fs: int = 5500, fe: int = 9500,
                  f_preamble_start: int = 5500, f_preamble_end: int = 9500, blank_space_time: float = 0.000,
-                 T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: int = 5,
+                 T_preamble: float = 0.2, orthogonal_pair_offset: int = 0, required_number_of_cycles: float = 5,
                  minimize_sub_chirp_duration: bool = False, volume: float = 1, no_window: bool = False,
                  window_beta: float = 4, orthogonal_preamble: bool = False):
 
@@ -315,7 +315,7 @@ class OChirpEncode:
 
                 if minimal_sub_chirp_duration:
                     Tb = self.get_min_symbol_time(1, self.required_number_of_cycles, subchirp[0], subchirp[1])
-                    t = np.linspace(0, Tb, int(np.ceil(Tb * self.fsample)))
+                    t = np.linspace(0, Tb, int(np.round(Tb * self.fsample)))
 
                 # Maybe shape the chirp with a window function, to reduce the phase difference click
                 if not no_window:
@@ -389,12 +389,13 @@ class OChirpEncode:
 
 
 if __name__ == '__main__':
+    import sounddevice as sd
     data_to_send = "Hello, World!"
 
-    oc = OChirpEncode(T=None)
+    oc = OChirpEncode(T=None, fs=100, fe=1100, required_number_of_cycles=3, minimize_sub_chirp_duration=True)
     file, data = oc.convert_data_to_sound(data_to_send)
-    # sd.play(data, oc.fsample, blocking=True)
+    sd.play(data, oc.fsample, blocking=True)
 
     plt.figure()
-    plt.plot(oc.get_single_chirp(4))
+    plt.plot(oc.get_single_chirp(1))
     plt.show()
