@@ -1,6 +1,6 @@
 from pyexpat import model
 import pytorch_lightning as pl
-from torch.nn.modules import Sequential, Linear, ReLU, CrossEntropyLoss, Conv2d
+from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss
 from torch.optim import SGD
 import torch
 import logging
@@ -33,7 +33,7 @@ class AudioModel(pl.LightningModule):
             ReLU(),
             Linear(32, 2),
         )
-        self.criterion = CrossEntropyLoss()
+        self.criterion = MSELoss()
 
     def forward(self, x):
         x1 = self.conv1(x[0])
