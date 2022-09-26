@@ -180,3 +180,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pytorch Lightning trained networks and checkpoints
+Pytorch_lightning/lightning_logs/**

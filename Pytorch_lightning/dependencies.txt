@@ -1,0 +1,6 @@
+numpy
+torch
+torchaudio
+PySoundFile
+matplotlib
+pytorch-lightning
