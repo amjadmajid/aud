@@ -1,5 +1,7 @@
+from pyexpat import model
 import pytorch_lightning as pl
-from torch.nn.modules import Sequential, Linear, ReLU, CrossEntropyLoss, Conv2d, Conv3d
+from torch.nn.modules import Sequential, Linear, ReLU, CrossEntropyLoss, Conv2d
+from torch.optim import SGD
 import torch
 import logging
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.CRITICAL)
@@ -79,5 +81,5 @@ class AudioModel(pl.LightningModule):
         pass
     
     def configure_optimizers(self):
-        #TODO: apply optimizers
-        pass
+        return SGD(self.parameters(), lr=1e-3)
+        
