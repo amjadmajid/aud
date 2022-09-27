@@ -11,7 +11,7 @@ import os
 import glob
   
 #local test path
-localPath = "N:\AUD_Data\Line_Of_Sight\chirp_train_chirp_0s024_0\chirp_train_chirp_0s024_0\Sampled_files"
+localPath = "E:/sampled/"
 fileToFind = "rec_050cm_000_locH2-FS.wav"
 
 #method from pytorch that allows the plotting of a waveform
@@ -188,6 +188,6 @@ def read_all_audio_in_dir(path, fileType=None):
     return stacked_tensor, labels_tensor
 
 
-# returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
-# print(returnedTensor.shape)
+returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
+print(returnedTensor.shape)
 # print(returnedTensor)

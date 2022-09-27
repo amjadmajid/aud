@@ -4,3 +4,4 @@ torchaudio
 PySoundFile
 matplotlib
 pytorch-lightning
+pydub
