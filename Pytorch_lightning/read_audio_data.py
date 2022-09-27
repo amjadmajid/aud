@@ -11,7 +11,7 @@ import os
 import glob
   
 #local test path
-localPath = "N:\AUD_Data\Line_Of_Sight\chirp_train_chirp_0s024_0\chirp_train_chirp_0s024_0\Raw_recordings"
+localPath = "N:\AUD_Data\Line_Of_Sight\chirp_train_chirp_0s024_0\chirp_train_chirp_0s024_0\Sampled_files"
 fileToFind = "rec_050cm_000_locH2-FS.wav"
 
 #method from pytorch that allows the plotting of a waveform
@@ -92,7 +92,8 @@ def loc_to_xy(filename):
         if angle > 180:
             x *= -1
 
-        return x,y
+        #divide by 250 to properly allow scale
+        return x/250,y/250
 
     elif (measure_type == "IC"):
         print("IC detected")
@@ -172,7 +173,7 @@ def read_all_audio_in_dir(path, fileType=None):
     #create save tensor
     tensorsFound = []
     labelsFound = []
-    for name in list_of_files[:50]:
+    for name in list_of_files[:]:
         # print(name)
         datapoint, label = read_audio_regression(path,name)
         # print(label)
@@ -187,6 +188,6 @@ def read_all_audio_in_dir(path, fileType=None):
     return stacked_tensor, labels_tensor
 
 
-returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
+# returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
 # print(returnedTensor.shape)
 # print(returnedTensor)
