@@ -16,7 +16,7 @@ class AudioDataModule(pl.LightningDataModule):
         self.train_dataset = audioDataset(mode="singular")
         self.val_dataset = audioDataset(mode="singular")
         self.test_dataset = audioDataset(mode="singular")
-        self.batch_size = 1
+        self.batch_size = 10
         
 
     def setup(self, stage=None):
