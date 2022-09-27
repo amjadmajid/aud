@@ -3,17 +3,17 @@ sample_length = 100
 preamble_length = 220
 
 #absolute path to folder in which the recorded samples are stored
-recordings = ""
+recordings = "N:\AUD_Data\Line_Of_Sight\chirp_train_chirp_0s024_0\chirp_train_chirp_0s024_0\Raw_recordings\\"
 
 #absolute path to folder in which to store snippets of audio
 storage = ""
 
 #filename for manual testing of the split
-filename = "E:/rec_050cm_000_locH2-FS.wav"
+filename = "rec_050cm_000_locH2-FS.wav"
 
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
-sound = AudioSegment.from_file(filename)
+sound = AudioSegment.from_file(recordings + filename)
 
 
 def detect_leading_silence(sound, silence_threshold=-20.0, chunk_size=10):
@@ -36,7 +36,7 @@ start_trim = detect_leading_silence(sound)
 end_trim = detect_leading_silence(sound.reverse())
 
 duration = len(sound)    
-trimmed_sound = sound[start_trim:duration-end_trim]
+trimmed_sound = sound[start_trim:]
 
 print(start_trim)
 print(end_trim)
@@ -46,9 +46,14 @@ print(duration)
 start_samples = start_trim + preamble_length
 
 #200 samples in a raw recording, so need to find 200 samples afterwards
+
+storagePath = "N:\AUD_Data\sampled\\"+ "cuttoff" +".wav"
+trimmed_sound.export(storagePath, format="wav")
+
 for i in range(200):
-    sound_byte = sound[start_samples+ i*sample_length: start_samples+1+ i*sample_length]
-    storagePath = filename[:-4] + "-"+str(i)+".wav"
+    print(i*sample_length)
+    sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]
+    storagePath = "N:\AUD_Data\sampled\\"+ filename[:-4] + "-"+str(i)+".wav"
     sound_byte.export(storagePath, format="wav")
 
 print("finished split")

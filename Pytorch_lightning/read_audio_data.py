@@ -11,7 +11,7 @@ import os
 import glob
   
 #local test path
-localPath = "E:/sampled/"
+localPath = "N:\AUD_Data\sampled"
 fileToFind = "rec_050cm_000_locH2-FS.wav"
 
 #method from pytorch that allows the plotting of a waveform
@@ -152,9 +152,7 @@ def read_audio_regression(path, filename):
     #add label to tensor
     x_coord, y_coord = loc_to_xy(filename)
 
-
-    # print(data.shape)
-    return data[:,:1060], torch.tensor([x_coord, y_coord])
+    return data[:,:], torch.tensor([x_coord, y_coord])
 
 #path to load all audio clips of a certain filetype 
 #input: local path of the user to search for the filetypes in
@@ -181,10 +179,13 @@ def read_all_audio_in_dir(path, fileType=None):
         labelsFound.append(label)
     
     #convert list of tensors to one tensor
-
+    print(len(tensorsFound))
+    print(path)
     stacked_tensor = torch.stack(tensorsFound)
     stacked_tensor = stacked_tensor.unsqueeze(1)
     labels_tensor = torch.stack(labelsFound)
+    print("sounds size check")
+    print(stacked_tensor.shape)
     return stacked_tensor, labels_tensor
 
 

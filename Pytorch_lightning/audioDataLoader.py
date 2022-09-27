@@ -13,9 +13,10 @@ class AudioDataModule(pl.LightningDataModule):
     def prepare_data(self):
         # download, tokenize or operations that use disk and it's done on a single gpu in a distributed scenario
         # DO NOT ASSIGN self.variable in this methods!!!!!!!!!!
-        self.train_dataset = audioDataset(mode="singular")
-        self.val_dataset = audioDataset(mode="singular")
-        self.test_dataset = audioDataset(mode="singular")
+        data = audioDataset(mode="singular")
+        self.train_dataset = data
+        self.val_dataset = data
+        self.test_dataset = data
         self.batch_size = 10
         
 
