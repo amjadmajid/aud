@@ -5,7 +5,7 @@ from read_audio_data import read_all_audio_in_dir
 np.random.seed(123)
 
 #local test path
-localPath = "N:\AUD_Data\Line_Of_Sight\chirp_train_chirp_0s024_0\chirp_train_chirp_0s024_0\Raw_recordings"
+localPath = "N:\AUD_Data\sampled"
 fileToFind = "rec_050cm_000_locH2-FS.wav"
 
 class audioDataset(Dataset):

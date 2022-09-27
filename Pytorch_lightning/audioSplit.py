@@ -47,9 +47,6 @@ start_samples = start_trim + preamble_length
 
 #200 samples in a raw recording, so need to find 200 samples afterwards
 
-storagePath = "N:\AUD_Data\sampled\\"+ "cuttoff" +".wav"
-trimmed_sound.export(storagePath, format="wav")
-
 for i in range(200):
     print(i*sample_length)
     sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]

@@ -27,7 +27,7 @@ class AudioModel(pl.LightningModule):
         )
 
         self.ll = Sequential(
-            Linear(4*983*64, 64),
+            Linear(4*4333*64, 64),
             ReLU(),
             Linear(64, 32),
             ReLU(),
@@ -39,7 +39,6 @@ class AudioModel(pl.LightningModule):
         x1 = self.conv1(x[0])
         x2 = self.conv2(x1)
         x3 = self.conv3(x2)
-        
         x3 = x3.view(1, -1)
         flatten = self.ll(x3)
         return flatten
