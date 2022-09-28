@@ -5,7 +5,10 @@ from read_audio_data import read_all_audio_in_dir
 np.random.seed(123)
 
 #local test path
-localPath = "N:\AUD_Data\sampled"
+localPathTrain = "N:\AUD_Data\sampled\\train"
+localPathVal = "N:\AUD_Data\sampled\\validation"
+localPathTest = "N:\AUD_Data\sampled\\test"
+
 fileToFind = "rec_050cm_000_locH2-FS.wav"
 
 class audioDataset(Dataset):
@@ -21,18 +24,18 @@ class audioDataset(Dataset):
 
         if mode == "singular":
             
-            self.x, self.y = read_all_audio_in_dir(localPath, "FS")
+            self.x, self.y = read_all_audio_in_dir(localPathTrain, "FS")
             # print(self.x)
             # print(self.x.shape)
             # print(self.y)
         else:
 
             if mode == "train":
-                self.x, self.y = read_all_audio_in_dir(localPath, "FS")
+                self.x, self.y = read_all_audio_in_dir(localPathTrain, "FS")
             if mode == "validation":
-                self.x, self.y = read_all_audio_in_dir(localPath, "FS")
+                self.x, self.y = read_all_audio_in_dir(localPathVal, "FS")
             if mode == "test":
-                self.x, self.y = read_all_audio_in_dir(localPath, "FS")
+                self.x, self.y = read_all_audio_in_dir(localPathTest, "FS")
 
     def __getitem__(self, index):
         return self.x[index], self.y[index]
