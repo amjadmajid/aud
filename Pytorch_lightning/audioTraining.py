@@ -17,8 +17,8 @@ def train():
         mode="min",
         verbose=True,
         filename="modello-figo-{epoch}--{val_loss:0.4f}",
-        save_top_k=-1,
-
+        save_top_k=3,
+        
     )
 
     trainer = pl.Trainer(
@@ -26,7 +26,7 @@ def train():
         accelerator="gpu",
         callbacks=[checkpoint_p, custom_call],
         min_epochs=1,
-        max_epochs=50,
+        max_epochs=1000,
     )
 
     trainer.fit(model, data_m)
@@ -34,3 +34,4 @@ def train():
 
 if __name__ == "__main__":
     train()
+    

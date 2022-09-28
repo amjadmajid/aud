@@ -1,6 +1,6 @@
 from pyexpat import model
 import pytorch_lightning as pl
-from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss
+from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss, LeakyReLU
 from torch.optim import SGD
 import torch
 import logging
@@ -13,24 +13,24 @@ class AudioModel(pl.LightningModule):
 
         self.conv1 = Sequential(
             Conv2d(1,64, (1,50)),
-            ReLU()
+            LeakyReLU()
         )
 
         self.conv2 = Sequential(
             Conv2d(64, 64, (6, 20)),
-            ReLU()
+            LeakyReLU()
         )
 
         self.conv3 = Sequential(
             Conv2d(64,64, (3,10)),
-            ReLU()
+            LeakyReLU()
         )
 
         self.ll = Sequential(
             Linear(4*4333*64, 64),
-            ReLU(),
+            LeakyReLU(),
             Linear(64, 32),
-            ReLU(),
+            LeakyReLU(),
             Linear(32, 2),
         )
         self.criterion = MSELoss()
@@ -63,8 +63,8 @@ class AudioModel(pl.LightningModule):
         output = self(x)
         loss = self.criterion(output, y)
         self.log("val_loss", loss)
-        # print(y)
-        # print(output)
+        print(y)
+        print(output)
         return {"out": output, "label": y}
 
     def validation_step_end(self, outputs):
@@ -82,5 +82,5 @@ class AudioModel(pl.LightningModule):
         pass
     
     def configure_optimizers(self):
-        return SGD(self.parameters(), lr=1e-2)
+        return SGD(self.parameters(), lr=1e-1)
         
