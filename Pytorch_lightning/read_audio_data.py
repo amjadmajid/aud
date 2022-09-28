@@ -189,6 +189,6 @@ def read_all_audio_in_dir(path, fileType=None):
     return stacked_tensor, labels_tensor
 
 
-returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
-print(returnedTensor.shape)
+# returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
+# print(returnedTensor.shape)
 # print(returnedTensor)
