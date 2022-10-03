@@ -13,7 +13,12 @@ filename = "rec_050cm_000_locH2-FS.wav"
 
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
-sound = AudioSegment.from_file(recordings + filename)
+import os
+import random
+  
+
+
+
 
 
 def detect_leading_silence(sound, silence_threshold=-20.0, chunk_size=10):
@@ -32,28 +37,52 @@ def detect_leading_silence(sound, silence_threshold=-20.0, chunk_size=10):
 
     return trim_ms
 
-start_trim = detect_leading_silence(sound)
-end_trim = detect_leading_silence(sound.reverse())
 
-duration = len(sound)    
-trimmed_sound = sound[start_trim:]
+for f in os.listdir(recordings):
 
-print(start_trim)
-print(end_trim)
-print(duration)
+    sound = AudioSegment.from_file(recordings + f)
+    start_trim = detect_leading_silence(sound)
+    end_trim = detect_leading_silence(sound.reverse())
+
+    duration = len(sound)    
+    trimmed_sound = sound[start_trim:]
+
+    # print(start_trim)
+    # print(end_trim)
+    # print(duration)
 
 
-start_samples = start_trim + preamble_length
+    start_samples = start_trim + preamble_length
 
-#200 samples in a raw recording, so need to find 200 samples afterwards
+    #200 samples in a raw recording, so need to find 200 samples afterwards
 
-for i in range(200):
-    print(i*sample_length)
-    sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]
-    #TODO: add sanity checks
-    storagePath = "N:\AUD_Data\sampled\\"+ filename[:-4] + "-"+str(i)+".wav"
-    sound_byte.export(storagePath, format="wav")
+    for i in range(200):
+        # print(i*sample_length)
+        sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]
+        #TODO: add sanity checks
 
-print("finished split")
+        #Create splits to test/train/val
+        train = 0.70
+        val = 0.85
+
+        number = random.uniform(0,1)
+
+        if len(sound_byte) < 100:
+            print("length too small")
+            print(f)
+            print(i)
+            break
+        folder = ""
+        if number < train:
+            folder = "train\\"
+        elif number < val:
+            folder = "validation\\"
+        else:
+            folder = "test\\"
+
+        storagePath = "N:\AUD_Data\sampled\\"+ folder+ f[:-4] + "-"+str(i)+".wav"
+        sound_byte.export(storagePath, format="wav")
+
+    # print("finished split")
 
 

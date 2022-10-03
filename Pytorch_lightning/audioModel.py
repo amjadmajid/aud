@@ -63,8 +63,8 @@ class AudioModel(pl.LightningModule):
         output = self(x)
         loss = self.criterion(output, y)
         self.log("val_loss", loss)
-        print(y)
-        print(output)
+        # print(y)
+        # print(output)
         return {"out": output, "label": y}
 
     def validation_step_end(self, outputs):

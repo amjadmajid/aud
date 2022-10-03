@@ -175,8 +175,9 @@ def read_all_audio_in_dir(path, fileType=None):
         # print(name)
         datapoint, label = read_audio_regression(path,name)
         # print(label)
-        tensorsFound.append(datapoint)
-        labelsFound.append(label)
+        if label[0] != -1 and label[1] != -1:
+            tensorsFound.append(datapoint)
+            labelsFound.append(label)
     
     #convert list of tensors to one tensor
     print(len(tensorsFound))
