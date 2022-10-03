@@ -50,6 +50,7 @@ start_samples = start_trim + preamble_length
 for i in range(200):
     print(i*sample_length)
     sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]
+    #TODO: add sanity checks
     storagePath = "N:\AUD_Data\sampled\\"+ filename[:-4] + "-"+str(i)+".wav"
     sound_byte.export(storagePath, format="wav")
 

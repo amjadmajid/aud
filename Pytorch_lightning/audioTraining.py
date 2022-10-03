@@ -6,6 +6,7 @@ from audioDataLoader import AudioDataModule
 from audioModel import AudioModel
 from pytorch_lightning.callbacks import ModelCheckpoint
 from audioCallBacks import CustomCallback
+from pytorch_lightning.loggers import CSVLogger
 
 def train():
     data_m = AudioDataModule()
@@ -27,6 +28,7 @@ def train():
         callbacks=[checkpoint_p, custom_call],
         min_epochs=1,
         max_epochs=1000,
+        logger=CSVLogger(save_dir="")
     )
 
     trainer.fit(model, data_m)
