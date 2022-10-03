@@ -5,3 +5,4 @@ PySoundFile
 matplotlib
 pytorch-lightning
 pydub
+pandas

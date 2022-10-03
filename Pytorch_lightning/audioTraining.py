@@ -27,7 +27,7 @@ def train():
         accelerator="gpu",
         callbacks=[checkpoint_p, custom_call],
         min_epochs=1,
-        max_epochs=1000,
+        max_epochs=300,
         logger=CSVLogger(save_dir="")
     )
 
