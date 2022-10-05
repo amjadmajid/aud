@@ -17,17 +17,17 @@ class AudioDataModule(pl.LightningDataModule):
         self.train_dataset = audioDataset(mode="train")
         self.val_dataset = audioDataset(mode="validation")
         self.test_dataset = audioDataset(mode="test")
-        self.batch_size = 256
+        self.batch_size = 1
         
 
     def setup(self, stage=None):
         pass
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_dataset, batch_size=256, pin_memory=True)
+        return DataLoader(self.train_dataset, pin_memory=True)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.val_dataset, batch_size=256, pin_memory=True)
+        return DataLoader(self.val_dataset, pin_memory=True)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_dataset, batch_size=256, pin_memory=True)
+        return DataLoader(self.test_dataset, pin_memory=True)

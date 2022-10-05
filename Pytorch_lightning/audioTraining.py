@@ -27,13 +27,15 @@ def train():
         accelerator="gpu",
         callbacks=[checkpoint_p, custom_call],
         min_epochs=1,
-        max_epochs=300,
-        logger=CSVLogger(save_dir=""),
+        max_epochs=200,
+        logger=CSVLogger(save_dir="")
     )
 
     trainer.fit(model, data_m)
+    trainer.test(model, dataloaders=data_m)
 
 
 if __name__ == "__main__":
     train()
+    
     

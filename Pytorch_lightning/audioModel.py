@@ -1,7 +1,7 @@
 from pyexpat import model
 import pytorch_lightning as pl
 from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss, LeakyReLU
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 import torch
 import logging
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.CRITICAL)
@@ -12,22 +12,22 @@ class AudioModel(pl.LightningModule):
         super().__init__(),
 
         self.conv1 = Sequential(
-            Conv2d(1,64, (1,50)),
+            Conv2d(1,32, (1,50)),
             LeakyReLU()
         )
 
         self.conv2 = Sequential(
-            Conv2d(64, 64, (6, 20)),
+            Conv2d(32, 32, (6, 20)),
             LeakyReLU()
         )
 
         self.conv3 = Sequential(
-            Conv2d(64,64, (3,10)),
+            Conv2d(32,32, (3,10)),
             LeakyReLU()
         )
 
         self.ll = Sequential(
-            Linear(4*4333*64, 64),
+            Linear(4*4333*32, 64),
             LeakyReLU(),
             Linear(64, 32),
             LeakyReLU(),
@@ -63,8 +63,10 @@ class AudioModel(pl.LightningModule):
         output = self(x)
         loss = self.criterion(output, y)
         self.log("val_loss", loss)
-        # print(y)
-        # print(output)
+        if batch_index %100 ==0:
+            print(y)
+            print(output)
+            print(loss)
         return {"out": output, "label": y}
 
     def validation_step_end(self, outputs):
@@ -72,15 +74,21 @@ class AudioModel(pl.LightningModule):
 
     def validation_epoch_end(self, outputs) -> None:
         pass
-    def test_step(self, a, b):
-        pass
 
-    def test_step_end(self, a,b):
+
+    def test_step(self, batch, batch_index):
+        x, y = batch
+        output = self(x)
+        test_loss = self.criterion(output, y)
+        self.log("test_loss", test_loss)
+
+
+    def test_step_end(self, a):
         pass
 
     def test_epoch_end(self, outputs) -> None:
         pass
     
     def configure_optimizers(self):
-        return SGD(self.parameters(), lr=1e-1)
+        return Adam(self.parameters(), lr=1e-4)
         
