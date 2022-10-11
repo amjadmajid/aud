@@ -1,6 +1,6 @@
 from pyexpat import model
 import pytorch_lightning as pl
-from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss, LeakyReLU
+from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss, LeakyReLU, Dropout
 from torch.optim import SGD, Adam
 import torch
 import logging
@@ -13,24 +13,29 @@ class AudioModel(pl.LightningModule):
 
         self.conv1 = Sequential(
             Conv2d(1,32, (1,50)),
-            LeakyReLU()
+            LeakyReLU(),
+            Dropout(0.2)
         )
 
         self.conv2 = Sequential(
             Conv2d(32, 32, (6, 20)),
-            LeakyReLU()
+            LeakyReLU(),
+            Dropout(0.2)
         )
 
         self.conv3 = Sequential(
             Conv2d(32,32, (3,10)),
-            LeakyReLU()
+            LeakyReLU(),
+            Dropout(0.2)
         )
 
         self.ll = Sequential(
             Linear(4*4333*32, 64),
             LeakyReLU(),
+            Dropout(0.2),
             Linear(64, 32),
             LeakyReLU(),
+            Dropout(0.2),
             Linear(32, 2),
         )
         self.criterion = MSELoss()
@@ -63,10 +68,10 @@ class AudioModel(pl.LightningModule):
         output = self(x)
         loss = self.criterion(output, y)
         self.log("val_loss", loss)
-        if batch_index %100 ==0:
-            print(y)
-            print(output)
-            print(loss)
+        # if batch_index %100 ==0:
+        #     print(y)
+        #     print(output)
+        #     print(loss)
         return {"out": output, "label": y}
 
     def validation_step_end(self, outputs):

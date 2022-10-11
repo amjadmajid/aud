@@ -12,7 +12,6 @@ import glob
   
 #local test path
 localPath = "N:\AUD_Data\sampled"
-fileToFind = "rec_050cm_000_locH2-FS.wav"
 
 #method from pytorch that allows the plotting of a waveform
 #requires interactive environment (ipynb)
@@ -167,7 +166,7 @@ def read_all_audio_in_dir(path, fileType=None):
         for file in files:
             if fileType in file:
                 list_of_files.append(file)
-
+    print("files found:" + str(len(list_of_files)))
     #create save tensor
     tensorsFound = []
     labelsFound = []

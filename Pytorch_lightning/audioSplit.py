@@ -3,13 +3,17 @@ sample_length = 100
 preamble_length = 220
 
 #absolute path to folder in which the recorded samples are stored
-recordings = "N:\AUD_Data\Line_Of_Sight\chirp_train_chirp_0s024_0\chirp_train_chirp_0s024_0\Raw_recordings\\"
+headDir= "N:\AUD_Data\Line_Of_Sight\\"
+recordings = "chirp_train_chirp_0s024_"
+numbers = range(0,8)
+suffix = "\Raw_recordings\\"
+
+recordingsList = []
+for i in numbers:
+    recordingsList.append(headDir + recordings + str(i) + "\\" + recordings + str(i) + suffix)
 
 #absolute path to folder in which to store snippets of audio
 storage = ""
-
-#filename for manual testing of the split
-filename = "rec_050cm_000_locH2-FS.wav"
 
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
@@ -21,7 +25,7 @@ import random
 
 
 
-def detect_leading_silence(sound, silence_threshold=-20.0, chunk_size=10):
+def detect_leading_silence(sound, silence_threshold=-30.0, chunk_size=10):
     '''
     sound is a pydub.AudioSegment
     silence_threshold in dB
@@ -37,52 +41,62 @@ def detect_leading_silence(sound, silence_threshold=-20.0, chunk_size=10):
 
     return trim_ms
 
+for recordingsPlace in recordingsList:
+    for f in os.listdir(recordingsPlace):
+        #small if to only include FS
+        if f[-6:-4] == "FS":
+            sound = AudioSegment.from_file(recordingsPlace + f)
+            start_trim = detect_leading_silence(sound)
+            end_trim = detect_leading_silence(sound.reverse())
 
-for f in os.listdir(recordings):
-
-    sound = AudioSegment.from_file(recordings + f)
-    start_trim = detect_leading_silence(sound)
-    end_trim = detect_leading_silence(sound.reverse())
-
-    duration = len(sound)    
-    trimmed_sound = sound[start_trim:]
-
-    # print(start_trim)
-    # print(end_trim)
-    # print(duration)
+            # print(start_trim)
+            # print(end_trim)
+            # print(duration)
 
 
-    start_samples = start_trim + preamble_length
+            start_samples = start_trim + preamble_length
 
-    #200 samples in a raw recording, so need to find 200 samples afterwards
+            if start_trim > 5000 or start_trim < 800:
+                print("Questionable start found")
+                print(start_trim)
+                print(recordingsPlace + f)
+                continue
 
-    for i in range(200):
-        # print(i*sample_length)
-        sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]
-        #TODO: add sanity checks
+            #200 samples in a raw recording, so need to find 200 samples afterwards
 
-        #Create splits to test/train/val
-        train = 0.70
-        val = 0.85
+            for i in range(200):
+                # print(i*sample_length)
+                sound_byte = sound[start_samples+ i*sample_length: start_samples+(1+ i)*sample_length]
 
-        number = random.uniform(0,1)
+                #Create splits to test/train/val
+                train = 0.70
+                val = 0.85
 
-        if len(sound_byte) < 100:
-            print("length too small")
-            print(f)
-            print(i)
-            break
-        folder = ""
-        if number < train:
-            folder = "train\\"
-        elif number < val:
-            folder = "validation\\"
-        else:
-            folder = "test\\"
+                number = random.uniform(0,1)
 
-        storagePath = "N:\AUD_Data\sampled\\"+ folder+ f[:-4] + "-"+str(i)+".wav"
-        sound_byte.export(storagePath, format="wav")
+                if len(sound_byte) < 100:
+                    # print("length too small")
+                    print(recordingsPlace + f)
+                    print(i)
+                    print(start_samples)
+                    print(start_trim)
+                    break
+                folder = ""
+                if number < train:
+                    folder = "train\\"
+                elif number < val:
+                    folder = "validation\\"
+                else:
+                    folder = "test\\"
 
-    # print("finished split")
+                #sessionID required to prevent overwriting similar measurements on different day
+                sessionID_index = recordingsPlace.find("Raw") -2
+
+
+                storagePath = "N:\AUD_Data\sampled\\"+ folder+ f[:-4] + "-"+str(i)+"-Session" + recordingsPlace[sessionID_index:sessionID_index+1] + ".wav"
+                # print(storagePath)
+                sound_byte.export(storagePath, format="wav")
+
+            # print("finished split")
 
 
