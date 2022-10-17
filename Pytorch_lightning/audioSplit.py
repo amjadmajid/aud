@@ -3,14 +3,15 @@ sample_length = 100
 preamble_length = 220
 
 #absolute path to folder in which the recorded samples are stored
-headDir= "N:\AUD_Data\Line_Of_Sight\\"
+headDir= "N:\AUD_Data\\"
+FS_offgrid = "Ordered_files_off_grid_FS\\Ordered_files_off_grid_FS\\Obstructed_Top\\Line_of_Sight\\"
 recordings = "chirp_train_chirp_0s024_"
 numbers = range(0,8)
 suffix = "\Raw_recordings\\"
 
 recordingsList = []
 for i in numbers:
-    recordingsList.append(headDir + recordings + str(i) + "\\" + recordings + str(i) + suffix)
+    recordingsList.append(headDir +FS_offgrid+ recordings + str(i) + "\\" + suffix)
 
 #absolute path to folder in which to store snippets of audio
 storage = ""
@@ -42,9 +43,10 @@ def detect_leading_silence(sound, silence_threshold=-30.0, chunk_size=10):
     return trim_ms
 
 for recordingsPlace in recordingsList:
+    print("started splitting")
     for f in os.listdir(recordingsPlace):
         #small if to only include FS
-        if f[-6:-4] == "FS":
+        if f[-7:-4] == "FSO":
             sound = AudioSegment.from_file(recordingsPlace + f)
             start_trim = detect_leading_silence(sound)
             end_trim = detect_leading_silence(sound.reverse())
@@ -90,7 +92,7 @@ for recordingsPlace in recordingsList:
                     folder = "test\\"
 
                 #sessionID required to prevent overwriting similar measurements on different day
-                sessionID_index = recordingsPlace.find("Raw") -2
+                sessionID_index = recordingsPlace.find("Raw") -3
 
 
                 storagePath = "N:\AUD_Data\sampled\\"+ folder+ f[:-4] + "-"+str(i)+"-Session" + recordingsPlace[sessionID_index:sessionID_index+1] + ".wav"
@@ -98,5 +100,6 @@ for recordingsPlace in recordingsList:
                 sound_byte.export(storagePath, format="wav")
 
             # print("finished split")
+    print("ended splitting ")
 
 

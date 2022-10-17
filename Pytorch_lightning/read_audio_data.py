@@ -3,7 +3,7 @@
 
 from inspect import stack
 from math import cos, sin
-from random import sample
+from random import Random, random, sample
 import torch
 import torchaudio
 import matplotlib.pyplot as plt
@@ -160,17 +160,19 @@ def read_audio_regression(path, filename):
 #   FS   - only FS files will be used
 #   IC   - only reverberant files will be used
 #   OC   - only Non-Line-Of-Sigth will be used
-def read_all_audio_in_dir(path, fileType=None):
+def read_all_audio_in_dir(path, fileType=None, percentage=1):
     list_of_files = []
     for root, dirs, files in os.walk(path):
         for file in files:
             if fileType in file:
                 list_of_files.append(file)
     print("files found:" + str(len(list_of_files)))
+
+    subsampled_list = sample(list_of_files, int(len(list_of_files) * percentage))
     #create save tensor
     tensorsFound = []
     labelsFound = []
-    for name in list_of_files[:]:
+    for name in subsampled_list[:]:
         # print(name)
         datapoint, label = read_audio_regression(path,name)
         # print(label)
