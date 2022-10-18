@@ -96,4 +96,4 @@ class AudioModel(pl.LightningModule):
     
     def configure_optimizers(self):
         return Adam(self.parameters(), lr=1e-4)
-        
+    
