@@ -3,10 +3,10 @@ sample_length = 100
 preamble_length = 220
 
 #absolute path to folder in which the recorded samples are stored
-headDir= "N:\AUD_Data\\"
+headDir= "E:\\fake\\"
 FS_offgrid = "Ordered_files_off_grid_FS\\Ordered_files_off_grid_FS\\Obstructed_Top\\Line_of_Sight\\"
 recordings = "chirp_train_chirp_0s024_"
-numbers = range(0,8)
+numbers = range(0,1)
 suffix = "\Raw_recordings\\"
 
 recordingsList = []
@@ -42,11 +42,13 @@ def detect_leading_silence(sound, silence_threshold=-30.0, chunk_size=10):
 
     return trim_ms
 
+
+print("check split")
 for recordingsPlace in recordingsList:
     print("started splitting")
     for f in os.listdir(recordingsPlace):
         #small if to only include FS
-        if f[-7:-4] == "FSO":
+        if True:
             sound = AudioSegment.from_file(recordingsPlace + f)
             start_trim = detect_leading_silence(sound)
             end_trim = detect_leading_silence(sound.reverse())
@@ -95,8 +97,8 @@ for recordingsPlace in recordingsList:
                 sessionID_index = recordingsPlace.find("Raw") -3
 
 
-                storagePath = "N:\AUD_Data\sampled\\"+ folder+ f[:-4] + "-"+str(i)+"-Session" + recordingsPlace[sessionID_index:sessionID_index+1] + ".wav"
-                # print(storagePath)
+                storagePath = "E:\\sampled\\"+ folder+ f[:-4] + "-"+str(i)+"-Session" + recordingsPlace[sessionID_index:sessionID_index+1] + ".wav"
+                print(storagePath)
                 sound_byte.export(storagePath, format="wav")
 
             # print("finished split")

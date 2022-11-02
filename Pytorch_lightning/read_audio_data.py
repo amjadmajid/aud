@@ -11,7 +11,7 @@ import os
 import glob
   
 #local test path
-localPath = "N:\AUD_Data\sampled"
+localPath = "E:\sampled"
 
 #method from pytorch that allows the plotting of a waveform
 #requires interactive environment (ipynb)
@@ -71,7 +71,8 @@ def loc_to_xy(filename):
     distance = int(filename[4:7]) 
     angle = int(filename[10:13])
 
-    measure_type = filename[20:22]
+    start_name_type = filename.find("-")
+    measure_type = filename[start_name_type+1:start_name_type+3]
 
     # print("Found title values " + str(distance) + " and angle " + str(angle))
     # print("measurement type is " + measure_type)
@@ -98,10 +99,20 @@ def loc_to_xy(filename):
         print("IC detected")
         #TODO: add calculation for IC measurements
 
-        x =-1
-        y = -1
+        x = distance * cos(angle)
+        y = distance * sin(angle)
 
-        return x,y
+        #negative y if condition holds
+        if angle < 270 and angle >90:
+            y *= -1
+
+
+        #negative x if condition holds
+        if angle > 180:
+            x *= -1
+
+        #divide by 250 to properly allow scale
+        return x/250,y/250
 
     elif (measure_type == "OC"):
         print("OC detected")
@@ -113,6 +124,7 @@ def loc_to_xy(filename):
         return x,y
     else:
         print("no proper type detected, aborting...")
+        print(measure_type)
         exit(-1)
 
 
@@ -162,10 +174,14 @@ def read_audio_regression(path, filename):
 #   OC   - only Non-Line-Of-Sigth will be used
 def read_all_audio_in_dir(path, fileType=None, percentage=1):
     list_of_files = []
+    print("path: " + path)
     for root, dirs, files in os.walk(path):
         for file in files:
-            if fileType in file:
+            if fileType == None:
                 list_of_files.append(file)
+            else:
+                if fileType in file:
+                    list_of_files.append(file)
     print("files found:" + str(len(list_of_files)))
 
     subsampled_list = sample(list_of_files, int(len(list_of_files) * percentage))
@@ -191,6 +207,6 @@ def read_all_audio_in_dir(path, fileType=None, percentage=1):
     return stacked_tensor, labels_tensor
 
 
-# returnedTensor, labels = read_all_audio_in_dir(localPath, "FS")
+# returnedTensor, labels = read_all_audio_in_dir(localPath)
 # print(returnedTensor.shape)
 # print(returnedTensor)
