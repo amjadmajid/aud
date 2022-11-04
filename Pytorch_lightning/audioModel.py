@@ -30,10 +30,10 @@ class AudioModel(pl.LightningModule):
         )
 
         self.ll = Sequential(
-            Linear(4*4333*32, 64),
+            Linear(4*4333*32, 256),
             LeakyReLU(),
             Dropout(0.2),
-            Linear(64, 32),
+            Linear(256, 32),
             LeakyReLU(),
             Dropout(0.2),
             Linear(32, 2),

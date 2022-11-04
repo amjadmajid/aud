@@ -11,7 +11,7 @@ import os
 import glob
   
 #local test path
-localPath = "E:\sampled"
+localPath = "N:\AUD_Data\\sampled"
 
 #method from pytorch that allows the plotting of a waveform
 #requires interactive environment (ipynb)
@@ -116,12 +116,25 @@ def loc_to_xy(filename):
 
     elif (measure_type == "OC"):
         print("OC detected")
-        #TODO: add calculation for OC measurements
+        #true coordinates are stored in the filename, overwrite distance and angle with true values
 
-        x =-1
-        y = -1
+        distance = int(filename[21:24])
+        angle = int(filename[27:30])
+        
+        x = distance * cos(angle)
+        y = distance * sin(angle)
 
-        return x,y
+        #negative y if condition holds
+        if angle < 270 and angle >90:
+            y *= -1
+
+
+        #negative x if condition holds
+        if angle > 180:
+            x *= -1
+
+        #divide by 250 to properly allow scale
+        return x/250,y/250
     else:
         print("no proper type detected, aborting...")
         print(measure_type)

@@ -5,9 +5,9 @@ from read_audio_data import read_all_audio_in_dir
 np.random.seed(123)
 
 #local test path
-localPathTrain = "E:\\sampled\\train"
-localPathVal = "E:\\sampled\\validation"
-localPathTest = "E:\\sampled\\test"
+localPathTrain = "N:\\AUD_Data\\sampled\\train"
+localPathVal = "N:\\AUD_Data\\sampled\\validation"
+localPathTest = "N:\\AUD_Data\\sampled\\test"
 
 fileToFind = "rec_050cm_000_locH2-FS.wav"
 

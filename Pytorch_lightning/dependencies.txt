@@ -6,3 +6,4 @@ matplotlib
 pytorch-lightning
 pydub
 pandas
+webdataset

@@ -14,3 +14,14 @@ The model will be stored into lightning_logs, where it will be created in a new 
 hyperparameters.yaml
 metrics.csv : log of the val_loss achieved per epoch
 modello-figo-{epoch}--{val_loss:0.4f} : model, named after its validation loss. It keeps the best k models, based on the k specified in Trainer.pl
+
+
+Creating a new webdataset:
+
+First run tarCreation.py to instantiate a cls file to store the normalized class labels, which should have the same name as the audio file
+
+Then, create a .tar using the following command on Windows:
+
+tar -cvzf archive name.tar path to folder to compress
+
+After this, a tar file should be found in the directory the command was run. This tar can be used as a webdataset
