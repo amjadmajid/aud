@@ -9,8 +9,6 @@ localPathTrain = "N:\\AUD_Data\\sampled\\train"
 localPathVal = "N:\\AUD_Data\\sampled\\validation"
 localPathTest = "N:\\AUD_Data\\sampled\\test"
 
-fileToFind = "rec_050cm_000_locH2-FS.wav"
-
 class audioDataset(Dataset):
     """
     Fake dataset generator. Only for demonstration purpose. It create 10000 samples of 64 dimension with 2 classes

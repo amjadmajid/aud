@@ -1,4 +1,4 @@
-#file to check if a created tar file store a proper class
+#file to check if a created tar file stores a proper class
 
 import webdataset as wds
 

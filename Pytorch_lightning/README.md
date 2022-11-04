@@ -24,4 +24,6 @@ Then, create a .tar using the following command on Windows:
 
 tar -cvzf archive name.tar path to folder to compress
 
-After this, a tar file should be found in the directory the command was run. This tar can be used as a webdataset
+After this, a tar file should be found in the directory the command was run. This tar can be used as a webdataset. 
+
+In order to be able to read from a webdataset, we need to provide a url, which, if we have data locally, is just a path name. If it is not a url, we need to write it as "file:{absolutepath}". If the data is stored remotely, we can simply use the remote url.
