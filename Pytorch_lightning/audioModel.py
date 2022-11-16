@@ -4,6 +4,10 @@ from torch.nn.modules import Sequential, Linear, ReLU, Conv2d, MSELoss, LeakyReL
 from torch.optim import SGD, Adam
 import torch
 import logging
+import re
+import io
+import numpy as np
+
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.CRITICAL)
 
 
@@ -64,14 +68,21 @@ class AudioModel(pl.LightningModule):
         logging.warning(f"Loss: {final_loss}")
 
     def validation_step(self, batch, batch_index):
+        print(batch)
         x, y = batch
+        x = x[0]
+        y = y[0]
+        y = re.findall(r"[-+]?\d*\.\d+|\d+", y)
+
+        #reconstruct string to list to create tensor
+        x = x.decode('utf-8')
+        x =  re.findall(r"[-+]?\d*\.\d+|\d+", x)
+        print(x)
+        print(type(x))
+        
         output = self(x)
         loss = self.criterion(output, y)
         self.log("val_loss", loss)
-        # if batch_index %100 ==0:
-        #     print(y)
-        #     print(output)
-        #     print(loss)
         return {"out": output, "label": y}
 
     def validation_step_end(self, outputs):

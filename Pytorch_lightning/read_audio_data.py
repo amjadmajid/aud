@@ -96,7 +96,7 @@ def loc_to_xy(filename):
         return x/250,y/250
 
     elif (measure_type == "IC"):
-        print("IC detected")
+        # print("IC detected")
         #TODO: add calculation for IC measurements
 
         x = distance * cos(angle)
@@ -115,7 +115,7 @@ def loc_to_xy(filename):
         return x/250,y/250
 
     elif (measure_type == "OC"):
-        print("OC detected")
+        # print("OC detected")
         #true coordinates are stored in the filename, overwrite distance and angle with true values
 
         distance = int(filename[21:24])

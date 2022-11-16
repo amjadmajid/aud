@@ -22,7 +22,7 @@ First run tarCreation.py to instantiate a cls file to store the normalized class
 
 Then, create a .tar using the following command on Windows:
 
-tar -cvzf archive name.tar path to folder to compress
+tar -cf name.tar path to folder to compress
 
 After this, a tar file should be found in the directory the command was run. This tar can be used as a webdataset. 
 

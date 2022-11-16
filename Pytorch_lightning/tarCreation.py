@@ -1,9 +1,9 @@
-import webdataset as wds
 import os
+import torch
 
-from read_audio_data import loc_to_xy
+from read_audio_data import read_audio_regression
 
-
+baseDir = "N:\\AUD_Data\\sampled\\"
 #create a webdataset, in which the class attributes and labels are stored based on a common basename
 #needs manual tar creation command to compress all of the data
 def create_tar(path):
@@ -11,26 +11,33 @@ def create_tar(path):
 
 
     files_found = []
-    #TODO: define class labels
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(baseDir + path):
         for file in files:
-            if file.endswith(".cls"):
+            if not file.endswith(".wav"):
                 print("classes have already been created, exiting...")
-                exit(-1)
+                continue
             files_found.append(file)
 
     print("files found: " + str(len(files_found)))
 
+
+    
+    count = 0
+
     for file in files_found:
-        x, y = loc_to_xy(file)
-        print("found loc is: "  + str(x) + " " + str(y) + " for file: " + file)
-        with open(path + "\\" + file[:-4] + ".cls", 'w') as fp:
-            fp.write(str(x)+", " + str(y))
-            pass
+        audio, coord = read_audio_regression(baseDir + path, file)
+        # print("found loc is: "  + str(coord[0]) + " " + str(coord[1]) + " for file: " + file)
+        if (count % (len(files_found)/100)) == 0:
+            print("count has completed " + str(count % len(files_found)/100) + " at file " + str(count) )
+        #TODO: fix collapsed printing of numbers, create full tensor to print
+        torch.save(audio, baseDir + "tars\\" + path + "\\" + file[:-4] + ".pt")
+
+        torch.save(coord, baseDir + "tars\\" + path + "\\" + file[:-4] + ".txt")
+        count +=1
 
 
 
 
-# create_tar("N:\\AUD_Data\\sampled\\tars\\train")
-# create_tar("N:\\AUD_Data\\sampled\\tars\\test")
-# create_tar("N:\\AUD_Data\\sampled\\tars\\validation")
+# create_tar("train")
+# create_tar("test")
+create_tar("validation")

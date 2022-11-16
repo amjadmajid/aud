@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from audioCreateDataset import audioDataset
+import webdataset as wds
 
 
 class AudioDataModule(pl.LightningDataModule):
@@ -13,20 +14,19 @@ class AudioDataModule(pl.LightningDataModule):
         # download, tokenize or operations that use disk and it's done on a single gpu in a distributed scenario
         # DO NOT ASSIGN self.variable in this methods!!!!!!!!!!
         # data = audioDataset(mode="singular")
-        self.train_dataset = audioDataset(mode="train")
-        self.val_dataset = audioDataset(mode="validation")
-        self.test_dataset = audioDataset(mode="test")
-        self.batch_size = 2048
+        self.train_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/train.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
+        self.val_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/validation.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
+        self.test_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/test.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
         
 
     def setup(self, stage=None):
         pass
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_dataset, pin_memory=True)
+        return wds.WebLoader(self.train_dataset)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.val_dataset, pin_memory=True)
+        return wds.WebLoader(self.val_dataset)
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_dataset, pin_memory=True)
+        return wds.WebLoader(self.test_dataset)
