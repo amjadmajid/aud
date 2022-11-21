@@ -68,18 +68,7 @@ class AudioModel(pl.LightningModule):
         logging.warning(f"Loss: {final_loss}")
 
     def validation_step(self, batch, batch_index):
-        print(batch)
         x, y = batch
-        x = x[0]
-        y = y[0]
-        y = re.findall(r"[-+]?\d*\.\d+|\d+", y)
-
-        #reconstruct string to list to create tensor
-        x = x.decode('utf-8')
-        x =  re.findall(r"[-+]?\d*\.\d+|\d+", x)
-        print(x)
-        print(type(x))
-        
         output = self(x)
         loss = self.criterion(output, y)
         self.log("val_loss", loss)

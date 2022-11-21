@@ -27,17 +27,21 @@ def create_tar(path):
     for file in files_found:
         audio, coord = read_audio_regression(baseDir + path, file)
         # print("found loc is: "  + str(coord[0]) + " " + str(coord[1]) + " for file: " + file)
-        if (count % (len(files_found)/100)) == 0:
+        if (count % (int(len(files_found)/100))) == 0:
             print("count has completed " + str(count % len(files_found)/100) + " at file " + str(count) )
         #TODO: fix collapsed printing of numbers, create full tensor to print
         torch.save(audio, baseDir + "tars\\" + path + "\\" + file[:-4] + ".pt")
 
-        torch.save(coord, baseDir + "tars\\" + path + "\\" + file[:-4] + ".txt")
+        num = coord.numpy()
+
+        with open(baseDir + "tars\\" + path + "\\" + file[:-4] + ".txt", 'w', encoding='utf-8') as f:
+            f.write(str(num[0]) + "\n")
+            f.write(str(num[1]))
         count +=1
 
 
 
 
-# create_tar("train")
-# create_tar("test")
+create_tar("train")
+create_tar("test")
 create_tar("validation")

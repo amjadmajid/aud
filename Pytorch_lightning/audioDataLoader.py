@@ -14,7 +14,7 @@ class AudioDataModule(pl.LightningDataModule):
         # download, tokenize or operations that use disk and it's done on a single gpu in a distributed scenario
         # DO NOT ASSIGN self.variable in this methods!!!!!!!!!!
         # data = audioDataset(mode="singular")
-        self.train_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/train.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
+        self.train_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/test.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
         self.val_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/validation.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
         self.test_dataset = wds.WebDataset("file:N://AUD_Data//sampled//tars/test.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
         
