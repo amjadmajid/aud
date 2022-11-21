@@ -185,7 +185,7 @@ def read_audio_regression(path, filename):
 #   FS   - only FS files will be used
 #   IC   - only reverberant files will be used
 #   OC   - only Non-Line-Of-Sigth will be used
-def read_all_audio_in_dir(path, fileType=None, percentage=1):
+def read_all_audio_in_dir(path, fileType=None, percentage=0.1):
     list_of_files = []
     print("path: " + path)
     for root, dirs, files in os.walk(path):

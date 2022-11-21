@@ -24,7 +24,7 @@ def train():
 
     trainer = pl.Trainer(
         # gpus = -1,
-        accelerator="cpu",
+        accelerator="gpu",
         callbacks=[checkpoint_p, custom_call],
         min_epochs=1,
         max_epochs=50,
