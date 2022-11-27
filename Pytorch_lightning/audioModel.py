@@ -34,10 +34,10 @@ class AudioModel(pl.LightningModule):
         )
 
         self.ll = Sequential(
-            Linear(4*4333*32, 256),
+            Linear(4*4333*32, 64),
             LeakyReLU(),
             Dropout(0.2),
-            Linear(256, 32),
+            Linear(64, 32),
             LeakyReLU(),
             Dropout(0.2),
             Linear(32, 2),
@@ -85,7 +85,10 @@ class AudioModel(pl.LightningModule):
         x, y = batch
         output = self(x)
         test_loss = self.criterion(output, y)
-        self.log("test_loss", test_loss)
+        self.log("test_loss", test_loss, on_step=True, on_epoch=False)
+        self.log("output_x", y.mean(), on_step=True, on_epoch=False)
+        self.log("predicted_x", output.mean(), on_step=True, on_epoch=False)
+        
 
 
     def test_step_end(self, a):

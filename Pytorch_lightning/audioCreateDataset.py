@@ -33,7 +33,7 @@ class audioDataset(Dataset):
             if mode == "validation":
                 self.x, self.y = read_all_audio_in_dir(localPathVal)
             if mode == "test":
-                self.x, self.y = read_all_audio_in_dir(localPathTest)
+                self.x, self.y = read_all_audio_in_dir(localPathTest, "FS", 0.1)
 
     def __getitem__(self, index):
         return self.x[index], self.y[index]

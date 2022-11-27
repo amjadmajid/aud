@@ -15,8 +15,8 @@ class AudioDataModule(pl.LightningDataModule):
         # DO NOT ASSIGN self.variable in this methods!!!!!!!!!!
         # data = audioDataset(mode="singular")
         # wds.WebDataset("file:N://AUD_Data//sampled//tars/validation.tar").decode(wds.torch_audio).to_tuple("pt", "txt")
-        self.train_dataset = audioDataset("train")
-        self.val_dataset = audioDataset("validation")
+        # self.train_dataset = audioDataset("train")
+        # self.val_dataset = audioDataset("validation")
         self.test_dataset = audioDataset("test")
         
 
